@@ -1,53 +1,261 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Loads the plugin previously configured in tailwind.config.js */
+@plugin "tailwindcss-animate";
+
+
+/* Equivalent to darkMode: ["class"] */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Application theme values.
+ * These variables can also be used directly in custom CSS.
+ */
+:root {
+	--radius: 0.625rem;
+
+	/* Custom palette */
+	--platinum: #dcdcdd;
+	--french-gray: #c5c3c6;
+	--outer-space: #46494c;
+	--paynes-gray: #4c5c68;
+	--blue-munsell: #1985a1;
+
+	/* Semantic light-theme colors */
+	--background: #f8f8f8;
+	--foreground: #1c1e1f;
+
+	--card: #ffffff;
+	--card-foreground: #1c1e1f;
+
+	--popover: #ffffff;
+	--popover-foreground: #1c1e1f;
+
+	--primary: #1985a1;
+	--primary-foreground: #ffffff;
+
+	--secondary: #dcdcdd;
+	--secondary-foreground: #282628;
+
+	--muted: #e9e9ea;
+	--muted-foreground: #575759;
+
+	--accent: #c7edf6;
+	--accent-foreground: #0a3540;
+
+	--destructive: #dc2626;
+	--destructive-foreground: #ffffff;
+
+	--border: #c5c3c6;
+	--input: #c5c3c6;
+	--ring: #1985a1;
+}
+
+.dark {
+	/* Semantic dark-theme colors */
+	--background: #0e0f0f;
+	--foreground: #f8f8f8;
+
+	--card: #1c1e1f;
+	--card-foreground: #f8f8f8;
+
+	--popover: #1c1e1f;
+	--popover-foreground: #f8f8f8;
+
+	--primary: #22b3d7;
+	--primary-foreground: #051a20;
+
+	--secondary: #2b2c2e;
+	--secondary-foreground: #f1f1f1;
+
+	--muted: #2b2b2c;
+	--muted-foreground: #b4b7b9;
+
+	--accent: #0a3540;
+	--accent-foreground: #c7edf6;
+
+	--destructive: #ef4444;
+	--destructive-foreground: #ffffff;
+
+	--border: #393b3e;
+	--input: #393b3e;
+	--ring: #22b3d7;
+}
+
+/*
+ * Tailwind v4 semantic theme utilities.
+ *
+ * Examples:
+ * bg-background
+ * text-foreground
+ * bg-primary
+ * text-primary-foreground
+ * border-border
+ */
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+
+	/* Default custom colors */
+	--color-platinum: var(--platinum);
+	--color-french_gray: var(--french-gray);
+	--color-outer_space: var(--outer-space);
+	--color-paynes_gray: var(--paynes-gray);
+	--color-blue_munsell: var(--blue-munsell);
+
+	/* Typography */
+	--font-sans: "Inter", sans-serif;
+
+	/* Border radius */
+	--radius-lg: var(--radius);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-sm: calc(var(--radius) - 4px);
+}
+
+/*
+ * Custom color scales migrated from theme.extend.colors.
+ *
+ * The underscore naming preserves utilities such as:
+ * bg-french_gray-500
+ * text-outer_space-700
+ * border-blue_munsell-300
+ */
+@theme {
+	/* Platinum */
+	--color-platinum-50: #f8f8f8;
+	--color-platinum-100: #f1f1f1;
+	--color-platinum-200: #e9e9ea;
+	--color-platinum-300: #e2e2e3;
+	--color-platinum-400: #afafb0;
+	--color-platinum-500: #dcdcdd;
+	--color-platinum-600: #828285;
+	--color-platinum-700: #575759;
+	--color-platinum-800: #2b2b2c;
+	--color-platinum-900: #f8f8f8;
+
+	/* French gray */
+	--color-french_gray-50: #f3f3f4;
+	--color-french_gray-100: #e8e7e8;
+	--color-french_gray-200: #dcdbdd;
+	--color-french_gray-300: #d1cfd1;
+	--color-french_gray-400: #9e9aa0;
+	--color-french_gray-500: #c5c3c6;
+	--color-french_gray-600: #777279;
+	--color-french_gray-700: #4f4c51;
+	--color-french_gray-800: #282628;
+	--color-french_gray-900: #f3f3f4;
+
+	/* Outer space */
+	--color-outer_space-50: #d9dbdc;
+	--color-outer_space-100: #b4b7b9;
+	--color-outer_space-200: #8e9297;
+	--color-outer_space-300: #6a6e73;
+	--color-outer_space-400: #393b3e;
+	--color-outer_space-500: #46494c;
+	--color-outer_space-600: #2b2c2e;
+	--color-outer_space-700: #1c1e1f;
+	--color-outer_space-800: #0e0f0f;
+	--color-outer_space-900: #d9dbdc;
+
+	/* Payne's gray */
+	--color-paynes_gray-50: #d9dfe3;
+	--color-paynes_gray-100: #b2bec7;
+	--color-paynes_gray-200: #8c9eab;
+	--color-paynes_gray-300: #677d8e;
+	--color-paynes_gray-400: #3c4953;
+	--color-paynes_gray-500: #4c5c68;
+	--color-paynes_gray-600: #2d373e;
+	--color-paynes_gray-700: #1e2429;
+	--color-paynes_gray-800: #0f1215;
+	--color-paynes_gray-900: #d9dfe3;
+
+	/* Blue Munsell */
+	--color-blue_munsell-50: #c7edf6;
+	--color-blue_munsell-100: #8edaed;
+	--color-blue_munsell-200: #56c8e5;
+	--color-blue_munsell-300: #22b3d7;
+	--color-blue_munsell-400: #146a7f;
+	--color-blue_munsell-500: #1985a1;
+	--color-blue_munsell-600: #0f4f5f;
+	--color-blue_munsell-700: #0a3540;
+	--color-blue_munsell-800: #051a20;
+	--color-blue_munsell-900: #c7edf6;
+}
 
 @layer base {
-  :root {
-    /* Custom color palette variables */
-    --platinum: #dcdcdd;
-    --french-gray: #c5c3c6;
-    --outer-space: #46494c;
-    --paynes-gray: #4c5c68;
-    --blue-munsell: #1985a1;
-  }
+	* {
+		border-color: var(--border);
+	}
 
-  .dark {
-    /* Dark theme color adjustments */
-  }
+	html {
+		background: var(--background);
+	}
+
+	body {
+		min-height: 100vh;
+		background: var(--background);
+		color: var(--foreground);
+		font-family: var(--font-sans);
+	}
 }
 
-@layer utilities {
-  .line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .line-clamp-3 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
-}
-
-/* Custom scrollbar styles */
+/* Custom scrollbar */
 .scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: var(--french-gray) transparent;
+	scrollbar-width: thin;
+	scrollbar-color: var(--french-gray) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
+	width: 6px;
+	height: 6px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+	background: transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: var(--french-gray);
-  border-radius: 3px;
+	background-color: var(--french-gray);
+	border-radius: 9999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+	background-color: var(--outer-space);
+}
+
+.dark .scrollbar-thin {
+	scrollbar-color: var(--outer-space) transparent;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+	background-color: var(--outer-space);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+	background-color: var(--french-gray);
 }
