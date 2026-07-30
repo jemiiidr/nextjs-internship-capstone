@@ -1,58 +1,103 @@
-// TypeScript type definitions
-// Task 1.3: Set up project structure and folder organization
+export type MemberRole = "owner" | "admin" | "member" | "viewer";
+export type TaskPriority = "low" | "medium" | "high";
+export type ProjectVisibility = "private" | "workspace";
 
-export interface User {
-  id: string
-  clerkId: string
-  email: string
-  name: string
-  createdAt: Date
-  updatedAt: Date
+export interface UserSummary {
+	id: string;
+	name: string;
+	email: string;
+	avatarUrl: string | null;
 }
 
-export interface Project {
-  id: string
-  name: string
-  description?: string
-  ownerId: string
-  createdAt: Date
-  updatedAt: Date
-  dueDate?: Date
-  lists: List[]
+export interface ProjectSummary {
+	id: string;
+	name: string;
+	description: string | null;
+	dueDate: string | null;
+	visibility: ProjectVisibility;
+	role: MemberRole;
+	memberCount: number;
+	taskCount: number;
+	completedTaskCount: number;
+	updatedAt: string;
 }
 
-export interface List {
-  id: string
-  name: string
-  projectId: string
-  position: number
-  createdAt: Date
-  updatedAt: Date
-  tasks: Task[]
+export interface BoardList {
+	id: string;
+	projectId: string;
+	name: string;
+	position: number;
 }
 
-export interface Task {
-  id: string
-  title: string
-  description?: string
-  listId: string
-  assigneeId?: string
-  priority: "low" | "medium" | "high"
-  dueDate?: Date
-  position: number
-  createdAt: Date
-  updatedAt: Date
-  comments: Comment[]
+export interface BoardTask {
+	id: string;
+	listId: string;
+	title: string;
+	description: string | null;
+	assigneeId: string | null;
+	assignee: UserSummary | null;
+	priority: TaskPriority;
+	dueDate: string | null;
+	position: number;
+	labels: string[];
+	commentsCount: number;
+	createdAt: string;
+	updatedAt: string;
 }
 
-export interface Comment {
-  id: string
-  content: string
-  taskId: string
-  authorId: string
-  createdAt: Date
-  updatedAt: Date
+export interface ProjectMember {
+	projectId: string;
+	role: MemberRole;
+	user: UserSummary;
 }
 
-// Note for interns: These types should match your database schema
-// Update as needed when implementing the actual database schema
+export interface TaskComment {
+	id: string;
+	taskId: string;
+	content: string;
+	createdAt: string;
+	updatedAt: string;
+	author: UserSummary;
+}
+
+export interface ActivityItem {
+	id: string;
+	action:
+		| "project_created"
+		| "project_updated"
+		| "project_member_added"
+		| "project_member_removed"
+		| "list_created"
+		| "list_updated"
+		| "list_deleted"
+		| "task_created"
+		| "task_updated"
+		| "task_moved"
+		| "task_deleted"
+		| "comment_created";
+	metadata: Record<string, string | number | boolean | null>;
+	createdAt: string;
+	actor: UserSummary;
+}
+
+export interface ProjectBoardData {
+	project: {
+		id: string;
+		name: string;
+		description: string | null;
+		dueDate: string | null;
+		visibility: ProjectVisibility;
+		role: MemberRole;
+	};
+	lists: BoardList[];
+	tasks: BoardTask[];
+	members: ProjectMember[];
+	activities: ActivityItem[];
+}
+
+export interface ActionResult<T = undefined> {
+	success: boolean;
+	message: string;
+	data?: T;
+	fieldErrors?: Record<string, string[]>;
+}
