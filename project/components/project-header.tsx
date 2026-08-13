@@ -33,10 +33,16 @@ export function ProjectHeader({ projectId }: { projectId: string }) {
 				</div>
 
 				<div className="flex items-center space-x-2">
-					<button className="p-2 hover:bg-platinum-500 dark:hover:bg-payne's_gray-400 rounded-lg transition-colors">
+					<button
+						type="button"
+						className="p-2 hover:bg-platinum-500 dark:hover:bg-payne's_gray-400 rounded-lg transition-colors"
+					>
 						<Settings size={20} />
 					</button>
-					<button className="p-2 hover:bg-platinum-500 dark:hover:bg-payne's_gray-400 rounded-lg transition-colors">
+					<button
+						type="button"
+						className="p-2 hover:bg-platinum-500 dark:hover:bg-payne's_gray-400 rounded-lg transition-colors"
+					>
 						<MoreHorizontal size={20} />
 					</button>
 				</div>

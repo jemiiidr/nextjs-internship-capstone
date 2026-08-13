@@ -40,6 +40,7 @@ export function Header() {
 
 					<div className="flex items-center space-x-4">
 						<button
+							type="button"
 							onClick={() => setTheme(theme === "light" ? "dark" : "light")}
 							className="p-2 rounded-lg bg-platinum-500 dark:bg-payne's_gray-500 text-outer_space-500 dark:text-platinum-500 hover:bg-french_gray-500 dark:hover:bg-payne's_gray-400 transition-colors"
 						>
