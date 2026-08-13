@@ -1,32 +1,24 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import type React from "react";
-import "./globals.css";
-// TODO: Task 2.1 - Set up Clerk authentication service
-// import { ClerkProvider } from "@clerk/nextjs"
-import { ThemeProvider } from "@/components/theme-provider";
-
-const inter = Inter({ subsets: ["latin"] });
+import { ClerkProvider } from "@clerk/nextjs"
+import { Analytics } from "@vercel/analytics/next"
+import type { Metadata } from "next"
+import type { ReactNode } from "react"
+import { ThemeProvider } from "@/components/theme-provider"
+import "./globals.css"
 
 export const metadata: Metadata = {
-	title: "Project Management Tool",
-	description: "Team collaboration and project management platform",
-	generator: "v0.dev",
-};
+	title: { default: "ProjectFlow", template: "%s · ProjectFlow" },
+	description: "A collaborative Kanban project management application built with Next.js, Clerk, Drizzle, and Neon.",
+}
 
-export default function RootLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
+const themeScript = `(() => { try { const saved = localStorage.getItem('projectflow-theme'); const dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.classList.toggle('dark', dark); document.documentElement.style.colorScheme = dark ? 'dark' : 'light'; } catch {} })();`
+
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
 	return (
-		// TODO: Task 2.1 - Wrap with ClerkProvider once Clerk is set up
-		// <ClerkProvider>
-		<html lang="en" suppressHydrationWarning>
-			<body className={inter.className}>
-				<ThemeProvider>{children}</ThemeProvider>
-			</body>
-		</html>
-		// </ClerkProvider>
-	);
+		<ClerkProvider>
+			<html lang="en" suppressHydrationWarning>
+				<head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head>
+				<body><ThemeProvider>{children}</ThemeProvider><Analytics /></body>
+			</html>
+		</ClerkProvider>
+	)
 }
