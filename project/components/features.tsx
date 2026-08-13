@@ -1,74 +1,92 @@
-import { BarChart3, Calendar, Kanban, Shield, Users, Zap } from "lucide-react";
+import {
+	BarChart3,
+	CalendarDays,
+	Kanban,
+	MessageSquare,
+	ShieldCheck,
+	Users,
+} from "lucide-react";
 
 const features = [
 	{
+		id: "boards",
 		icon: Kanban,
-		title: "Kanban Boards",
+		title: "Interactive boards",
 		description:
-			"Visualize your workflow with intuitive drag-and-drop Kanban boards that keep your team organized.",
+			"Move tasks between ordered lists with pointer and keyboard drag-and-drop.",
 	},
 	{
+		id: "collaboration",
 		icon: Users,
-		title: "Team Collaboration",
+		title: "Members and roles",
 		description:
-			"Work together seamlessly with real-time updates, comments, and task assignments.",
+			"Owners and admins manage access while viewers stay read-only.",
 	},
 	{
-		icon: Calendar,
-		title: "Timeline Management",
+		id: "planning",
+		icon: CalendarDays,
+		title: "Due-date planning",
 		description:
-			"Track deadlines and milestones with integrated calendar views and due date reminders.",
+			"See project and task deadlines together in a focused calendar view.",
 	},
 	{
+		id: "discussion",
+		icon: MessageSquare,
+		title: "Task conversations",
+		description:
+			"Keep decisions attached to the work with comments and activity history.",
+	},
+	{
+		id: "insights",
 		icon: BarChart3,
-		title: "Progress Analytics",
+		title: "Progress insights",
 		description:
-			"Monitor project progress with detailed analytics and performance insights.",
+			"Track open and completed work across every accessible project.",
 	},
 	{
-		icon: Shield,
-		title: "Secure & Private",
+		id: "security",
+		icon: ShieldCheck,
+		title: "Protected workspace",
 		description:
-			"Enterprise-grade security ensures your project data stays safe and confidential.",
-	},
-	{
-		icon: Zap,
-		title: "Lightning Fast",
-		description:
-			"Optimized performance delivers instant updates and smooth user experience.",
+			"Clerk authentication and server-side permission checks protect every mutation.",
 	},
 ];
 
 export function Features() {
 	return (
-		<section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
-			<div className="container mx-auto">
-				<div className="text-center mb-16">
-					<h2 className="text-4xl font-bold text-outer_space-500 dark:text-platinum-500 mb-4">
-						Everything You Need to Succeed
+		<section
+			id="features"
+			className="border-y border-french_gray-300 bg-white px-4 py-20 dark:border-paynes_gray-400 dark:bg-outer_space-500 sm:px-6 lg:px-8"
+		>
+			<div className="mx-auto max-w-7xl">
+				<div className="max-w-2xl">
+					<p className="text-sm font-semibold uppercase tracking-wider text-blue_munsell-500">
+						Core features
+					</p>
+					<h2 className="mt-3 text-3xl font-bold text-outer_space-900 dark:text-platinum-50 sm:text-4xl">
+						Everything needed to manage a real team project.
 					</h2>
-					<p className="text-xl text-payne's_gray-500 dark:text-french_gray-500 max-w-2xl mx-auto">
-						Powerful features designed to help teams collaborate effectively and
-						deliver projects on time.
+					<p className="mt-4 text-paynes_gray-500 dark:text-french_gray-400">
+						The app connects UI state, authenticated server actions, and a
+						relational database through one consistent data flow.
 					</p>
 				</div>
-
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-					{features.map((feature, index) => (
-						<div
-							key={index}
-							className="p-6 bg-white dark:bg-outer_space-400 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-french_gray-300 dark:border-payne's_gray-400"
+				<div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+					{features.map((feature) => (
+						<article
+							key={feature.id}
+							className="rounded-2xl border border-french_gray-300 bg-background p-6 dark:border-paynes_gray-400"
 						>
-							<div className="w-12 h-12 bg-blue_munsell-100 dark:bg-blue_munsell-900 rounded-lg flex items-center justify-center mb-4">
-								<feature.icon className="text-blue_munsell-500" size={24} />
-							</div>
-							<h3 className="text-xl font-semibold text-outer_space-500 dark:text-platinum-500 mb-2">
+							<span className="grid size-11 place-items-center rounded-xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
+								<feature.icon size={21} />
+							</span>
+							<h3 className="mt-5 font-semibold text-outer_space-900 dark:text-platinum-50">
 								{feature.title}
 							</h3>
-							<p className="text-payne's_gray-500 dark:text-french_gray-500">
+							<p className="mt-2 text-sm leading-6 text-paynes_gray-500 dark:text-french_gray-400">
 								{feature.description}
 							</p>
-						</div>
+						</article>
 					))}
 				</div>
 			</div>

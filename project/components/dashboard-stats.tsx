@@ -1,73 +1,45 @@
-import { CheckCircle, Clock, TrendingUp, Users } from "lucide-react";
+import {
+	CalendarClock,
+	CheckCircle2,
+	FolderKanban,
+	ListChecks,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
-const stats = [
-	{
-		name: "Active Projects",
-		value: "12",
-		change: "+2.5%",
-		changeType: "positive",
-		icon: TrendingUp,
-	},
-	{
-		name: "Team Members",
-		value: "24",
-		change: "+4.1%",
-		changeType: "positive",
-		icon: Users,
-	},
-	{
-		name: "Completed Tasks",
-		value: "156",
-		change: "+12.3%",
-		changeType: "positive",
-		icon: CheckCircle,
-	},
-	{
-		name: "Pending Tasks",
-		value: "43",
-		change: "-2.1%",
-		changeType: "negative",
-		icon: Clock,
-	},
-];
-
-export function DashboardStats() {
+export function DashboardStats({
+	stats,
+}: {
+	stats: {
+		projectCount: number;
+		totalTasks: number;
+		completedTasks: number;
+		dueSoon: number;
+	};
+}) {
+	const items = [
+		{ label: "Projects", value: stats.projectCount, icon: FolderKanban },
+		{ label: "Total tasks", value: stats.totalTasks, icon: ListChecks },
+		{ label: "Completed", value: stats.completedTasks, icon: CheckCircle2 },
+		{ label: "Due this week", value: stats.dueSoon, icon: CalendarClock },
+	];
 	return (
-		<div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-			{stats.map((stat) => (
-				<div
-					key={stat.name}
-					className="bg-white dark:bg-outer_space-500 overflow-hidden rounded-lg border border-french_gray-300 dark:border-payne's_gray-400 p-6"
-				>
-					<div className="flex items-center">
-						<div className="flex-shrink-0">
-							<div className="w-8 h-8 bg-blue_munsell-100 dark:bg-blue_munsell-900 rounded-lg flex items-center justify-center">
-								<stat.icon className="text-blue_munsell-500" size={20} />
-							</div>
+		<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+			{items.map((item) => (
+				<Card key={item.label}>
+					<CardContent className="flex items-center gap-4 p-5">
+						<span className="grid size-11 place-items-center rounded-xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
+							<item.icon size={21} />
+						</span>
+						<div>
+							<p className="text-2xl font-bold text-outer_space-900 dark:text-platinum-50">
+								{item.value}
+							</p>
+							<p className="text-sm text-paynes_gray-500 dark:text-french_gray-400">
+								{item.label}
+							</p>
 						</div>
-						<div className="ml-5 w-0 flex-1">
-							<dl>
-								<dt className="text-sm font-medium text-payne's_gray-500 dark:text-french_gray-400 truncate">
-									{stat.name}
-								</dt>
-								<dd className="flex items-baseline">
-									<div className="text-2xl font-semibold text-outer_space-500 dark:text-platinum-500">
-										{stat.value}
-									</div>
-									<div
-										className={`ml-2 flex items-baseline text-sm font-semibold ${
-											stat.changeType === "positive"
-												? "text-green-600 dark:text-green-400"
-												: "text-red-600 dark:text-red-400"
-										}`}
-									>
-										{stat.change}
-									</div>
-								</dd>
-							</dl>
-						</div>
-					</div>
-				</div>
+					</CardContent>
+				</Card>
 			))}
 		</div>
 	);

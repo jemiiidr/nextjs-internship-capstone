@@ -1,59 +1,55 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "./theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 
 export function Header() {
-	const { theme, setTheme } = useTheme();
-
 	return (
-		<header className="border-b border-french_gray-300 dark:border-payne's_gray-400 bg-white/80 dark:bg-outer_space-500/80 backdrop-blur-sm">
-			<div className="container mx-auto px-4 sm:px-6 lg:px-8">
-				<div className="flex justify-between items-center h-16">
-					<div className="flex items-center">
-						<Link href="/" className="text-2xl font-bold text-blue_munsell-500">
-							TaskFlow
+		<header className="sticky top-0 z-40 border-b border-french_gray-300 bg-white/90 backdrop-blur dark:border-paynes_gray-400 dark:bg-outer_space-900/90">
+			<div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+				<Link
+					href="/"
+					className="flex items-center gap-2 text-xl font-bold text-outer_space-500 dark:text-platinum-500"
+				>
+					<span className="grid size-9 place-items-center rounded-xl bg-blue_munsell-500 text-white">
+						P
+					</span>
+					ProjectFlow
+				</Link>
+				<nav className="hidden items-center gap-6 text-sm text-paynes_gray-500 dark:text-french_gray-400 md:flex">
+					<Link href="#features" className="hover:text-blue_munsell-500">
+						Features
+					</Link>
+					<Link href="#workflow" className="hover:text-blue_munsell-500">
+						Workflow
+					</Link>
+					<Link href="#security" className="hover:text-blue_munsell-500">
+						Security
+					</Link>
+				</nav>
+				<div className="flex items-center gap-2">
+					<ThemeToggle />
+					<SignedOut>
+						<Link href="/sign-in">
+							<Button variant="secondary" size="sm">
+								Sign in
+							</Button>
 						</Link>
-					</div>
-
-					<nav className="hidden md:flex space-x-8">
-						<Link
-							href="#features"
-							className="text-outer_space-500 dark:text-platinum-500 hover:text-blue_munsell-500 transition-colors"
-						>
-							Features
+						<Link href="/sign-up">
+							<Button size="sm">Get started</Button>
 						</Link>
-						<Link
-							href="#pricing"
-							className="text-outer_space-500 dark:text-platinum-500 hover:text-blue_munsell-500 transition-colors"
-						>
-							Pricing
+					</SignedOut>
+					<SignedIn>
+						<Link href="/dashboard">
+							<Button size="sm">
+								<LayoutDashboard size={15} /> Dashboard
+							</Button>
 						</Link>
-						<Link
-							href="#about"
-							className="text-outer_space-500 dark:text-platinum-500 hover:text-blue_munsell-500 transition-colors"
-						>
-							About
-						</Link>
-					</nav>
-
-					<div className="flex items-center space-x-4">
-						<button
-							type="button"
-							onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-							className="p-2 rounded-lg bg-platinum-500 dark:bg-payne's_gray-500 text-outer_space-500 dark:text-platinum-500 hover:bg-french_gray-500 dark:hover:bg-payne's_gray-400 transition-colors"
-						>
-							{theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
-						</button>
-
-						<Link
-							href="/dashboard"
-							className="px-4 py-2 bg-blue_munsell-500 text-white rounded-lg hover:bg-blue_munsell-600 transition-colors"
-						>
-							Get Started
-						</Link>
-					</div>
+						<UserButton />
+					</SignedIn>
 				</div>
 			</div>
 		</header>

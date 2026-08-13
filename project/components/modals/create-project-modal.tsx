@@ -1,48 +1,96 @@
-// TODO: Task 4.1 - Implement project CRUD operations
-// TODO: Task 4.4 - Build task creation and editing functionality
+"use client";
 
-/*
-TODO: Implementation Notes for Interns:
+import { useActionState, useEffect } from "react";
+import { createProjectAction } from "@/app/actions/projects";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Modal } from "@/components/ui/modal";
+import { Textarea } from "@/components/ui/textarea";
+import { useUIStore } from "@/stores/ui-store";
+import type { ActionResult, ProjectSummary } from "@/types";
 
-Modal for creating new projects with form validation.
-
-Features to implement:
-- Form with project name, description, due date
-- Zod validation
-- Error handling
-- Loading states
-- Success feedback
-- Team member assignment
-- Project template selection
-
-Form fields:
-- Name (required)
-- Description (optional)
-- Due date (optional)
-- Team members (optional)
-- Project template (optional)
-- Privacy settings
-
-Integration:
-- Use project validation schema from lib/validations.ts
-- Call project creation API
-- Update project list optimistically
-- Handle errors gracefully
-*/
+const initialState: ActionResult<ProjectSummary> = {
+	success: false,
+	message: "",
+};
 
 export function CreateProjectModal() {
+	const open = useUIStore((state) => state.isCreateProjectOpen);
+	const close = useUIStore((state) => state.closeCreateProject);
+	const [state, formAction, pending] = useActionState(
+		async (_previous: ActionResult<ProjectSummary>, formData: FormData) =>
+			createProjectAction(formData),
+		initialState,
+	);
+
+	useEffect(() => {
+		if (state.success) close();
+	}, [close, state.success]);
+
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-			<div className="bg-white dark:bg-outer_space-500 rounded-lg p-6 w-full max-w-md mx-4">
-				<h3 className="text-lg font-semibold text-outer_space-500 dark:text-platinum-500 mb-4">
-					TODO: Create Project Modal
-				</h3>
-				<div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded border border-yellow-200 dark:border-yellow-800">
-					<p className="text-sm text-yellow-800 dark:text-yellow-200">
-						📋 Implement project creation form with validation
-					</p>
+		<Modal
+			open={open}
+			onClose={close}
+			title="Create project"
+			description="A starter board with To do, In progress, and Done lists is created automatically."
+		>
+			<form action={formAction} className="space-y-4">
+				<div className="space-y-1.5">
+					<Label htmlFor="project-name">Name</Label>
+					<Input
+						id="project-name"
+						name="name"
+						required
+						minLength={2}
+						maxLength={100}
+						autoFocus
+					/>
+					{state.fieldErrors?.name?.[0] ? (
+						<p className="text-xs text-red-600">{state.fieldErrors.name[0]}</p>
+					) : null}
 				</div>
-			</div>
-		</div>
+				<div className="space-y-1.5">
+					<Label htmlFor="project-description">Description</Label>
+					<Textarea
+						id="project-description"
+						name="description"
+						maxLength={800}
+						placeholder="What is this project for?"
+					/>
+				</div>
+				<div className="grid gap-4 sm:grid-cols-2">
+					<div className="space-y-1.5">
+						<Label htmlFor="project-due-date">Due date</Label>
+						<Input id="project-due-date" name="dueDate" type="date" />
+					</div>
+					<div className="space-y-1.5">
+						<Label htmlFor="project-visibility">Visibility</Label>
+						<select
+							id="project-visibility"
+							name="visibility"
+							defaultValue="private"
+							className="h-10 w-full rounded-lg border border-french_gray-300 bg-white px-3 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
+						>
+							<option value="private">Private</option>
+							<option value="workspace">Workspace</option>
+						</select>
+					</div>
+				</div>
+				{state.message && !state.success ? (
+					<p role="alert" className="text-sm text-red-600">
+						{state.message}
+					</p>
+				) : null}
+				<div className="flex justify-end gap-2 pt-2">
+					<Button variant="secondary" onClick={close}>
+						Cancel
+					</Button>
+					<Button type="submit" disabled={pending}>
+						{pending ? "Creating…" : "Create project"}
+					</Button>
+				</div>
+			</form>
+		</Modal>
 	);
 }
