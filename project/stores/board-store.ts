@@ -1,72 +1,114 @@
-// TODO: Task 5.3 - Set up client-side state management with Zustand
-// TODO: Task 5.4 - Implement optimistic UI updates for smooth interactions
+"use client";
 
-/*
-TODO: Implementation Notes for Interns:
-
-Board state management for Kanban functionality:
-- Current project data
-- Lists/columns
-- Tasks
-- Drag and drop state
-- Optimistic updates
-- Sync with server
-
-Key features:
-- Optimistic task creation/updates
-- Drag and drop state management
-- Real-time synchronization
-- Conflict resolution
-- Offline support (optional)
-
-Example structure:
-import { create } from 'zustand'
-import { subscribeWithSelector } from 'zustand/middleware'
+import { create } from "zustand";
+import type {
+	BoardList,
+	BoardTask,
+	ProjectBoardData,
+	ProjectMember,
+} from "@/types";
 
 interface BoardState {
-  // Data
-  currentProject: Project | null
-  lists: List[]
-  tasks: Task[]
-  
-  // UI state
-  draggedTask: Task | null
-  draggedOverList: string | null
-  
-  // Loading states
-  isLoading: boolean
-  isSaving: boolean
-  
-  // Actions
-  loadProject: (projectId: string) => Promise<void>
-  createTask: (listId: string, task: Partial<Task>) => Promise<void>
-  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>
-  moveTask: (taskId: string, newListId: string, newPosition: number) => Promise<void>
-  deleteTask: (taskId: string) => Promise<void>
-  
-  // Drag and drop
-  setDraggedTask: (task: Task | null) => void
-  setDraggedOverList: (listId: string | null) => void
+	project: ProjectBoardData["project"] | null;
+	lists: BoardList[];
+	tasks: BoardTask[];
+	members: ProjectMember[];
+	search: string;
+	priorityFilter: "all" | BoardTask["priority"];
+	hydrate: (data: ProjectBoardData) => void;
+	setSearch: (search: string) => void;
+	setPriorityFilter: (priority: BoardState["priorityFilter"]) => void;
+	addTask: (task: BoardTask) => void;
+	updateTask: (task: BoardTask) => void;
+	removeTask: (taskId: string) => void;
+	removeTasks: (taskIds: string[]) => void;
+	replaceTasks: (tasks: BoardTask[]) => void;
+	addList: (list: BoardList) => void;
+	updateListName: (listId: string, name: string) => void;
+	removeList: (listId: string) => void;
+	moveTaskLocally: (taskId: string, toListId: string, position: number) => void;
 }
 
-export const useBoardStore = create<BoardState>()(
-  subscribeWithSelector((set, get) => ({
-    // ... implementation
-  }))
-)
-*/
+function normalizePositions(tasks: BoardTask[], listId: string) {
+	return tasks
+		.filter((task) => task.listId === listId)
+		.sort((a, b) => a.position - b.position)
+		.map((task, position) => ({ ...task, position }));
+}
 
-// Placeholder to prevent import errors
-export const useBoardStore = () => {
-	console.log("TODO: Implement board store with Zustand");
-	return {
-		currentProject: null,
-		lists: [],
-		tasks: [],
-		isLoading: false,
-		loadProject: (projectId: string) =>
-			console.log(`TODO: Load project ${projectId}`),
-		createTask: (listId: string, task: any) =>
-			console.log(`TODO: Create task in list ${listId}`, task),
-	};
-};
+export const useBoardStore = create<BoardState>((set) => ({
+	project: null,
+	lists: [],
+	tasks: [],
+	members: [],
+	search: "",
+	priorityFilter: "all",
+	hydrate: (data) =>
+		set({
+			project: data.project,
+			lists: data.lists,
+			tasks: data.tasks,
+			members: data.members,
+		}),
+	setSearch: (search) => set({ search }),
+	setPriorityFilter: (priorityFilter) => set({ priorityFilter }),
+	addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
+	updateTask: (task) =>
+		set((state) => ({
+			tasks: state.tasks.map((candidate) =>
+				candidate.id === task.id ? task : candidate,
+			),
+		})),
+	removeTask: (taskId) =>
+		set((state) => ({
+			tasks: state.tasks.filter((task) => task.id !== taskId),
+		})),
+	removeTasks: (taskIds) => {
+		const ids = new Set(taskIds);
+		set((state) => ({
+			tasks: state.tasks.filter((task) => !ids.has(task.id)),
+		}));
+	},
+	replaceTasks: (tasks) => set({ tasks }),
+	addList: (list) =>
+		set((state) => ({
+			lists: [...state.lists, list].sort((a, b) => a.position - b.position),
+		})),
+	updateListName: (listId, name) =>
+		set((state) => ({
+			lists: state.lists.map((list) =>
+				list.id === listId ? { ...list, name } : list,
+			),
+		})),
+	removeList: (listId) =>
+		set((state) => ({
+			lists: state.lists.filter((list) => list.id !== listId),
+			tasks: state.tasks.filter((task) => task.listId !== listId),
+		})),
+	moveTaskLocally: (taskId, toListId, position) =>
+		set((state) => {
+			const moving = state.tasks.find((task) => task.id === taskId);
+			if (!moving) return state;
+			const affectedListIds = new Set([moving.listId, toListId]);
+			const remaining = state.tasks.filter((task) => task.id !== taskId);
+			const destination = remaining
+				.filter((task) => task.listId === toListId)
+				.sort((a, b) => a.position - b.position);
+			destination.splice(Math.min(position, destination.length), 0, {
+				...moving,
+				listId: toListId,
+			});
+
+			const unaffected = remaining.filter(
+				(task) => !affectedListIds.has(task.listId),
+			);
+			const target = destination.map((task, nextPosition) => ({
+				...task,
+				position: nextPosition,
+			}));
+			if (moving.listId === toListId)
+				return { tasks: [...unaffected, ...target] };
+			const source = normalizePositions(remaining, moving.listId);
+			return { tasks: [...unaffected, ...source, ...target] };
+		}),
+}));

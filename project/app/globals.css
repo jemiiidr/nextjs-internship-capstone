@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-
 /* Equivalent to darkMode: ["class"] */
 @custom-variant dark (&:where(.dark, .dark *));
 

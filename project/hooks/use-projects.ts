@@ -1,70 +1,73 @@
-// TODO: Task 4.1 - Implement project CRUD operations
-// TODO: Task 4.2 - Create project listing and dashboard interface
+"use client";
 
-/*
-TODO: Implementation Notes for Interns:
+import { useCallback, useOptimistic, useState, useTransition } from "react";
+import {
+	createProjectAction,
+	deleteProjectAction,
+} from "@/app/actions/projects";
+import type { ProjectSummary } from "@/types";
 
-Custom hook for project data management:
-- Fetch projects list
-- Create new project
-- Update project
-- Delete project
-- Search/filter projects
-- Pagination
+export function useProjects(initialProjects: ProjectSummary[]) {
+	const [projects, setProjects] = useState(initialProjects);
+	const [isPending, startTransition] = useTransition();
 
-Features:
-- React Query/SWR for caching
-- Optimistic updates
-- Error handling
-- Loading states
-- Infinite scrolling (optional)
+	const [optimisticProjects, addOptimisticProject] = useOptimistic(
+		projects,
+		(state, project: ProjectSummary) => [project, ...state],
+	);
 
-Example structure:
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+	const createProject = useCallback(
+		(formData: FormData, onComplete?: (message: string) => void) => {
+			const optimistic: ProjectSummary = {
+				id: `optimistic-${crypto.randomUUID()}`,
+				name: String(formData.get("name") || "New project"),
+				description: String(formData.get("description") || "") || null,
+				dueDate: String(formData.get("dueDate") || "") || null,
+				visibility:
+					formData.get("visibility") === "workspace" ? "workspace" : "private",
+				role: "owner",
+				memberCount: 1,
+				taskCount: 0,
+				completedTaskCount: 0,
+				updatedAt: new Date().toISOString(),
+			};
 
-export function useProjects() {
-  const queryClient = useQueryClient()
-  
-  const {
-    data: projects,
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => queries.projects.getAll()
-  })
-  
-  const createProject = useMutation({
-    mutationFn: queries.projects.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    }
-  })
-  
-  return {
-    projects,
-    isLoading,
-    error,
-    createProject: createProject.mutate,
-    isCreating: createProject.isPending
-  }
-}
+			startTransition(async () => {
+				addOptimisticProject(optimistic);
 
-Dependencies to install:
-- @tanstack/react-query (recommended)
-- OR swr (alternative)
-*/
+				const result = await createProjectAction(formData);
 
-// Placeholder to prevent import errors
-export function useProjects() {
-	console.log("TODO: Implement useProjects hook");
+				if (result.success && result.data) {
+					setProjects((state) => [result.data as ProjectSummary, ...state]);
+				}
+
+				onComplete?.(result.message);
+			});
+		},
+		[addOptimisticProject],
+	);
+
+	const removeProject = useCallback(
+		(projectId: string, onComplete?: (message: string) => void) => {
+			startTransition(async () => {
+				const result = await deleteProjectAction(projectId);
+
+				if (result.success) {
+					setProjects((state) =>
+						state.filter((project) => project.id !== projectId),
+					);
+				}
+
+				onComplete?.(result.message);
+			});
+		},
+		[],
+	);
+
 	return {
-		projects: [],
-		isLoading: false,
-		error: null,
-		createProject: (data: any) => console.log("TODO: Create project", data),
-		updateProject: (id: string, data: any) =>
-			console.log(`TODO: Update project ${id}`, data),
-		deleteProject: (id: string) => console.log(`TODO: Delete project ${id}`),
+		projects: optimisticProjects,
+		createProject,
+		removeProject,
+		isPending,
 	};
 }

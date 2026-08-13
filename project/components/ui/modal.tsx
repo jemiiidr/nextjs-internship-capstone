@@ -6,6 +6,15 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+interface ModalProps {
+	open: boolean;
+	onClose: () => void;
+	title: string;
+	description?: string;
+	children: ReactNode;
+	className?: string;
+}
+
 export function Modal({
 	open,
 	onClose,
@@ -13,47 +22,56 @@ export function Modal({
 	description,
 	children,
 	className,
-}: {
-	open: boolean;
-	onClose: () => void;
-	title: string;
-	description?: string;
-	children: ReactNode;
-	className?: string;
-}) {
+}: ModalProps) {
 	const titleId = useId();
 	const descriptionId = useId();
 
 	useEffect(() => {
-		if (!open) return;
+		if (!open) {
+			return;
+		}
+
 		const previousOverflow = document.body.style.overflow;
 		document.body.style.overflow = "hidden";
-		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") onClose();
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				onClose();
+			}
 		};
-		document.addEventListener("keydown", onKeyDown);
+
+		document.addEventListener("keydown", handleKeyDown);
+
 		return () => {
 			document.body.style.overflow = previousOverflow;
-			document.removeEventListener("keydown", onKeyDown);
+			document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [onClose, open]);
+	}, [open, onClose]);
 
-	if (!open || typeof document === "undefined") return null;
+	if (!open) {
+		return null;
+	}
+
 	return createPortal(
-		<div
-			className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-outer_space-500/70 p-4"
-			onMouseDown={onClose}
-		>
+		<div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4">
+			{/* Backdrop */}
+			<button
+				type="button"
+				aria-label="Close dialog"
+				className="absolute inset-0 bg-outer_space-500/70"
+				onClick={onClose}
+			/>
+
+			{/* Dialog */}
 			<div
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby={titleId}
 				aria-describedby={description ? descriptionId : undefined}
 				className={cn(
-					"my-8 w-full max-w-lg rounded-2xl border border-french_gray-300 bg-white p-6 shadow-2xl dark:border-paynes_gray-400 dark:bg-outer_space-500",
+					"relative z-10 my-8 w-full max-w-lg rounded-2xl border border-french_gray-300 bg-white p-6 shadow-2xl dark:border-paynes_gray-400 dark:bg-outer_space-500",
 					className,
 				)}
-				onMouseDown={(event) => event.stopPropagation()}
 			>
 				<div className="mb-5 flex items-start justify-between gap-4">
 					<div>
@@ -63,6 +81,7 @@ export function Modal({
 						>
 							{title}
 						</h2>
+
 						{description ? (
 							<p
 								id={descriptionId}
@@ -72,7 +91,9 @@ export function Modal({
 							</p>
 						) : null}
 					</div>
+
 					<Button
+						type="button"
 						variant="ghost"
 						size="icon"
 						aria-label="Close dialog"
@@ -81,6 +102,7 @@ export function Modal({
 						<X size={18} />
 					</Button>
 				</div>
+
 				{children}
 			</div>
 		</div>,

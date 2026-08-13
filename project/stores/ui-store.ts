@@ -1,62 +1,51 @@
-// TODO: Task 5.3 - Set up client-side state management with Zustand
+"use client";
 
-/*
-TODO: Implementation Notes for Interns:
-
-UI state management store for:
-- Modal states (create project, create task, etc.)
-- Sidebar state
-- Theme preferences
-- Loading states
-- Error states
-- Notifications/toasts
-
-Install: pnpm add zustand
-
-Example structure:
-import { create } from 'zustand'
+import { create } from "zustand";
 
 interface UIState {
-  // Modal states
-  isCreateProjectModalOpen: boolean
-  isCreateTaskModalOpen: boolean
-  isTaskDetailModalOpen: boolean
-  selectedTaskId: string | null
-
-  // UI states
-  sidebarOpen: boolean
-  theme: 'light' | 'dark'
-
-  // Loading states
-  isLoading: boolean
-  loadingMessage: string
-
-  // Actions
-  openCreateProjectModal: () => void
-  closeCreateProjectModal: () => void
-  openCreateTaskModal: () => void
-  closeCreateTaskModal: () => void
-  openTaskDetailModal: (taskId: string) => void
-  closeTaskDetailModal: () => void
-  toggleSidebar: () => void
-  setTheme: (theme: 'light' | 'dark') => void
-  setLoading: (loading: boolean, message?: string) => void
+	isSidebarOpen: boolean;
+	isCreateProjectOpen: boolean;
+	isCreateTaskOpen: boolean;
+	isTaskDetailOpen: boolean;
+	activeListId: string | null;
+	activeTaskId: string | null;
+	selectedTaskIds: string[];
+	setSidebarOpen: (open: boolean) => void;
+	toggleSidebar: () => void;
+	openCreateProject: () => void;
+	closeCreateProject: () => void;
+	openCreateTask: (listId: string) => void;
+	closeCreateTask: () => void;
+	openTaskDetail: (taskId: string) => void;
+	closeTaskDetail: () => void;
+	toggleTaskSelection: (taskId: string) => void;
+	clearTaskSelection: () => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
-  // ... implementation
-}))
-*/
-
-// Placeholder to prevent import errors
-export const useUIStore = () => {
-	console.log("TODO: Implement UI store with Zustand");
-	return {
-		isCreateProjectModalOpen: false,
-		isCreateTaskModalOpen: false,
-		openCreateProjectModal: () =>
-			console.log("TODO: Open create project modal"),
-		closeCreateProjectModal: () =>
-			console.log("TODO: Close create project modal"),
-	};
-};
+	isSidebarOpen: false,
+	isCreateProjectOpen: false,
+	isCreateTaskOpen: false,
+	isTaskDetailOpen: false,
+	activeListId: null,
+	activeTaskId: null,
+	selectedTaskIds: [],
+	setSidebarOpen: (open) => set({ isSidebarOpen: open }),
+	toggleSidebar: () =>
+		set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+	openCreateProject: () => set({ isCreateProjectOpen: true }),
+	closeCreateProject: () => set({ isCreateProjectOpen: false }),
+	openCreateTask: (listId) =>
+		set({ isCreateTaskOpen: true, activeListId: listId }),
+	closeCreateTask: () => set({ isCreateTaskOpen: false, activeListId: null }),
+	openTaskDetail: (taskId) =>
+		set({ isTaskDetailOpen: true, activeTaskId: taskId }),
+	closeTaskDetail: () => set({ isTaskDetailOpen: false, activeTaskId: null }),
+	toggleTaskSelection: (taskId) =>
+		set((state) => ({
+			selectedTaskIds: state.selectedTaskIds.includes(taskId)
+				? state.selectedTaskIds.filter((id) => id !== taskId)
+				: [...state.selectedTaskIds, taskId],
+		})),
+	clearTaskSelection: () => set({ selectedTaskIds: [] }),
+}));
