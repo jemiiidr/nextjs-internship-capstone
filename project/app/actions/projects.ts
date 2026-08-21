@@ -2,8 +2,13 @@
 
 import { and, asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { requireDbUser } from "@/lib/auth";
-import { canManageProject, db, getProjectAccess } from "@/lib/db";
+import {
+	canEditProject,
+	canManageProject,
+	requireProjectAccess,
+	requireWorkspaceContext,
+} from "@/lib/auth";
+import { db } from "@/lib/db";
 import {
 	activities,
 	lists,
@@ -12,6 +17,7 @@ import {
 	users,
 } from "@/lib/db/schema";
 import { toDateOrNull } from "@/lib/utils";
+import { getWorkspaceMembers } from "@/lib/workspaces";
 import {
 	memberSchema,
 	projectSchema,
@@ -25,15 +31,28 @@ function fieldErrors(error: {
 	return error.flatten().fieldErrors;
 }
 
+function revalidateProjectSurfaces(projectId?: string) {
+	revalidatePath("/dashboard");
+	revalidatePath("/projects");
+	revalidatePath("/workspaces");
+	revalidatePath("/analytics");
+	revalidatePath("/my-tasks");
+	revalidatePath("/calendar");
+	if (projectId) revalidatePath(`/projects/${projectId}`);
+}
+
 export async function createProjectAction(
 	formData: FormData,
 ): Promise<ActionResult<ProjectSummary>> {
-	const user = await requireDbUser();
+	const context = await requireWorkspaceContext();
+	if (!canEditProject(context.role)) {
+		return { success: false, message: "Viewers cannot create projects." };
+	}
 	const parsed = projectSchema.safeParse({
 		name: formData.get("name"),
 		description: formData.get("description"),
 		dueDate: formData.get("dueDate"),
-		visibility: formData.get("visibility") || "private",
+		visibility: "workspace",
 	});
 
 	if (!parsed.success) {
@@ -51,42 +70,53 @@ export async function createProjectAction(
 				name: parsed.data.name,
 				description: parsed.data.description,
 				dueDate: toDateOrNull(parsed.data.dueDate),
-				visibility: parsed.data.visibility,
-				ownerId: user.id,
+				visibility: "workspace",
+				ownerId: context.user.id,
+				workspaceId: context.workspaceId,
 			})
 			.returning();
 
 		await db.insert(projectMembers).values({
 			projectId: project.id,
-			userId: user.id,
-			role: "owner",
+			userId: context.user.id,
+			role: context.role,
 		});
 		await db.insert(lists).values([
-			{ projectId: project.id, name: "To do", position: 0 },
-			{ projectId: project.id, name: "In progress", position: 1 },
-			{ projectId: project.id, name: "Done", position: 2 },
+			{ projectId: project.id, name: "To Do", position: 0 },
+			{ projectId: project.id, name: "In Progress", position: 1 },
+			{ projectId: project.id, name: "In Review", position: 2 },
+			{ projectId: project.id, name: "Done", position: 3 },
+			{ projectId: project.id, name: "Blocked", position: 4 },
 		]);
 		await db.insert(activities).values({
 			projectId: project.id,
-			actorId: user.id,
+			actorId: context.user.id,
 			action: "project_created",
 			metadata: { projectName: project.name },
 		});
 
-		revalidatePath("/dashboard");
-		revalidatePath("/projects");
-
+		revalidateProjectSurfaces(project.id);
 		return {
 			success: true,
-			message: "Project created.",
+			message: "Project created in the active workspace.",
 			data: {
 				id: project.id,
+				workspaceId: project.workspaceId,
 				name: project.name,
 				description: project.description,
 				dueDate: project.dueDate?.toISOString() ?? null,
 				visibility: project.visibility,
-				role: "owner",
+				role: context.role,
+				isOwner: true,
 				memberCount: 1,
+				members: [
+					{
+						id: context.user.id,
+						name: context.user.name,
+						email: context.user.email,
+						avatarUrl: context.user.avatarUrl,
+					},
+				],
 				taskCount: 0,
 				completedTaskCount: 0,
 				updatedAt: project.updatedAt.toISOString(),
@@ -104,13 +134,12 @@ export async function createProjectAction(
 export async function updateProjectAction(
 	formData: FormData,
 ): Promise<ActionResult> {
-	const user = await requireDbUser();
 	const parsed = projectUpdateSchema.safeParse({
 		projectId: formData.get("projectId"),
 		name: formData.get("name"),
 		description: formData.get("description"),
 		dueDate: formData.get("dueDate"),
-		visibility: formData.get("visibility") || "private",
+		visibility: "workspace",
 	});
 	if (!parsed.success) {
 		return {
@@ -120,8 +149,8 @@ export async function updateProjectAction(
 		};
 	}
 
-	const access = await getProjectAccess(parsed.data.projectId, user.id);
-	if (!access || !canManageProject(access.role)) {
+	const access = await requireProjectAccess(parsed.data.projectId);
+	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
 			message: "You do not have permission to edit this project.",
@@ -134,124 +163,106 @@ export async function updateProjectAction(
 			name: parsed.data.name,
 			description: parsed.data.description,
 			dueDate: toDateOrNull(parsed.data.dueDate),
-			visibility: parsed.data.visibility,
 			updatedAt: new Date(),
 		})
 		.where(eq(projects.id, parsed.data.projectId));
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		action: "project_updated",
 		metadata: { projectName: parsed.data.name },
 	});
 
-	revalidatePath("/dashboard");
-	revalidatePath("/projects");
-	revalidatePath(`/projects/${parsed.data.projectId}`);
+	revalidateProjectSurfaces(parsed.data.projectId);
 	return { success: true, message: "Project updated." };
 }
 
 export async function deleteProjectAction(
 	projectId: string,
 ): Promise<ActionResult> {
-	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access) return { success: false, message: "Project not found." };
-
-	if (access.role !== "owner") {
+	if (!canManageProject(access.role)) {
 		return {
 			success: false,
-			message: "Only the project owner can delete this project.",
+			message: "Only workspace admins can delete projects.",
 		};
 	}
 	await db.delete(projects).where(eq(projects.id, projectId));
-	revalidatePath("/dashboard");
-	revalidatePath("/projects");
+	revalidateProjectSurfaces();
 	return { success: true, message: "Project deleted." };
 }
 
 export async function addProjectMemberAction(
 	formData: FormData,
 ): Promise<ActionResult> {
-	const currentUser = await requireDbUser();
 	const parsed = memberSchema.safeParse({
 		projectId: formData.get("projectId"),
 		userId: formData.get("userId"),
-		role: formData.get("role") || "member",
 	});
 	if (!parsed.success) {
 		return {
 			success: false,
-			message: "Choose a valid user and role.",
+			message: "Choose a valid workspace member.",
 			fieldErrors: fieldErrors(parsed.error),
 		};
 	}
 
-	const access = await getProjectAccess(parsed.data.projectId, currentUser.id);
-	if (!access || !canManageProject(access.role)) {
+	const access = await requireProjectAccess(parsed.data.projectId);
+	if (!access || !canManageProject(access.role) || !access.workspaceId) {
 		return {
 			success: false,
-			message: "You do not have permission to manage members.",
+			message: "Only workspace admins can manage project collaborators.",
 		};
 	}
 
-	const targetUser = await db.query.users.findFirst({
-		where: eq(users.id, parsed.data.userId),
-	});
-	if (!targetUser)
+	const workspaceMembers = await getWorkspaceMembers(access.workspaceId);
+	const target = workspaceMembers.find((member) => member.id === parsed.data.userId);
+	if (!target) {
 		return {
 			success: false,
-			message: "User not found. Ask them to sign in once first.",
+			message: "That user is not a member of the active Clerk workspace.",
 		};
+	}
 
 	await db
 		.insert(projectMembers)
-		.values(parsed.data)
+		.values({
+			projectId: parsed.data.projectId,
+			userId: target.id,
+			role: target.role,
+		})
 		.onConflictDoUpdate({
 			target: [projectMembers.projectId, projectMembers.userId],
-			set: { role: parsed.data.role },
+			set: { role: target.role },
 		});
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: currentUser.id,
+		actorId: access.user.id,
 		action: "project_member_added",
-		metadata: { memberName: targetUser.name, role: parsed.data.role },
+		metadata: { memberName: target.name, role: target.role },
 	});
 
-	revalidatePath(`/projects/${parsed.data.projectId}`);
-	revalidatePath("/team");
-	return {
-		success: true,
-		message: `${targetUser.name} was added to the project.`,
-	};
+	revalidateProjectSurfaces(parsed.data.projectId);
+	return { success: true, message: `${target.name} was added as a collaborator.` };
 }
 
 export async function removeProjectMemberAction(
 	projectId: string,
 	userId: string,
 ): Promise<ActionResult> {
-	const currentUser = await requireDbUser();
-	const access = await getProjectAccess(projectId, currentUser.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access || !canManageProject(access.role)) {
 		return {
 			success: false,
-			message: "You do not have permission to manage members.",
+			message: "Only workspace admins can manage project collaborators.",
 		};
 	}
+	if (access.project.ownerId === userId) {
+		return { success: false, message: "The project creator cannot be removed." };
+	}
 
-	const membership = await db.query.projectMembers.findFirst({
-		where: and(
-			eq(projectMembers.projectId, projectId),
-			eq(projectMembers.userId, userId),
-		),
-	});
-	if (!membership) return { success: false, message: "Membership not found." };
-	if (membership.role === "owner")
-		return { success: false, message: "The project owner cannot be removed." };
-
-	const targetUser = await db.query.users.findFirst({
-		where: eq(users.id, userId),
-	});
+	const targetUser = await db.query.users.findFirst({ where: eq(users.id, userId) });
 	await db
 		.delete(projectMembers)
 		.where(
@@ -262,25 +273,44 @@ export async function removeProjectMemberAction(
 		);
 	await db.insert(activities).values({
 		projectId,
-		actorId: currentUser.id,
+		actorId: access.user.id,
 		action: "project_member_removed",
 		metadata: { memberName: targetUser?.name ?? "Member" },
 	});
 
-	revalidatePath(`/projects/${projectId}`);
-	revalidatePath("/team");
-	return { success: true, message: "Member removed." };
+	revalidateProjectSurfaces(projectId);
+	return { success: true, message: "Collaborator removed." };
 }
 
 export async function getProjectMembersForAction(projectId: string) {
-	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access) return [];
-
 	return db
 		.select({ membership: projectMembers, user: users })
 		.from(projectMembers)
 		.innerJoin(users, eq(projectMembers.userId, users.id))
 		.where(eq(projectMembers.projectId, projectId))
 		.orderBy(asc(users.name));
+}
+
+export async function moveLegacyProjectToActiveWorkspaceAction(
+	projectId: string,
+): Promise<ActionResult> {
+	const context = await requireWorkspaceContext();
+	const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
+	if (!project || project.ownerId !== context.user.id || project.workspaceId) {
+		return { success: false, message: "This legacy project cannot be moved." };
+	}
+	if (!canEditProject(context.role)) {
+		return {
+			success: false,
+			message: "Viewers cannot move projects into a workspace.",
+		};
+	}
+	await db
+		.update(projects)
+		.set({ workspaceId: context.workspaceId, visibility: "workspace", updatedAt: new Date() })
+		.where(eq(projects.id, projectId));
+	revalidateProjectSurfaces(projectId);
+	return { success: true, message: "Project moved to the active workspace." };
 }

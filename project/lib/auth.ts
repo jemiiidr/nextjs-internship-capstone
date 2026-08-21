@@ -3,16 +3,14 @@ import "server-only";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { db, findUserByClerkId, getProjectAccess } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { db, findUserByClerkId } from "@/lib/db";
+import { projects, users } from "@/lib/db/schema";
+import { normalizeWorkspaceRole } from "@/lib/workspaces";
 import type { MemberRole } from "@/types";
 
 export async function syncCurrentUser() {
 	const { userId } = await auth();
 	if (!userId) return null;
-
-	const existing = await findUserByClerkId(userId);
-	if (existing) return existing;
 
 	const clerkUser = await currentUser();
 	if (!clerkUser) return null;
@@ -25,7 +23,7 @@ export async function syncCurrentUser() {
 		[clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
 		clerkUser.username ||
 		email.split("@")[0] ||
-		"ProjectFlow user";
+		"Flowora user";
 
 	const [savedUser] = await db
 		.insert(users)
@@ -61,11 +59,66 @@ export async function requireDbUser() {
 	return synced;
 }
 
-export async function requireProjectAccess(projectId: string) {
+export async function getWorkspaceContext() {
+	const authState = await auth();
+	if (!authState.userId) redirect("/sign-in");
 	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
-	if (!access) return null;
-	return { ...access, user };
+	return {
+		user,
+		clerkUserId: authState.userId,
+		workspaceId: authState.orgId ?? null,
+		workspaceRoleKey: authState.orgRole ?? null,
+		role: normalizeWorkspaceRole(authState.orgRole),
+	};
+}
+
+export async function requireWorkspaceContext() {
+	const context = await getWorkspaceContext();
+	if (!context.workspaceId) redirect("/workspaces");
+	return { ...context, workspaceId: context.workspaceId };
+}
+
+export async function requireProjectAccess(projectId: string) {
+	const context = await getWorkspaceContext();
+	const project = await db.query.projects.findFirst({
+		where: eq(projects.id, projectId),
+	});
+	if (!project) return null;
+
+	// New Flowora projects are scoped to the active Clerk Organization.
+	if (project.workspaceId) {
+		if (!context.workspaceId || project.workspaceId !== context.workspaceId) {
+			return null;
+		}
+		return {
+			project,
+			role: context.role,
+			isOwner: project.ownerId === context.user.id,
+			user: context.user,
+			workspaceId: context.workspaceId,
+			clerkUserId: context.clerkUserId,
+		};
+	}
+
+	// Legacy rows created before workspaces were introduced stay private to the
+	// original owner until they are assigned a Clerk Organization workspace.
+	if (project.ownerId !== context.user.id) return null;
+	return {
+		project,
+		role: "admin" as const,
+		isOwner: true,
+		user: context.user,
+		workspaceId: null,
+		clerkUserId: context.clerkUserId,
+	};
+}
+
+export function canManageProject(role: MemberRole) {
+	return role === "owner" || role === "admin";
+}
+
+export function canEditProject(role: MemberRole) {
+	return role !== "viewer";
 }
 
 export function requireProjectRole(role: MemberRole, allowed: MemberRole[]) {
