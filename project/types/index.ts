@@ -9,14 +9,33 @@ export interface UserSummary {
 	avatarUrl: string | null;
 }
 
+export interface WorkspaceMember extends UserSummary {
+	clerkId: string;
+	role: Exclude<MemberRole, "owner">;
+	roleKey: string;
+}
+
+export interface WorkspaceSummary {
+	id: string;
+	name: string;
+	slug: string | null;
+	imageUrl: string | null;
+	role: Exclude<MemberRole, "owner">;
+	roleKey: string;
+	memberCount: number;
+}
+
 export interface ProjectSummary {
 	id: string;
+	workspaceId: string | null;
 	name: string;
 	description: string | null;
 	dueDate: string | null;
 	visibility: ProjectVisibility;
 	role: MemberRole;
+	isOwner: boolean;
 	memberCount: number;
+	members: UserSummary[];
 	taskCount: number;
 	completedTaskCount: number;
 	updatedAt: string;
@@ -83,16 +102,38 @@ export interface ActivityItem {
 export interface ProjectBoardData {
 	project: {
 		id: string;
+		workspaceId: string | null;
 		name: string;
 		description: string | null;
 		dueDate: string | null;
 		visibility: ProjectVisibility;
 		role: MemberRole;
+		isOwner: boolean;
 	};
 	lists: BoardList[];
 	tasks: BoardTask[];
 	members: ProjectMember[];
 	activities: ActivityItem[];
+}
+
+export interface MyTaskItem {
+	id: string;
+	title: string;
+	projectId: string;
+	projectName: string;
+	listName: string;
+	priority: TaskPriority;
+	dueDate: string | null;
+	labels: string[];
+}
+
+export interface AnalyticsData {
+	status: Array<{ label: string; count: number }>;
+	completedByDay: Array<{ date: string; completed: number; created: number }>;
+	overdueTasks: number;
+	inProgressTasks: number;
+	completionRate: number;
+	averageTasksPerProject: number;
 }
 
 export interface ActionResult<T = undefined> {

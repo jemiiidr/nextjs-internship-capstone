@@ -111,6 +111,9 @@ export const projects = pgTable(
 		ownerId: uuid("owner_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
+		// Clerk Organization ID. Nullable only for projects created before
+		// Flowora workspaces were introduced.
+		workspaceId: text("workspace_id"),
 		dueDate: timestamp("due_date", { withTimezone: true }),
 		visibility: projectVisibilityEnum("visibility")
 			.default("private")
@@ -124,6 +127,11 @@ export const projects = pgTable(
 	},
 	(table) => [
 		index("projects_owner_id_idx").on(table.ownerId),
+		index("projects_workspace_id_idx").on(table.workspaceId),
+		index("projects_workspace_updated_idx").on(
+			table.workspaceId,
+			table.updatedAt,
+		),
 		index("projects_updated_at_idx").on(table.updatedAt),
 	],
 );
