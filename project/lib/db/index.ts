@@ -1,50 +1,24 @@
-// TODO: Task 3.2 - Configure PostgreSQL database (Vercel Postgres or Neon)
-// TODO: Task 3.5 - Implement database connection and query utilities
-
-/*
-TODO: Implementation Notes for Interns:
-
-1. Choose database provider:
-   - Vercel Postgres (recommended for Vercel deployment)
-   - Neon (good alternative)
-   - Local PostgreSQL for development
-
-2. Set up environment variables:
-   - DATABASE_URL
-   - POSTGRES_URL (if using Vercel Postgres)
-
-3. Configure Drizzle connection
-4. Implement CRUD operations for all entities
-5. Add proper error handling
-6. Set up connection pooling if needed
-
-Example structure:
-import { drizzle } from 'drizzle-orm/vercel-postgres'
-import { sql } from '@vercel/postgres'
-import * as schema from './schema'
-
-export const db = drizzle(sql, { schema })
-
-export const queries = {
-  projects: {
-    getAll: async () => { ... },
-    getById: async (id: string) => { ... },
-    create: async (data: any) => { ... },
-    update: async (id: string, data: any) => { ... },
-    delete: async (id: string) => { ... },
-  },
-  // ... other entity queries
-}
-*/
 import "server-only";
 
-import { and, asc, desc, eq, ilike, inArray, or } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gte,
+	ilike,
+	inArray,
+	isNull,
+	or,
+} from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import type {
 	ActivityItem,
+	AnalyticsData,
 	BoardList,
 	BoardTask,
 	MemberRole,
+	MyTaskItem,
 	ProjectBoardData,
 	ProjectMember,
 	ProjectSummary,
@@ -77,31 +51,67 @@ function serializeUser(user: typeof users.$inferSelect): UserSummary {
 	};
 }
 
+function isCompletedList(name: string) {
+	return ["done", "complete", "completed"].includes(name.trim().toLowerCase());
+}
+
+function isInProgressList(name: string) {
+	return ["in progress", "doing", "active"].includes(name.trim().toLowerCase());
+}
+
 export async function findUserByClerkId(clerkId: string) {
 	return db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
 }
 
-export async function getProjectAccess(projectId: string, userId: string) {
+export async function getLegacyProjectsForOwner(userId: string) {
+	const rows = await db
+		.select({
+			id: projects.id,
+			name: projects.name,
+			description: projects.description,
+			updatedAt: projects.updatedAt,
+		})
+		.from(projects)
+		.where(and(eq(projects.ownerId, userId), isNull(projects.workspaceId)))
+		.orderBy(desc(projects.updatedAt));
+
+	return rows.map((project) => ({
+		...project,
+		updatedAt: project.updatedAt.toISOString(),
+	}));
+}
+
+function projectScopeCondition(input: {
+	userId: string;
+	workspaceId: string | null;
+}) {
+	if (input.workspaceId) return eq(projects.workspaceId, input.workspaceId);
+	return and(eq(projects.ownerId, input.userId), isNull(projects.workspaceId));
+}
+
+export async function getProjectAccess(
+	projectId: string,
+	input: {
+		userId: string;
+		workspaceId: string | null;
+		role: MemberRole;
+	},
+) {
 	const project = await db.query.projects.findFirst({
 		where: eq(projects.id, projectId),
 	});
 	if (!project) return null;
-
-	if (project.ownerId === userId) {
-		return { project, role: "owner" as const };
+	if (project.workspaceId) {
+		if (!input.workspaceId || project.workspaceId !== input.workspaceId)
+			return null;
+		return {
+			project,
+			role: input.role,
+			isOwner: project.ownerId === input.userId,
+		};
 	}
-
-	const membership = await db.query.projectMembers.findFirst({
-		where: and(
-			eq(projectMembers.projectId, projectId),
-			eq(projectMembers.userId, userId),
-		),
-	});
-
-	if (membership) return { project, role: membership.role };
-	if (project.visibility === "workspace")
-		return { project, role: "viewer" as const };
-	return null;
+	if (project.ownerId !== input.userId) return null;
+	return { project, role: "admin" as const, isOwner: true };
 }
 
 export function canManageProject(role: MemberRole) {
@@ -112,58 +122,34 @@ export function canEditProject(role: MemberRole) {
 	return role !== "viewer";
 }
 
-export async function getProjectsForUser(
-	userId: string,
-	search = "",
-): Promise<ProjectSummary[]> {
-	const normalizedSearch = search.trim();
-	const accessCondition = or(
-		eq(projects.ownerId, userId),
-		eq(projectMembers.userId, userId),
-		eq(projects.visibility, "workspace"),
-	);
+export async function getProjectsForUser(input: {
+	userId: string;
+	workspaceId: string | null;
+	role: MemberRole;
+	search?: string;
+}): Promise<ProjectSummary[]> {
+	const normalizedSearch = input.search?.trim() ?? "";
+	const scope = projectScopeCondition(input);
 	const whereCondition = normalizedSearch
-		? and(accessCondition, ilike(projects.name, `%${normalizedSearch}%`))
-		: accessCondition;
+		? and(scope, ilike(projects.name, `%${normalizedSearch}%`))
+		: scope;
 
 	const projectRows = await db
-		.select({ project: projects, membershipRole: projectMembers.role })
+		.select()
 		.from(projects)
-		.leftJoin(
-			projectMembers,
-			and(
-				eq(projectMembers.projectId, projects.id),
-				eq(projectMembers.userId, userId),
-			),
-		)
 		.where(whereCondition)
 		.orderBy(desc(projects.updatedAt));
 
-	const uniqueProjects = new Map<
-		string,
-		{ project: typeof projects.$inferSelect; role: MemberRole }
-	>();
-	for (const row of projectRows) {
-		uniqueProjects.set(row.project.id, {
-			project: row.project,
-			role:
-				row.project.ownerId === userId
-					? "owner"
-					: (row.membershipRole ?? "viewer"),
-		});
-	}
-
-	const projectIds = Array.from(uniqueProjects.keys());
+	const projectIds = projectRows.map((project) => project.id);
 	if (projectIds.length === 0) return [];
 
 	const [memberRows, taskRows] = await Promise.all([
 		db
-			.select({
-				projectId: projectMembers.projectId,
-				userId: projectMembers.userId,
-			})
+			.select({ projectId: projectMembers.projectId, user: users })
 			.from(projectMembers)
-			.where(inArray(projectMembers.projectId, projectIds)),
+			.innerJoin(users, eq(projectMembers.userId, users.id))
+			.where(inArray(projectMembers.projectId, projectIds))
+			.orderBy(asc(projectMembers.createdAt)),
 		db
 			.select({
 				projectId: lists.projectId,
@@ -175,11 +161,13 @@ export async function getProjectsForUser(
 			.where(inArray(lists.projectId, projectIds)),
 	]);
 
-	const memberCounts = new Map<string, Set<string>>();
+	const memberMap = new Map<string, UserSummary[]>();
 	for (const row of memberRows) {
-		const set = memberCounts.get(row.projectId) ?? new Set<string>();
-		set.add(row.userId);
-		memberCounts.set(row.projectId, set);
+		const current = memberMap.get(row.projectId) ?? [];
+		if (!current.some((member) => member.id === row.user.id)) {
+			current.push(serializeUser(row.user));
+		}
+		memberMap.set(row.projectId, current);
 	}
 
 	const taskCounts = new Map<string, { total: number; completed: number }>();
@@ -187,26 +175,24 @@ export async function getProjectsForUser(
 		if (!row.taskId) continue;
 		const current = taskCounts.get(row.projectId) ?? { total: 0, completed: 0 };
 		current.total += 1;
-		if (
-			["done", "complete", "completed"].includes(
-				row.listName.trim().toLowerCase(),
-			)
-		) {
-			current.completed += 1;
-		}
+		if (isCompletedList(row.listName)) current.completed += 1;
 		taskCounts.set(row.projectId, current);
 	}
 
-	return Array.from(uniqueProjects.values()).map(({ project, role }) => {
+	return projectRows.map((project) => {
 		const counts = taskCounts.get(project.id) ?? { total: 0, completed: 0 };
+		const projectMemberList = memberMap.get(project.id) ?? [];
 		return {
 			id: project.id,
+			workspaceId: project.workspaceId,
 			name: project.name,
 			description: project.description,
 			dueDate: project.dueDate?.toISOString() ?? null,
 			visibility: project.visibility,
-			role,
-			memberCount: memberCounts.get(project.id)?.size ?? 1,
+			role: project.workspaceId ? input.role : "owner",
+			isOwner: project.ownerId === input.userId,
+			memberCount: projectMemberList.length || 1,
+			members: projectMemberList.slice(0, 4),
 			taskCount: counts.total,
 			completedTaskCount: counts.completed,
 			updatedAt: project.updatedAt.toISOString(),
@@ -214,8 +200,12 @@ export async function getProjectsForUser(
 	});
 }
 
-export async function getDashboardData(userId: string) {
-	const projectSummaries = await getProjectsForUser(userId);
+export async function getDashboardData(input: {
+	userId: string;
+	workspaceId: string | null;
+	role: MemberRole;
+}) {
+	const projectSummaries = await getProjectsForUser(input);
 	const totalTasks = projectSummaries.reduce(
 		(sum, project) => sum + project.taskCount,
 		0,
@@ -243,9 +233,9 @@ export async function getDashboardData(userId: string) {
 
 export async function getProjectBoard(
 	projectId: string,
-	userId: string,
+	input: { userId: string; workspaceId: string | null; role: MemberRole },
 ): Promise<ProjectBoardData | null> {
-	const access = await getProjectAccess(projectId, userId);
+	const access = await getProjectAccess(projectId, input);
 	if (!access) return null;
 
 	const listRows = await db
@@ -318,7 +308,7 @@ export async function getProjectBoard(
 
 	const members: ProjectMember[] = memberRows.map(({ membership, user }) => ({
 		projectId: membership.projectId,
-		role: membership.role,
+		role: user.id === access.project.ownerId ? "owner" : membership.role,
 		user: serializeUser(user),
 	}));
 
@@ -335,11 +325,13 @@ export async function getProjectBoard(
 	return {
 		project: {
 			id: access.project.id,
+			workspaceId: access.project.workspaceId,
 			name: access.project.name,
 			description: access.project.description,
 			dueDate: access.project.dueDate?.toISOString() ?? null,
 			visibility: access.project.visibility,
 			role: access.role,
+			isOwner: access.isOwner,
 		},
 		lists: boardLists,
 		tasks: boardTasks,
@@ -351,9 +343,9 @@ export async function getProjectBoard(
 export async function getTaskComments(
 	taskId: string,
 	projectId: string,
-	userId: string,
+	input: { userId: string; workspaceId: string | null; role: MemberRole },
 ): Promise<TaskComment[]> {
-	const access = await getProjectAccess(projectId, userId);
+	const access = await getProjectAccess(projectId, input);
 	if (!access) return [];
 
 	const rows = await db
@@ -373,13 +365,12 @@ export async function getTaskComments(
 	}));
 }
 
-export async function getWorkspaceUsers(): Promise<UserSummary[]> {
-	const rows = await db.select().from(users).orderBy(asc(users.name));
-	return rows.map(serializeUser);
-}
-
-export async function getCalendarTasks(userId: string) {
-	const accessibleProjects = await getProjectsForUser(userId);
+export async function getCalendarTasks(input: {
+	userId: string;
+	workspaceId: string | null;
+	role: MemberRole;
+}) {
+	const accessibleProjects = await getProjectsForUser(input);
 	const projectIds = accessibleProjects.map((project) => project.id);
 	if (projectIds.length === 0) return [];
 
@@ -391,7 +382,10 @@ export async function getCalendarTasks(userId: string) {
 		.where(
 			and(
 				inArray(projects.id, projectIds),
-				or(eq(tasks.assigneeId, userId), eq(projects.ownerId, userId)),
+				or(
+					eq(tasks.assigneeId, input.userId),
+					eq(projects.ownerId, input.userId),
+				),
 			),
 		)
 		.orderBy(asc(tasks.dueDate));
@@ -405,4 +399,129 @@ export async function getCalendarTasks(userId: string) {
 		projectName: project.name,
 		listName: list.name,
 	}));
+}
+
+export async function getMyTasks(input: {
+	userId: string;
+	workspaceId: string | null;
+	role: MemberRole;
+}): Promise<MyTaskItem[]> {
+	const accessibleProjects = await getProjectsForUser(input);
+	const projectIds = accessibleProjects.map((project) => project.id);
+	if (projectIds.length === 0) return [];
+	const rows = await db
+		.select({ task: tasks, project: projects, list: lists })
+		.from(tasks)
+		.innerJoin(lists, eq(tasks.listId, lists.id))
+		.innerJoin(projects, eq(lists.projectId, projects.id))
+		.where(
+			and(inArray(projects.id, projectIds), eq(tasks.assigneeId, input.userId)),
+		)
+		.orderBy(asc(tasks.dueDate), desc(tasks.updatedAt));
+	return rows.map(({ task, project, list }) => ({
+		id: task.id,
+		title: task.title,
+		projectId: project.id,
+		projectName: project.name,
+		listName: list.name,
+		priority: task.priority,
+		dueDate: task.dueDate?.toISOString() ?? null,
+		labels: task.labels,
+	}));
+}
+
+export async function getAnalyticsData(input: {
+	userId: string;
+	workspaceId: string | null;
+	role: MemberRole;
+}): Promise<AnalyticsData> {
+	const accessibleProjects = await getProjectsForUser(input);
+	const projectIds = accessibleProjects.map((project) => project.id);
+	if (projectIds.length === 0) {
+		return {
+			status: [],
+			completedByDay: [],
+			overdueTasks: 0,
+			inProgressTasks: 0,
+			completionRate: 0,
+			averageTasksPerProject: 0,
+		};
+	}
+
+	const taskRows = await db
+		.select({ task: tasks, listName: lists.name })
+		.from(tasks)
+		.innerJoin(lists, eq(tasks.listId, lists.id))
+		.where(inArray(lists.projectId, projectIds));
+
+	const statusMap = new Map<string, number>();
+	let completed = 0;
+	let inProgress = 0;
+	let overdue = 0;
+	const now = Date.now();
+	for (const row of taskRows) {
+		const label = row.listName;
+		statusMap.set(label, (statusMap.get(label) ?? 0) + 1);
+		if (isCompletedList(label)) completed += 1;
+		if (isInProgressList(label)) inProgress += 1;
+		if (
+			row.task.dueDate &&
+			row.task.dueDate.getTime() < now &&
+			!isCompletedList(label)
+		) {
+			overdue += 1;
+		}
+	}
+
+	const start = new Date();
+	start.setHours(0, 0, 0, 0);
+	start.setDate(start.getDate() - 13);
+	const recent = await db
+		.select({ task: tasks, listName: lists.name })
+		.from(tasks)
+		.innerJoin(lists, eq(tasks.listId, lists.id))
+		.where(
+			and(inArray(lists.projectId, projectIds), gte(tasks.updatedAt, start)),
+		);
+
+	const dayMap = new Map<string, { created: number; completed: number }>();
+	for (let index = 0; index < 14; index += 1) {
+		const day = new Date(start);
+		day.setDate(start.getDate() + index);
+		dayMap.set(day.toISOString().slice(0, 10), { created: 0, completed: 0 });
+	}
+	for (const row of recent) {
+		const createdKey = row.task.createdAt.toISOString().slice(0, 10);
+
+		const updatedKey = row.task.updatedAt.toISOString().slice(0, 10);
+
+		const createdDay = dayMap.get(createdKey);
+
+		if (createdDay) {
+			createdDay.created += 1;
+		}
+
+		if (isCompletedList(row.listName)) {
+			const updatedDay = dayMap.get(updatedKey);
+
+			if (updatedDay) {
+				updatedDay.completed += 1;
+			}
+		}
+	}
+	return {
+		status: Array.from(statusMap, ([label, count]) => ({ label, count })),
+		completedByDay: Array.from(dayMap, ([date, values]) => ({
+			date,
+			...values,
+		})),
+		overdueTasks: overdue,
+		inProgressTasks: inProgress,
+		completionRate: taskRows.length
+			? Math.round((completed / taskRows.length) * 100)
+			: 0,
+		averageTasksPerProject: accessibleProjects.length
+			? Math.round((taskRows.length / accessibleProjects.length) * 10) / 10
+			: 0,
+	};
 }

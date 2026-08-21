@@ -78,7 +78,6 @@ export const commentSchema = z.object({
 export const memberSchema = z.object({
 	projectId: z.string().uuid(),
 	userId: z.string().uuid(),
-	role: z.enum(["admin", "member", "viewer"]).default("member"),
 });
 
 export const userSchema = z.object({
