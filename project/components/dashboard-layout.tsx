@@ -81,7 +81,7 @@ export function DashboardLayout({
 
 	return (
 		<div className="min-h-screen bg-background">
-			<div className="flowora-rainbow-line fixed inset-y-0 left-0 z-[60] w-1.5" />
+			<div className="flowora-rainbow-line fixed inset-y-0 left-0 z-60 w-1.5" />
 			{sidebarOpen ? (
 				<button
 					type="button"
@@ -93,11 +93,11 @@ export function DashboardLayout({
 
 			<aside
 				className={cn(
-					"fixed inset-y-0 left-1.5 z-50 flex w-[17.5rem] flex-col border-r border-french_gray-300/80 bg-white px-3 transition-transform dark:border-paynes_gray-800 dark:bg-outer_space-500 lg:translate-x-0",
+					"fixed inset-y-0 left-1.5 z-50 flex w-70 flex-col border-r border-french_gray-300/80 bg-white px-3 transition-transform dark:border-paynes_gray-800 dark:bg-outer_space-500 lg:translate-x-0",
 					sidebarOpen ? "translate-x-0" : "-translate-x-[calc(100%+8px)]",
 				)}
 			>
-				<div className="flex h-[4.5rem] items-center justify-between px-2">
+				<div className="flex h-18 items-center justify-between px-2">
 					<FloworaLogo href="/dashboard" />
 					<Button
 						variant="ghost"
@@ -168,7 +168,7 @@ export function DashboardLayout({
 				</div>
 			</aside>
 
-			<div className="lg:pl-[18rem]">
+			<div className="lg:pl-72">
 				<header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-french_gray-300/80 bg-white/90 px-4 backdrop-blur-lg lg:hidden dark:border-paynes_gray-800 dark:bg-outer_space-500/90">
 					<Button
 						variant="ghost"

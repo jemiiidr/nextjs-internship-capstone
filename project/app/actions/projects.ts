@@ -17,12 +17,12 @@ import {
 	users,
 } from "@/lib/db/schema";
 import { toDateOrNull } from "@/lib/utils";
-import { getWorkspaceMembers } from "@/lib/workspaces";
 import {
 	memberSchema,
 	projectSchema,
 	projectUpdateSchema,
 } from "@/lib/validations";
+import { getWorkspaceMembers } from "@/lib/workspaces";
 import type { ActionResult, ProjectSummary } from "@/types";
 
 function fieldErrors(error: {
@@ -217,7 +217,9 @@ export async function addProjectMemberAction(
 	}
 
 	const workspaceMembers = await getWorkspaceMembers(access.workspaceId);
-	const target = workspaceMembers.find((member) => member.id === parsed.data.userId);
+	const target = workspaceMembers.find(
+		(member) => member.id === parsed.data.userId,
+	);
 	if (!target) {
 		return {
 			success: false,
@@ -244,7 +246,10 @@ export async function addProjectMemberAction(
 	});
 
 	revalidateProjectSurfaces(parsed.data.projectId);
-	return { success: true, message: `${target.name} was added as a collaborator.` };
+	return {
+		success: true,
+		message: `${target.name} was added as a collaborator.`,
+	};
 }
 
 export async function removeProjectMemberAction(
@@ -259,10 +264,15 @@ export async function removeProjectMemberAction(
 		};
 	}
 	if (access.project.ownerId === userId) {
-		return { success: false, message: "The project creator cannot be removed." };
+		return {
+			success: false,
+			message: "The project creator cannot be removed.",
+		};
 	}
 
-	const targetUser = await db.query.users.findFirst({ where: eq(users.id, userId) });
+	const targetUser = await db.query.users.findFirst({
+		where: eq(users.id, userId),
+	});
 	await db
 		.delete(projectMembers)
 		.where(
@@ -297,7 +307,9 @@ export async function moveLegacyProjectToActiveWorkspaceAction(
 	projectId: string,
 ): Promise<ActionResult> {
 	const context = await requireWorkspaceContext();
-	const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
+	const project = await db.query.projects.findFirst({
+		where: eq(projects.id, projectId),
+	});
 	if (!project || project.ownerId !== context.user.id || project.workspaceId) {
 		return { success: false, message: "This legacy project cannot be moved." };
 	}
@@ -309,7 +321,11 @@ export async function moveLegacyProjectToActiveWorkspaceAction(
 	}
 	await db
 		.update(projects)
-		.set({ workspaceId: context.workspaceId, visibility: "workspace", updatedAt: new Date() })
+		.set({
+			workspaceId: context.workspaceId,
+			visibility: "workspace",
+			updatedAt: new Date(),
+		})
 		.where(eq(projects.id, projectId));
 	revalidateProjectSurfaces(projectId);
 	return { success: true, message: "Project moved to the active workspace." };

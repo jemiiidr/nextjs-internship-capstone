@@ -105,7 +105,7 @@ export default function HomePage() {
 									{taskFlowBars.map((bar) => (
 										<span
 											key={bar.id}
-											className="flex-1 rounded-t-md bg-gradient-to-t from-[#9187f5] to-[#72bada]"
+											className="flex-1 rounded-t-md bg-linear-to-t from-blue_munsell-400 to-[#72bada]"
 											style={{
 												height: `${bar.height}%`,
 											}}
@@ -121,7 +121,7 @@ export default function HomePage() {
 					id="workspaces"
 					className="bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-outer_space-800"
 				>
-					<div className="mx-auto max-w-7xl rounded-[2rem] bg-gradient-to-r from-[#7467f0] via-[#b26fce] to-[#f29586] p-[1px]">
+					<div className="mx-auto max-w-7xl rounded-4xl bg-linear-to-r from-blue_munsell-500 via-[#b26fce] to-[#f29586] p-px">
 						<div className="rounded-[calc(2rem-1px)] bg-white px-7 py-12 text-center dark:bg-outer_space-500 sm:px-12">
 							<span className="mx-auto grid size-12 place-items-center rounded-2xl bg-blue_munsell-50 text-blue_munsell-600">
 								<Building2 size={21} />

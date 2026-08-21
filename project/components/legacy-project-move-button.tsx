@@ -24,7 +24,7 @@ export function LegacyProjectMoveButton({ projectId }: { projectId: string }) {
 			<Button
 				type="button"
 				size="sm"
-				variant="outline"
+				variant="secondary"
 				disabled={isPending}
 				onClick={moveProject}
 			>
