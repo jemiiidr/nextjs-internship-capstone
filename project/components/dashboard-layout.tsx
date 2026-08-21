@@ -29,49 +29,17 @@ import { useUIStore } from "@/stores/ui-store";
 import type { UserSummary, WorkspaceSummary } from "@/types";
 
 const primaryNavigation = [
-	{
-		href: "/dashboard",
-		label: "Dashboard",
-		icon: LayoutDashboard,
-	},
-	{
-		href: "/my-tasks",
-		label: "My Tasks",
-		icon: CheckSquare2,
-	},
-	{
-		href: "/projects",
-		label: "Projects",
-		icon: FolderKanban,
-	},
-	{
-		href: "/calendar",
-		label: "Calendar",
-		icon: CalendarDays,
-	},
-	{
-		href: "/analytics",
-		label: "Analytics",
-		icon: BarChart3,
-	},
-] as const;
+	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+	{ href: "/my-tasks", label: "My Tasks", icon: CheckSquare2 },
+	{ href: "/projects", label: "Projects", icon: FolderKanban },
+	{ href: "/calendar", label: "Calendar", icon: CalendarDays },
+	{ href: "/analytics", label: "Analytics", icon: BarChart3 },
+];
 
 const secondaryNavigation = [
-	{
-		href: "/team",
-		label: "Team",
-		icon: Users,
-	},
-	{
-		href: "/settings",
-		label: "Settings",
-		icon: Settings,
-	},
-] as const;
-
-type NavigationItem =
-	| (typeof primaryNavigation)[number]
-	| (typeof secondaryNavigation)[number];
+	{ href: "/team", label: "Team", icon: Users },
+	{ href: "/settings", label: "Settings", icon: Settings },
+];
 
 export function DashboardLayout({
 	children,
@@ -85,19 +53,14 @@ export function DashboardLayout({
 	workspaceMembers: UserSummary[];
 }) {
 	const pathname = usePathname();
-
 	const sidebarOpen = useUIStore((state) => state.isSidebarOpen);
-
 	const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
 
-	const renderNavigationLink = (item: NavigationItem) => {
+	const navLink = (item: (typeof primaryNavigation)[number]) => {
 		const active =
 			item.href === "/dashboard"
 				? pathname === item.href
 				: pathname.startsWith(item.href);
-
-		const Icon = item.icon;
-
 		return (
 			<Link
 				key={item.href}
@@ -110,8 +73,7 @@ export function DashboardLayout({
 						: "text-paynes_gray-500 hover:bg-platinum-100 hover:text-outer_space-900 dark:text-french_gray-400 dark:hover:bg-outer_space-400 dark:hover:text-platinum-50",
 				)}
 			>
-				<Icon size={17} />
-
+				<item.icon size={17} />
 				{item.label}
 			</Link>
 		);
@@ -120,7 +82,6 @@ export function DashboardLayout({
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="flowora-rainbow-line fixed inset-y-0 left-0 z-[60] w-1.5" />
-
 			{sidebarOpen ? (
 				<button
 					type="button"
@@ -138,7 +99,6 @@ export function DashboardLayout({
 			>
 				<div className="flex h-[4.5rem] items-center justify-between px-2">
 					<FloworaLogo href="/dashboard" />
-
 					<Button
 						variant="ghost"
 						size="icon"
@@ -152,13 +112,11 @@ export function DashboardLayout({
 
 				<div className="px-1 pb-4">
 					<WorkspaceSwitcher activeWorkspaceId={workspace?.id ?? null} />
-
 					{workspace ? (
 						<div className="mt-2 flex items-center justify-between px-2 text-xs text-paynes_gray-500">
 							<span className="capitalize">
 								{workspace.role} · {workspace.memberCount} members
 							</span>
-
 							<AvatarStack
 								users={workspaceMembers}
 								total={workspace.memberCount}
@@ -168,18 +126,15 @@ export function DashboardLayout({
 					) : null}
 				</div>
 
-				<nav className="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-1">
+				<nav className="flex-1 space-y-1 overflow-y-auto px-1 scrollbar-thin">
 					<p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-paynes_gray-400">
 						Workspace
 					</p>
-
-					{primaryNavigation.map(renderNavigationLink)}
-
+					{primaryNavigation.map(navLink)}
 					<p className="px-3 pb-1 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-paynes_gray-400">
 						Manage
 					</p>
-
-					{secondaryNavigation.map(renderNavigationLink)}
+					{secondaryNavigation.map(navLink)}
 				</nav>
 
 				<div className="space-y-2 border-t border-french_gray-200 px-1 py-3 dark:border-paynes_gray-800">
@@ -193,33 +148,21 @@ export function DashboardLayout({
 								src={user.avatarUrl}
 								className="size-9"
 							/>
-
 							<div className="min-w-0 flex-1">
 								<p className="truncate text-sm font-semibold text-outer_space-900 dark:text-platinum-50">
 									{user.name}
 								</p>
-
 								<p className="truncate text-[11px] text-paynes_gray-500">
 									{user.email}
 								</p>
 							</div>
 						</Link>
-
-						<UserButton
-							appearance={{
-								elements: {
-									avatarBox: "size-8",
-								},
-							}}
-						/>
+						<UserButton appearance={{ elements: { avatarBox: "size-8" } }} />
 					</div>
-
 					<div className="flex items-center justify-between px-2">
 						<span className="flex items-center gap-2 text-xs text-paynes_gray-500">
-							<CircleHelp size={14} />
-							Help & support
+							<CircleHelp size={14} /> Help & support
 						</span>
-
 						<ThemeToggle />
 					</div>
 				</div>
@@ -235,19 +178,15 @@ export function DashboardLayout({
 					>
 						<Menu size={20} />
 					</Button>
-
 					<FloworaLogo href="/dashboard" compact />
-
 					<Button variant="ghost" size="icon" aria-label="Notifications">
 						<Bell size={18} />
 					</Button>
 				</header>
-
 				<main className="mx-auto max-w-[1680px] p-4 sm:p-6 lg:p-8 xl:p-10">
 					{children}
 				</main>
 			</div>
-
 			<CreateProjectModal />
 		</div>
 	);
