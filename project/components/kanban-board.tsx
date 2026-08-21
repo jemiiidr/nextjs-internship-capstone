@@ -125,6 +125,19 @@ function TaskDragPreview({ task }: { task: BoardTask }) {
 	);
 }
 
+function columnTone(name: string) {
+	const normalized = name.trim().toLowerCase();
+	if (normalized.includes("progress"))
+		return "border-amber-200/80 bg-amber-50/45 dark:border-amber-900/50 dark:bg-amber-950/10";
+	if (normalized.includes("review"))
+		return "border-sky-200/80 bg-sky-50/45 dark:border-sky-900/50 dark:bg-sky-950/10";
+	if (["done", "complete", "completed"].includes(normalized))
+		return "border-emerald-200/80 bg-emerald-50/45 dark:border-emerald-900/50 dark:bg-emerald-950/10";
+	if (normalized.includes("block"))
+		return "border-rose-200/80 bg-rose-50/45 dark:border-rose-900/50 dark:bg-rose-950/10";
+	return "border-violet-200/70 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/10";
+}
+
 function KanbanColumn({
 	list,
 	tasks,
@@ -151,7 +164,8 @@ function KanbanColumn({
 		<section
 			ref={setNodeRef}
 			className={cn(
-				"flex w-[min(86vw,20rem)] shrink-0 flex-col rounded-xl border border-french_gray-300 bg-platinum-700/70 transition-[box-shadow,background-color] duration-150 dark:border-paynes_gray-400 dark:bg-outer_space-400/70",
+				"flex w-[min(86vw,19rem)] shrink-0 flex-col rounded-2xl border transition-[box-shadow,background-color] duration-150",
+				columnTone(list.name),
 				isOver && "bg-blue_munsell-500/5 ring-2 ring-blue_munsell-500",
 			)}
 		>
@@ -542,7 +556,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex flex-col gap-3 rounded-xl border border-french_gray-300 bg-white p-3 dark:border-paynes_gray-400 dark:bg-outer_space-500 md:flex-row md:items-center">
+			<div className="flowora-panel flex flex-col gap-3 rounded-2xl border border-french_gray-300 bg-white p-3 dark:border-paynes_gray-800 dark:bg-outer_space-500 md:flex-row md:items-center">
 				<div className="relative flex-1">
 					<Search
 						className="absolute left-3 top-1/2 -translate-y-1/2 text-paynes_gray-500"
@@ -608,7 +622,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				onDragEnd={onDragEnd}
 				onDragCancel={onDragCancel}
 			>
-				<div className="flex gap-4 overflow-x-auto pb-4">
+				<div className="flex gap-4 overflow-x-auto pb-5 scrollbar-thin">
 					{lists.map((list) => (
 						<KanbanColumn
 							key={list.id}
@@ -627,7 +641,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					{canEdit ? (
 						<form
 							action={createList}
-							className="w-[min(86vw,20rem)] shrink-0 rounded-xl border border-dashed border-french_gray-300 bg-white p-3 dark:border-paynes_gray-400 dark:bg-outer_space-500"
+							className="w-[min(86vw,19rem)] shrink-0 rounded-2xl border border-dashed border-french_gray-300 bg-white p-3 dark:border-paynes_gray-800 dark:bg-outer_space-500"
 						>
 							<input type="hidden" name="projectId" value={data.project.id} />
 							<Input

@@ -2,8 +2,8 @@
 
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { requireDbUser } from "@/lib/auth";
-import { canEditProject, db, getProjectAccess } from "@/lib/db";
+import { canEditProject, requireProjectAccess } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { activities, lists, tasks, users } from "@/lib/db/schema";
 import { parseLabels, toDateOrNull } from "@/lib/utils";
 import {
@@ -12,6 +12,14 @@ import {
 	taskUpdateSchema,
 } from "@/lib/validations";
 import type { ActionResult, BoardTask } from "@/types";
+
+function revalidateTaskSurfaces(projectId: string) {
+	revalidatePath(`/projects/${projectId}`);
+	revalidatePath("/dashboard");
+	revalidatePath("/my-tasks");
+	revalidatePath("/calendar");
+	revalidatePath("/analytics");
+}
 
 function toBoardTask(
 	task: typeof tasks.$inferSelect,
@@ -41,12 +49,8 @@ function toBoardTask(
 	};
 }
 
-async function validateEditableList(
-	projectId: string,
-	listId: string,
-	userId: string,
-) {
-	const access = await getProjectAccess(projectId, userId);
+async function validateEditableList(projectId: string, listId: string) {
+	const access = await requireProjectAccess(projectId);
 	if (!access || !canEditProject(access.role)) return null;
 
 	const list = await db.query.lists.findFirst({
@@ -58,7 +62,6 @@ async function validateEditableList(
 export async function createTaskAction(
 	formData: FormData,
 ): Promise<ActionResult<BoardTask>> {
-	const user = await requireDbUser();
 	const parsed = taskSchema.safeParse({
 		projectId: formData.get("projectId"),
 		listId: formData.get("listId"),
@@ -80,7 +83,6 @@ export async function createTaskAction(
 	const editable = await validateEditableList(
 		parsed.data.projectId,
 		parsed.data.listId,
-		user.id,
 	);
 	if (!editable) {
 		return { success: false, message: "You cannot add a task to this list." };
@@ -133,13 +135,13 @@ export async function createTaskAction(
 
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: editable.access.user.id,
 		taskId: created.id,
 		action: "task_created",
 		metadata: { taskTitle: created.title, listName: editable.list.name },
 	});
 
-	revalidatePath(`/projects/${parsed.data.projectId}`);
+	revalidateTaskSurfaces(parsed.data.projectId);
 	return {
 		success: true,
 		message: "Task created.",
@@ -150,7 +152,6 @@ export async function createTaskAction(
 export async function updateTaskAction(
 	formData: FormData,
 ): Promise<ActionResult<BoardTask>> {
-	const user = await requireDbUser();
 	const parsed = taskUpdateSchema.safeParse({
 		projectId: formData.get("projectId"),
 		listId: formData.get("listId"),
@@ -173,7 +174,6 @@ export async function updateTaskAction(
 	const editable = await validateEditableList(
 		parsed.data.projectId,
 		parsed.data.listId,
-		user.id,
 	);
 	if (!editable)
 		return { success: false, message: "You cannot edit this task." };
@@ -229,13 +229,13 @@ export async function updateTaskAction(
 		: null;
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: editable.access.user.id,
 		taskId: updated.id,
 		action: "task_updated",
 		metadata: { taskTitle: updated.title },
 	});
 
-	revalidatePath(`/projects/${parsed.data.projectId}`);
+	revalidateTaskSurfaces(parsed.data.projectId);
 	return {
 		success: true,
 		message: "Task updated.",
@@ -261,12 +261,11 @@ export async function moveTaskAction(input: {
 	toListId: string;
 	position: number;
 }): Promise<ActionResult> {
-	const user = await requireDbUser();
 	const parsed = moveTaskSchema.safeParse(input);
 	if (!parsed.success)
 		return { success: false, message: "Invalid move request." };
 
-	const access = await getProjectAccess(parsed.data.projectId, user.id);
+	const access = await requireProjectAccess(parsed.data.projectId);
 	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
@@ -345,7 +344,7 @@ export async function moveTaskAction(input: {
 	);
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		taskId: parsed.data.taskId,
 		action: "task_moved",
 		metadata: {
@@ -354,7 +353,7 @@ export async function moveTaskAction(input: {
 		},
 	});
 
-	revalidatePath(`/projects/${parsed.data.projectId}`);
+	revalidateTaskSurfaces(parsed.data.projectId);
 	return { success: true, message: "Task moved." };
 }
 
@@ -362,8 +361,7 @@ export async function deleteTaskAction(
 	projectId: string,
 	taskId: string,
 ): Promise<ActionResult> {
-	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
@@ -383,11 +381,11 @@ export async function deleteTaskAction(
 	await db.delete(tasks).where(eq(tasks.id, taskId));
 	await db.insert(activities).values({
 		projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		action: "task_deleted",
 		metadata: { taskTitle: match.task.title, listName: match.list.name },
 	});
-	revalidatePath(`/projects/${projectId}`);
+	revalidateTaskSurfaces(projectId);
 	return { success: true, message: "Task deleted." };
 }
 
@@ -395,8 +393,7 @@ export async function bulkDeleteTasksAction(
 	projectId: string,
 	taskIds: string[],
 ): Promise<ActionResult> {
-	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
@@ -421,10 +418,10 @@ export async function bulkDeleteTasksAction(
 	await db.delete(tasks).where(inArray(tasks.id, permittedIds));
 	await db.insert(activities).values({
 		projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		action: "task_deleted",
 		metadata: { taskTitle: `${permittedIds.length} tasks`, bulk: true },
 	});
-	revalidatePath(`/projects/${projectId}`);
+	revalidateTaskSurfaces(projectId);
 	return { success: true, message: `${permittedIds.length} tasks deleted.` };
 }

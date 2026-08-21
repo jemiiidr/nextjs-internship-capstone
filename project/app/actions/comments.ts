@@ -2,13 +2,8 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { requireDbUser } from "@/lib/auth";
-import {
-	canEditProject,
-	db,
-	getProjectAccess,
-	getTaskComments,
-} from "@/lib/db";
+import { canEditProject, requireProjectAccess } from "@/lib/auth";
+import { db, getTaskComments } from "@/lib/db";
 import { activities, comments, lists, tasks } from "@/lib/db/schema";
 import { commentSchema } from "@/lib/validations";
 import type { ActionResult, TaskComment } from "@/types";
@@ -17,8 +12,7 @@ export async function getTaskCommentsAction(
 	projectId: string,
 	taskId: string,
 ): Promise<ActionResult<TaskComment[]>> {
-	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access) return { success: false, message: "Project not found." };
 	const task = await db
 		.select({ id: tasks.id })
@@ -31,14 +25,17 @@ export async function getTaskCommentsAction(
 	return {
 		success: true,
 		message: "Comments loaded.",
-		data: await getTaskComments(taskId, projectId, user.id),
+		data: await getTaskComments(taskId, projectId, {
+			userId: access.user.id,
+			workspaceId: access.workspaceId,
+			role: access.role,
+		}),
 	};
 }
 
 export async function addCommentAction(
 	formData: FormData,
 ): Promise<ActionResult<TaskComment>> {
-	const user = await requireDbUser();
 	const parsed = commentSchema.safeParse({
 		projectId: formData.get("projectId"),
 		taskId: formData.get("taskId"),
@@ -52,7 +49,7 @@ export async function addCommentAction(
 		};
 	}
 
-	const access = await getProjectAccess(parsed.data.projectId, user.id);
+	const access = await requireProjectAccess(parsed.data.projectId);
 	if (!access || !canEditProject(access.role)) {
 		return { success: false, message: "You cannot comment on this project." };
 	}
@@ -73,13 +70,13 @@ export async function addCommentAction(
 		.insert(comments)
 		.values({
 			taskId: parsed.data.taskId,
-			authorId: user.id,
+			authorId: access.user.id,
 			content: parsed.data.content,
 		})
 		.returning();
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		taskId: parsed.data.taskId,
 		action: "comment_created",
 		metadata: { taskTitle: task[0].title },
@@ -96,10 +93,10 @@ export async function addCommentAction(
 			createdAt: created.createdAt.toISOString(),
 			updatedAt: created.updatedAt.toISOString(),
 			author: {
-				id: user.id,
-				name: user.name,
-				email: user.email,
-				avatarUrl: user.avatarUrl,
+				id: access.user.id,
+				name: access.user.name,
+				email: access.user.email,
+				avatarUrl: access.user.avatarUrl,
 			},
 		},
 	};

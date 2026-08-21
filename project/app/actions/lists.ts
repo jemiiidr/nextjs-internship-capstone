@@ -2,8 +2,8 @@
 
 import { and, asc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { requireDbUser } from "@/lib/auth";
-import { canEditProject, db, getProjectAccess } from "@/lib/db";
+import { canEditProject, requireProjectAccess } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { activities, lists } from "@/lib/db/schema";
 import { listSchema, listUpdateSchema } from "@/lib/validations";
 import type { ActionResult, BoardList } from "@/types";
@@ -11,7 +11,6 @@ import type { ActionResult, BoardList } from "@/types";
 export async function createListAction(
 	formData: FormData,
 ): Promise<ActionResult<BoardList>> {
-	const user = await requireDbUser();
 	const parsed = listSchema.safeParse({
 		projectId: formData.get("projectId"),
 		name: formData.get("name"),
@@ -19,7 +18,7 @@ export async function createListAction(
 	if (!parsed.success)
 		return { success: false, message: "List name is required." };
 
-	const access = await getProjectAccess(parsed.data.projectId, user.id);
+	const access = await requireProjectAccess(parsed.data.projectId);
 	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
@@ -32,10 +31,9 @@ export async function createListAction(
 		.from(lists)
 		.where(eq(lists.projectId, parsed.data.projectId))
 		.orderBy(asc(lists.position));
-	const position =
-		existing.length === 0
-			? 0
-			: Math.max(...existing.map((list) => list.position)) + 1;
+	const position = existing.length
+		? Math.max(...existing.map((list) => list.position)) + 1
+		: 0;
 
 	const [list] = await db
 		.insert(lists)
@@ -43,7 +41,7 @@ export async function createListAction(
 		.returning();
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		action: "list_created",
 		metadata: { listName: list.name },
 	});
@@ -64,7 +62,6 @@ export async function createListAction(
 export async function updateListAction(
 	formData: FormData,
 ): Promise<ActionResult> {
-	const user = await requireDbUser();
 	const parsed = listUpdateSchema.safeParse({
 		projectId: formData.get("projectId"),
 		listId: formData.get("listId"),
@@ -73,7 +70,7 @@ export async function updateListAction(
 	if (!parsed.success)
 		return { success: false, message: "Invalid list details." };
 
-	const access = await getProjectAccess(parsed.data.projectId, user.id);
+	const access = await requireProjectAccess(parsed.data.projectId);
 	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
@@ -92,7 +89,7 @@ export async function updateListAction(
 		);
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		action: "list_updated",
 		metadata: { listName: parsed.data.name },
 	});
@@ -104,8 +101,7 @@ export async function deleteListAction(
 	projectId: string,
 	listId: string,
 ): Promise<ActionResult> {
-	const user = await requireDbUser();
-	const access = await getProjectAccess(projectId, user.id);
+	const access = await requireProjectAccess(projectId);
 	if (!access || !canEditProject(access.role)) {
 		return {
 			success: false,
@@ -121,7 +117,7 @@ export async function deleteListAction(
 	await db.delete(lists).where(eq(lists.id, listId));
 	await db.insert(activities).values({
 		projectId,
-		actorId: user.id,
+		actorId: access.user.id,
 		action: "list_deleted",
 		metadata: { listName: list.name },
 	});
