@@ -101,7 +101,7 @@ export function DashboardLayout({
 						);
 					})}
 				</nav>
-				<div className="border-t border-french_gray-300 p-4 dark:border-paynes_gray-400">
+				{/* <div className="border-t border-french_gray-300 p-4 dark:border-paynes_gray-400">
 					<div className="flex items-center gap-3">
 						<Avatar name={user.name} src={user.avatarUrl} />
 						<div className="min-w-0 flex-1">
@@ -114,7 +114,7 @@ export function DashboardLayout({
 						</div>
 						<UserButton />
 					</div>
-				</div>
+				</div> */}
 			</aside>
 			<div className="lg:pl-72">
 				<header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-french_gray-300 bg-white/90 px-4 backdrop-blur dark:border-paynes_gray-400 dark:bg-outer_space-500/90 sm:px-6">

@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Settings" };
 export default function SettingsPage() {
 	return (
 		<div className="space-y-7">
-			<header>
+			{/* <header>
 				<h1 className="text-3xl font-bold text-outer_space-900 dark:text-platinum-50">
 					Account settings
 				</h1>
@@ -13,7 +13,7 @@ export default function SettingsPage() {
 					Manage your Clerk profile, email addresses, password, and active
 					sessions.
 				</p>
-			</header>
+			</header> */}
 			<div className="overflow-x-auto">
 				<UserProfile routing="hash" />
 			</div>

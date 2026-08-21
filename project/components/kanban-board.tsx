@@ -2,10 +2,16 @@
 
 import {
 	closestCorners,
+	type CollisionDetection,
 	DndContext,
+	DragOverlay,
 	type DragEndEvent,
+	type DragOverEvent,
+	type DragStartEvent,
 	KeyboardSensor,
-	PointerSensor,
+	MouseSensor,
+	pointerWithin,
+	TouchSensor,
 	useDroppable,
 	useSensor,
 	useSensors,
@@ -17,7 +23,14 @@ import {
 } from "@dnd-kit/sortable";
 import { Filter, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useTransition,
+} from "react";
 import {
 	createListAction,
 	deleteListAction,
@@ -36,25 +49,34 @@ import { useBoardStore } from "@/stores/board-store";
 import { useUIStore } from "@/stores/ui-store";
 import type { BoardList, BoardTask, ProjectBoardData } from "@/types";
 
-interface OptimisticMove {
+interface TaskMove {
 	taskId: string;
 	toListId: string;
 	position: number;
 }
 
-function moveInArray(tasks: BoardTask[], move: OptimisticMove) {
+function moveInArray(tasks: BoardTask[], move: TaskMove) {
 	const moving = tasks.find((task) => task.id === move.taskId);
 	if (!moving) return tasks;
+
 	const unaffected = tasks.filter((task) => task.id !== move.taskId);
 	const destination = unaffected
 		.filter((task) => task.listId === move.toListId)
 		.sort((a, b) => a.position - b.position);
-	destination.splice(Math.min(move.position, destination.length), 0, {
+
+	const safePosition = Math.max(
+		0,
+		Math.min(move.position, destination.length),
+	);
+
+	destination.splice(safePosition, 0, {
 		...moving,
 		listId: move.toListId,
 	});
+
 	const affected = new Set([moving.listId, move.toListId]);
 	const result = unaffected.filter((task) => !affected.has(task.listId));
+
 	for (const listId of affected) {
 		const ordered =
 			listId === move.toListId
@@ -62,15 +84,55 @@ function moveInArray(tasks: BoardTask[], move: OptimisticMove) {
 				: unaffected
 						.filter((task) => task.listId === listId)
 						.sort((a, b) => a.position - b.position);
-		result.push(...ordered.map((task, position) => ({ ...task, position })));
+
+		result.push(
+			...ordered.map((task, position) => ({
+				...task,
+				position,
+			})),
+		);
 	}
+
 	return result;
+}
+
+function TaskDragPreview({ task }: { task: BoardTask }) {
+	return (
+		<div className="w-[min(86vw,20rem)] rotate-1 cursor-grabbing rounded-xl border border-blue_munsell-400 bg-white p-3 shadow-2xl ring-2 ring-blue_munsell-500/20 dark:border-blue_munsell-500 dark:bg-outer_space-400">
+			<div className="flex items-start justify-between gap-3">
+				<p className="min-w-0 flex-1 truncate text-sm font-semibold text-outer_space-500 dark:text-platinum-500">
+					{task.title}
+				</p>
+				<span className="shrink-0 rounded-full bg-platinum-700 px-2 py-0.5 text-[10px] font-medium capitalize text-paynes_gray-500 dark:bg-outer_space-300 dark:text-french_gray-400">
+					{task.priority}
+				</span>
+			</div>
+			{task.description ? (
+				<p className="mt-2 line-clamp-2 text-xs text-paynes_gray-500 dark:text-french_gray-400">
+					{task.description}
+				</p>
+			) : null}
+			{task.labels.length > 0 ? (
+				<div className="mt-2 flex flex-wrap gap-1">
+					{task.labels.slice(0, 3).map((label) => (
+						<span
+							key={label}
+							className="rounded-full bg-blue_munsell-500/10 px-2 py-0.5 text-[10px] text-blue_munsell-600 dark:text-blue_munsell-300"
+						>
+							{label}
+						</span>
+					))}
+				</div>
+			) : null}
+		</div>
+	);
 }
 
 function KanbanColumn({
 	list,
 	tasks,
 	canEdit,
+	activeTaskId,
 	onCreateTask,
 	onRename,
 	onDelete,
@@ -78,6 +140,7 @@ function KanbanColumn({
 	list: BoardList;
 	tasks: BoardTask[];
 	canEdit: boolean;
+	activeTaskId: string | null;
 	onCreateTask: () => void;
 	onRename: () => void;
 	onDelete: () => void;
@@ -86,12 +149,13 @@ function KanbanColumn({
 		id: list.id,
 		disabled: !canEdit,
 	});
+
 	return (
 		<section
 			ref={setNodeRef}
 			className={cn(
-				"flex w-[min(86vw,20rem)] shrink-0 flex-col rounded-xl border border-french_gray-300 bg-platinum-700/70 dark:border-paynes_gray-400 dark:bg-outer_space-400/70",
-				isOver && "ring-2 ring-blue_munsell-500",
+				"flex w-[min(86vw,20rem)] shrink-0 flex-col rounded-xl border border-french_gray-300 bg-platinum-700/70 transition-[box-shadow,background-color] duration-150 dark:border-paynes_gray-400 dark:bg-outer_space-400/70",
+				isOver && "bg-blue_munsell-500/5 ring-2 ring-blue_munsell-500",
 			)}
 		>
 			<header className="flex items-center justify-between border-b border-french_gray-300 p-3 dark:border-paynes_gray-400">
@@ -103,6 +167,7 @@ function KanbanColumn({
 						{tasks.length}
 					</span>
 				</div>
+
 				{canEdit ? (
 					<div className="flex">
 						<Button
@@ -126,14 +191,24 @@ function KanbanColumn({
 					</div>
 				) : null}
 			</header>
+
 			<SortableContext
 				items={tasks.map((task) => task.id)}
 				strategy={verticalListSortingStrategy}
 			>
 				<div className="min-h-40 flex-1 space-y-3 p-3">
 					{tasks.map((task) => (
-						<TaskCard key={task.id} task={task} disabled={!canEdit} />
+						<div
+							key={task.id}
+							className={cn(
+								"transition-opacity duration-150",
+								activeTaskId === task.id && "opacity-25",
+							)}
+						>
+							<TaskCard task={task} disabled={!canEdit} />
+						</div>
 					))}
+
 					{tasks.length === 0 ? (
 						<p className="rounded-lg border border-dashed border-french_gray-300 py-8 text-center text-xs text-paynes_gray-500 dark:border-paynes_gray-400 dark:text-french_gray-400">
 							Drop a task here
@@ -141,6 +216,7 @@ function KanbanColumn({
 					) : null}
 				</div>
 			</SortableContext>
+
 			{canEdit ? (
 				<div className="p-3 pt-0">
 					<Button
@@ -160,6 +236,8 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const router = useRouter();
 	const [isSaving, startTransition] = useTransition();
 	const [message, setMessage] = useState("");
+	const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+
 	const hydrate = useBoardStore((state) => state.hydrate);
 	const lists = useBoardStore((state) => state.lists);
 	const tasks = useBoardStore((state) => state.tasks);
@@ -170,22 +248,60 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const addList = useBoardStore((state) => state.addList);
 	const updateListName = useBoardStore((state) => state.updateListName);
 	const removeList = useBoardStore((state) => state.removeList);
-	const moveTaskLocally = useBoardStore((state) => state.moveTaskLocally);
 	const replaceTasks = useBoardStore((state) => state.replaceTasks);
 	const removeTasks = useBoardStore((state) => state.removeTasks);
+
 	const openCreateTask = useUIStore((state) => state.openCreateTask);
 	const selectedTaskIds = useUIStore((state) => state.selectedTaskIds);
 	const clearTaskSelection = useUIStore((state) => state.clearTaskSelection);
-	const [optimisticTasks, moveOptimistically] = useOptimistic(
-		tasks,
-		moveInArray,
-	);
+
 	const canEdit = data.project.role !== "viewer";
+
+	const tasksRef = useRef(tasks);
+	const dragSnapshotRef = useRef<BoardTask[] | null>(null);
+	const lastMoveRef = useRef<string | null>(null);
+
+	useEffect(() => {
+		tasksRef.current = tasks;
+	}, [tasks]);
+
 	const sensors = useSensors(
-		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+		useSensor(MouseSensor, {
+			activationConstraint: {
+				distance: 6,
+			},
+		}),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 180,
+				tolerance: 8,
+			},
+		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
+	);
+
+	const taskIdSet = useMemo(
+		() => new Set(tasks.map((task) => task.id)),
+		[tasks],
+	);
+
+	const collisionDetectionStrategy = useCallback<CollisionDetection>(
+		(args) => {
+			const pointerCollisions = pointerWithin(args);
+
+			if (pointerCollisions.length > 0) {
+				const taskCollision = pointerCollisions.find((collision) =>
+					taskIdSet.has(String(collision.id)),
+				);
+
+				return taskCollision ? [taskCollision] : pointerCollisions;
+			}
+
+			return closestCorners(args);
+		},
+		[taskIdSet],
 	);
 
 	useEffect(() => {
@@ -195,62 +311,183 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	useEffect(() => {
 		const handleShortcut = (event: KeyboardEvent) => {
 			const target = event.target as HTMLElement | null;
+
 			if (target?.matches("input, textarea, select, [contenteditable='true']"))
 				return;
+
 			if (event.key.toLowerCase() === "n" && canEdit && lists[0]) {
 				event.preventDefault();
 				openCreateTask(lists[0].id);
 			}
+
 			if (event.key === "Escape") clearTaskSelection();
 		};
+
 		window.addEventListener("keydown", handleShortcut);
 		return () => window.removeEventListener("keydown", handleShortcut);
 	}, [canEdit, clearTaskSelection, lists, openCreateTask]);
 
-	const filteredTasks = optimisticTasks.filter((task) => {
+	const filteredTasks = tasks.filter((task) => {
 		if (priorityFilter !== "all" && task.priority !== priorityFilter)
 			return false;
+
 		const normalized = search.trim().toLowerCase();
 		if (!normalized) return true;
+
 		return [task.title, task.description ?? "", ...task.labels]
 			.join(" ")
 			.toLowerCase()
 			.includes(normalized);
 	});
 
-	const onDragEnd = (event: DragEndEvent) => {
-		if (!canEdit || !event.over || event.active.id === event.over.id) return;
+	const activeTask = activeTaskId
+		? tasks.find((task) => task.id === activeTaskId) ??
+			dragSnapshotRef.current?.find((task) => task.id === activeTaskId) ??
+			null
+		: null;
+
+	const onDragStart = (event: DragStartEvent) => {
+		if (!canEdit) return;
+
 		const taskId = String(event.active.id);
-		const moving = tasks.find((task) => task.id === taskId);
+		const moving = tasksRef.current.find((task) => task.id === taskId);
 		if (!moving) return;
+
+		dragSnapshotRef.current = tasksRef.current.map((task) => ({ ...task }));
+		lastMoveRef.current = null;
+		setActiveTaskId(taskId);
+		setMessage("");
+	};
+
+	const onDragOver = (event: DragOverEvent) => {
+		if (!canEdit || !event.over) return;
+
+		const taskId = String(event.active.id);
 		const overId = String(event.over.id);
-		const overTask = tasks.find((task) => task.id === overId);
-		const toListId =
+
+		if (taskId === overId) return;
+
+		const currentTasks = tasksRef.current;
+		const moving = currentTasks.find((task) => task.id === taskId);
+		if (!moving) return;
+
+		const overTask = currentTasks.find((task) => task.id === overId);
+		const targetListId =
 			overTask?.listId ?? lists.find((list) => list.id === overId)?.id;
-		if (!toListId) return;
-		const targetTasks = tasks
-			.filter((task) => task.listId === toListId && task.id !== taskId)
+
+		if (!targetListId) return;
+
+		const targetTasks = currentTasks
+			.filter((task) => task.listId === targetListId && task.id !== taskId)
 			.sort((a, b) => a.position - b.position);
-		const position = overTask
-			? Math.max(
-					0,
-					targetTasks.findIndex((task) => task.id === overTask.id),
-				)
-			: targetTasks.length;
-		const previousTasks = tasks;
+
+		let position = targetTasks.length;
+
+		if (overTask) {
+			const overIndex = targetTasks.findIndex(
+				(task) => task.id === overTask.id,
+			);
+
+			if (overIndex >= 0) {
+				const translated = event.active.rect.current.translated;
+				const isBelowOverTask = translated
+					? translated.top > event.over.rect.top + event.over.rect.height / 2
+					: false;
+
+				position = overIndex + (isBelowOverTask ? 1 : 0);
+			}
+		}
+
+		const moveKey = `${taskId}:${targetListId}:${position}`;
+		if (lastMoveRef.current === moveKey) return;
+
+		if (moving.listId === targetListId && moving.position === position) {
+			lastMoveRef.current = moveKey;
+			return;
+		}
+
+		const nextTasks = moveInArray(currentTasks, {
+			taskId,
+			toListId: targetListId,
+			position,
+		});
+
+		tasksRef.current = nextTasks;
+		lastMoveRef.current = moveKey;
+		replaceTasks(nextTasks);
+	};
+
+	const onDragEnd = (event: DragEndEvent) => {
+		const taskId = String(event.active.id);
+		const snapshot = dragSnapshotRef.current;
+
+		setActiveTaskId(null);
+		lastMoveRef.current = null;
+
+		if (!canEdit || !snapshot) {
+			dragSnapshotRef.current = null;
+			return;
+		}
+
+		if (!event.over) {
+			tasksRef.current = snapshot;
+			replaceTasks(snapshot);
+			dragSnapshotRef.current = null;
+			return;
+		}
+
+		const originalTask = snapshot.find((task) => task.id === taskId);
+		const finalTask = tasksRef.current.find((task) => task.id === taskId);
+
+		if (!originalTask || !finalTask) {
+			tasksRef.current = snapshot;
+			replaceTasks(snapshot);
+			dragSnapshotRef.current = null;
+			return;
+		}
+
+		const didMove =
+			originalTask.listId !== finalTask.listId ||
+			originalTask.position !== finalTask.position;
+
+		if (!didMove) {
+			dragSnapshotRef.current = null;
+			return;
+		}
+
+		const finalListId = finalTask.listId;
+		const finalPosition = finalTask.position;
+		dragSnapshotRef.current = null;
+
 		startTransition(async () => {
-			moveOptimistically({ taskId, toListId, position });
-			moveTaskLocally(taskId, toListId, position);
 			const result = await moveTaskAction({
 				projectId: data.project.id,
 				taskId,
-				fromListId: moving.listId,
-				toListId,
-				position,
+				fromListId: originalTask.listId,
+				toListId: finalListId,
+				position: finalPosition,
 			});
+
 			setMessage(result.message);
-			if (!result.success) replaceTasks(previousTasks);
+
+			if (!result.success) {
+				tasksRef.current = snapshot;
+				replaceTasks(snapshot);
+			}
 		});
+	};
+
+	const onDragCancel = () => {
+		const snapshot = dragSnapshotRef.current;
+
+		if (snapshot) {
+			tasksRef.current = snapshot;
+			replaceTasks(snapshot);
+		}
+
+		dragSnapshotRef.current = null;
+		lastMoveRef.current = null;
+		setActiveTaskId(null);
 	};
 
 	const createList = (formData: FormData) => {
@@ -264,10 +501,12 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const renameList = (list: BoardList) => {
 		const name = window.prompt("List name", list.name)?.trim();
 		if (!name || name === list.name) return;
+
 		const formData = new FormData();
 		formData.set("projectId", data.project.id);
 		formData.set("listId", list.id);
 		formData.set("name", name);
+
 		startTransition(async () => {
 			const result = await updateListAction(formData);
 			setMessage(result.message);
@@ -277,6 +516,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 
 	const deleteList = (list: BoardList) => {
 		if (!window.confirm(`Delete “${list.name}” and every task in it?`)) return;
+
 		startTransition(async () => {
 			const result = await deleteListAction(data.project.id, list.id);
 			setMessage(result.message);
@@ -287,12 +527,15 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const bulkDelete = () => {
 		if (!window.confirm(`Delete ${selectedTaskIds.length} selected tasks?`))
 			return;
+
 		startTransition(async () => {
 			const result = await bulkDeleteTasksAction(
 				data.project.id,
 				selectedTaskIds,
 			);
+
 			setMessage(result.message);
+
 			if (result.success) {
 				removeTasks(selectedTaskIds);
 				clearTaskSelection();
@@ -315,6 +558,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 						className="pl-9"
 					/>
 				</div>
+
 				<label className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
 					<Filter size={16} />
 					<span className="sr-only">Filter priority</span>
@@ -333,18 +577,22 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 						<option value="high">High</option>
 					</select>
 				</label>
+
 				{selectedTaskIds.length > 0 && canEdit ? (
 					<Button variant="danger" onClick={bulkDelete} disabled={isSaving}>
 						<Trash2 size={16} /> Delete {selectedTaskIds.length}
 					</Button>
 				) : null}
 			</div>
+
 			<div className="flex items-center justify-between text-xs text-paynes_gray-500 dark:text-french_gray-400">
 				<span>
 					{message ||
 						(isSaving
 							? "Saving changes…"
-							: "Drag tasks between lists. Press N to create a task.")}
+							: activeTaskId
+								? "Release to drop task."
+								: "Drag tasks between lists. Press N to create a task.")}
 				</span>
 				<button
 					type="button"
@@ -354,10 +602,14 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					Refresh board
 				</button>
 			</div>
+
 			<DndContext
 				sensors={sensors}
-				collisionDetection={closestCorners}
+				collisionDetection={collisionDetectionStrategy}
+				onDragStart={onDragStart}
+				onDragOver={onDragOver}
 				onDragEnd={onDragEnd}
+				onDragCancel={onDragCancel}
 			>
 				<div className="flex gap-4 overflow-x-auto pb-4">
 					{lists.map((list) => (
@@ -368,17 +620,23 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 								.filter((task) => task.listId === list.id)
 								.sort((a, b) => a.position - b.position)}
 							canEdit={canEdit}
+							activeTaskId={activeTaskId}
 							onCreateTask={() => openCreateTask(list.id)}
 							onRename={() => renameList(list)}
 							onDelete={() => deleteList(list)}
 						/>
 					))}
+
 					{canEdit ? (
 						<form
 							action={createList}
 							className="w-[min(86vw,20rem)] shrink-0 rounded-xl border border-dashed border-french_gray-300 bg-white p-3 dark:border-paynes_gray-400 dark:bg-outer_space-500"
 						>
-							<input type="hidden" name="projectId" value={data.project.id} />
+							<input
+								type="hidden"
+								name="projectId"
+								value={data.project.id}
+							/>
 							<Input
 								name="name"
 								required
@@ -396,7 +654,18 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 						</form>
 					) : null}
 				</div>
+
+				<DragOverlay
+					zIndex={50}
+					dropAnimation={{
+						duration: 180,
+						easing: "cubic-bezier(0.2, 0, 0, 1)",
+					}}
+				>
+					{activeTask ? <TaskDragPreview task={activeTask} /> : null}
+				</DragOverlay>
 			</DndContext>
+
 			<CreateTaskModal projectId={data.project.id} />
 			<TaskDetailModal projectId={data.project.id} />
 		</div>
