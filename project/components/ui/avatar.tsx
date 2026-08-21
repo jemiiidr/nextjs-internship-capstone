@@ -13,13 +13,19 @@ export function Avatar({
 	return (
 		<span
 			className={cn(
-				"relative inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue_munsell-500 text-xs font-semibold text-white",
+				"relative inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#9187f5] to-[#72bada] text-xs font-semibold text-white",
 				className,
 			)}
 			title={name}
 		>
 			{src ? (
-				<Image src={src} alt="" fill sizes="32px" className="object-cover" />
+				<Image
+					src={src}
+					alt={name}
+					fill
+					sizes="40px"
+					className="object-cover"
+				/>
 			) : (
 				initials(name)
 			)}

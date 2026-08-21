@@ -1,8 +1,4 @@
-import {
-	CalendarDays,
-	ChevronLeft,
-	ChevronRight,
-} from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -16,25 +12,13 @@ export const metadata: Metadata = {
 	title: "Calendar",
 };
 
-const WEEKDAYS = [
-	"Sun",
-	"Mon",
-	"Tue",
-	"Wed",
-	"Thu",
-	"Fri",
-	"Sat",
-];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function pad(value: number) {
 	return String(value).padStart(2, "0");
 }
 
-function dateKey(
-	year: number,
-	month: number,
-	day: number,
-) {
+function dateKey(year: number, month: number, day: number) {
 	return `${year}-${pad(month + 1)}-${pad(day)}`;
 }
 
@@ -77,11 +61,7 @@ function parseMonth(value?: string) {
 	};
 }
 
-function getAdjacentMonth(
-	year: number,
-	month: number,
-	offset: number,
-) {
+function getAdjacentMonth(year: number, month: number, offset: number) {
 	const date = new Date(year, month + offset, 1);
 
 	return {
@@ -125,56 +105,33 @@ export default async function CalendarPage({
 	const firstDay = new Date(year, month, 1);
 	const firstWeekday = firstDay.getDay();
 
-	const previousMonth = getAdjacentMonth(
-		year,
-		month,
-		-1,
-	);
+	const previousMonth = getAdjacentMonth(year, month, -1);
 
-	const nextMonth = getAdjacentMonth(
-		year,
-		month,
-		1,
-	);
+	const nextMonth = getAdjacentMonth(year, month, 1);
 
 	/*
 	 * Use 42 cells so the calendar always displays
 	 * a consistent 6-week month view.
 	 */
-	const calendarDays = Array.from(
-		{ length: 42 },
-		(_, index) => {
-			const date = new Date(
-				year,
-				month,
-				index - firstWeekday + 1,
-			);
+	const calendarDays = Array.from({ length: 42 }, (_, index) => {
+		const date = new Date(year, month, index - firstWeekday + 1);
 
-			return {
-				year: date.getFullYear(),
-				month: date.getMonth(),
-				day: date.getDate(),
-				isCurrentMonth:
-					date.getMonth() === month &&
-					date.getFullYear() === year,
-			};
-		},
-	);
+		return {
+			year: date.getFullYear(),
+			month: date.getMonth(),
+			day: date.getDate(),
+			isCurrentMonth: date.getMonth() === month && date.getFullYear() === year,
+		};
+	});
 
-	const taskGroups = new Map<
-		string,
-		typeof tasks
-	>();
+	const taskGroups = new Map<string, typeof tasks>();
 
 	for (const task of tasks) {
 		if (!task.dueDate) continue;
 
 		const key = task.dueDate.slice(0, 10);
 
-		taskGroups.set(key, [
-			...(taskGroups.get(key) ?? []),
-			task,
-		]);
+		taskGroups.set(key, [...(taskGroups.get(key) ?? []), task]);
 	}
 
 	const today = new Date();
@@ -185,13 +142,10 @@ export default async function CalendarPage({
 		today.getDate(),
 	);
 
-	const monthTitle = new Intl.DateTimeFormat(
-		"en-US",
-		{
-			month: "long",
-			year: "numeric",
-		},
-	).format(firstDay);
+	const monthTitle = new Intl.DateTimeFormat("en-US", {
+		month: "long",
+		year: "numeric",
+	}).format(firstDay);
 
 	return (
 		<div className="min-w-0 space-y-6">
@@ -199,16 +153,12 @@ export default async function CalendarPage({
 			<header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<h1 className="flex items-center gap-2 text-2xl font-bold text-outer_space-900 sm:text-3xl dark:text-platinum-50">
-						<CalendarDays
-							size={28}
-							className="text-blue_munsell-500"
-						/>
+						<CalendarDays size={28} className="text-blue_munsell-500" />
 						Calendar
 					</h1>
 
 					<p className="mt-2 text-sm text-paynes_gray-500 sm:text-base dark:text-french_gray-400">
-						Due dates for projects you own and
-						tasks assigned to you.
+						Due dates for projects you own and tasks assigned to you.
 					</p>
 				</div>
 			</header>
@@ -229,10 +179,7 @@ export default async function CalendarPage({
 							)}`}
 							className="sm:hidden"
 						>
-							<Button
-								variant="secondary"
-								size="sm"
-							>
+							<Button variant="secondary" size="sm">
 								Today
 							</Button>
 						</Link>
@@ -246,10 +193,7 @@ export default async function CalendarPage({
 							)}`}
 							className="hidden sm:block"
 						>
-							<Button
-								variant="secondary"
-								size="sm"
-							>
+							<Button variant="secondary" size="sm">
 								Today
 							</Button>
 						</Link>
@@ -275,11 +219,7 @@ export default async function CalendarPage({
 								nextMonth.month,
 							)}`}
 						>
-							<Button
-								variant="secondary"
-								size="icon"
-								aria-label="Next month"
-							>
+							<Button variant="secondary" size="icon" aria-label="Next month">
 								<ChevronRight size={18} />
 							</Button>
 						</Link>
@@ -310,11 +250,9 @@ export default async function CalendarPage({
 									calendarDay.day,
 								);
 
-								const dayTasks =
-									taskGroups.get(key) ?? [];
+								const dayTasks = taskGroups.get(key) ?? [];
 
-								const isToday =
-									key === todayKey;
+								const isToday = key === todayKey;
 
 								return (
 									<div
@@ -344,59 +282,39 @@ export default async function CalendarPage({
 												{calendarDay.day}
 											</span>
 
-											{dayTasks.length >
-											0 ? (
+											{dayTasks.length > 0 ? (
 												<span className="text-[10px] text-paynes_gray-500 dark:text-french_gray-400">
-													{
-														dayTasks.length
-													}{" "}
-													{dayTasks.length ===
-													1
-														? "task"
-														: "tasks"}
+													{dayTasks.length}{" "}
+													{dayTasks.length === 1 ? "task" : "tasks"}
 												</span>
 											) : null}
 										</div>
 
 										{/* Tasks */}
 										<div className="space-y-1.5">
-											{dayTasks
-												.slice(0, 3)
-												.map((task) => (
-													<Link
-														key={
-															task.id
-														}
-														href={`/projects/${task.projectId}`}
-														className={cn(
-															"block rounded-md border px-2 py-1.5 transition-opacity hover:opacity-80",
-															getPriorityClasses(
-																task.priority,
-															),
-														)}
-														title={`${task.title} — ${task.projectName}`}
-													>
-														<p className="truncate text-xs font-semibold">
-															{
-																task.title
-															}
-														</p>
+											{dayTasks.slice(0, 3).map((task) => (
+												<Link
+													key={task.id}
+													href={`/projects/${task.projectId}`}
+													className={cn(
+														"block rounded-md border px-2 py-1.5 transition-opacity hover:opacity-80",
+														getPriorityClasses(task.priority),
+													)}
+													title={`${task.title} — ${task.projectName}`}
+												>
+													<p className="truncate text-xs font-semibold">
+														{task.title}
+													</p>
 
-														<p className="mt-0.5 truncate text-[10px] opacity-70">
-															{
-																task.projectName
-															}
-														</p>
-													</Link>
-												))}
+													<p className="mt-0.5 truncate text-[10px] opacity-70">
+														{task.projectName}
+													</p>
+												</Link>
+											))}
 
-											{dayTasks.length >
-											3 ? (
+											{dayTasks.length > 3 ? (
 												<p className="px-1 text-[11px] font-medium text-paynes_gray-500 dark:text-french_gray-400">
-													+
-													{dayTasks.length -
-														3}{" "}
-													more
+													+{dayTasks.length - 3} more
 												</p>
 											) : null}
 										</div>
@@ -410,9 +328,7 @@ export default async function CalendarPage({
 
 			{/* Priority Legend */}
 			<div className="flex flex-wrap items-center gap-3 text-xs text-paynes_gray-500 dark:text-french_gray-400">
-				<span className="font-medium">
-					Priority:
-				</span>
+				<span className="font-medium">Priority:</span>
 
 				<Badge className="border-red-300 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
 					High

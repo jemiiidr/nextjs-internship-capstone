@@ -1,27 +1,53 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
+import Script from "next/script";
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: { default: "ProjectFlow", template: "%s · ProjectFlow" },
+	title: {
+		default: "Flowora",
+		template: "%s · Flowora",
+	},
 	description:
-		"A collaborative Kanban project management application built with Next.js, Clerk, Drizzle, and Neon.",
+		"A colorful, focused Kanban workspace for planning projects and shipping work together.",
 };
 
-const themeScript = `(() => { try { const saved = localStorage.getItem('projectflow-theme'); const dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches; document.documentElement.classList.toggle('dark', dark); document.documentElement.style.colorScheme = dark ? 'dark' : 'light'; } catch {} })();`;
+const themeScript = `
+(() => {
+	try {
+		const savedTheme =
+			localStorage.getItem("flowora-theme") ||
+			localStorage.getItem("projectflow-theme");
+
+		const isDark = savedTheme
+			? savedTheme === "dark"
+			: window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+		document.documentElement.classList.toggle("dark", isDark);
+		document.documentElement.style.colorScheme = isDark
+			? "dark"
+			: "light";
+	} catch {}
+})();
+`;
 
 export default function RootLayout({
 	children,
-}: Readonly<{ children: ReactNode }>) {
+}: Readonly<{
+	children: ReactNode;
+}>) {
 	return (
 		<ClerkProvider>
 			<html lang="en" suppressHydrationWarning>
 				<head>
-					<script dangerouslySetInnerHTML={{ __html: themeScript }} />
+					<Script id="flowora-theme-init" strategy="beforeInteractive">
+						{themeScript}
+					</Script>
 				</head>
+
 				<body>
 					<ThemeProvider>{children}</ThemeProvider>
 					<Analytics />

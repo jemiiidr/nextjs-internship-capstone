@@ -3,6 +3,7 @@
 import {
 	createContext,
 	type ReactNode,
+	useCallback,
 	useContext,
 	useEffect,
 	useMemo,
@@ -22,20 +23,33 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	const [theme, setThemeState] = useState<Theme>("light");
 
 	useEffect(() => {
-		const current = document.documentElement.classList.contains("dark")
+		const currentTheme: Theme = document.documentElement.classList.contains(
+			"dark",
+		)
 			? "dark"
 			: "light";
-		setThemeState(current);
+
+		setThemeState(currentTheme);
 	}, []);
 
-	const setTheme = (nextTheme: Theme) => {
+	const setTheme = useCallback((nextTheme: Theme) => {
 		document.documentElement.classList.toggle("dark", nextTheme === "dark");
-		document.documentElement.style.colorScheme = nextTheme;
-		localStorage.setItem("projectflow-theme", nextTheme);
-		setThemeState(nextTheme);
-	};
 
-	const value = useMemo(() => ({ theme, setTheme }), [theme, setTheme]);
+		document.documentElement.style.colorScheme = nextTheme;
+
+		localStorage.setItem("flowora-theme", nextTheme);
+
+		setThemeState(nextTheme);
+	}, []);
+
+	const value = useMemo(
+		() => ({
+			theme,
+			setTheme,
+		}),
+		[theme, setTheme],
+	);
+
 	return (
 		<ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 	);
@@ -43,6 +57,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 export function useTheme() {
 	const context = useContext(ThemeContext);
-	if (!context) throw new Error("useTheme must be used within ThemeProvider");
+
+	if (!context) {
+		throw new Error("useTheme must be used within ThemeProvider");
+	}
+
 	return context;
 }

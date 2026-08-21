@@ -70,29 +70,21 @@ export default async function ProjectPage({
 									Private
 								</Badge>
 							) : (
-								<Badge className="shrink-0">
-									Workspace
-								</Badge>
+								<Badge className="shrink-0">Workspace</Badge>
 							)}
 						</div>
 
 						<p className="mt-2 max-w-3xl wrap-break-word text-sm leading-relaxed text-paynes_gray-500 sm:text-base dark:text-french_gray-400">
-							{board.project.description ||
-								"No project description."}
+							{board.project.description || "No project description."}
 						</p>
 					</div>
 
 					{/* Due Date */}
 					<div className="shrink-0">
 						<p className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
-							<CalendarDays
-								size={16}
-								className="shrink-0"
-							/>
+							<CalendarDays size={16} className="shrink-0" />
 
-							<span>
-								{formatDate(board.project.dueDate)}
-							</span>
+							<span>{formatDate(board.project.dueDate)}</span>
 						</p>
 					</div>
 				</div>

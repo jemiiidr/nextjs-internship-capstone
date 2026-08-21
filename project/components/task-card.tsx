@@ -15,10 +15,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import type { BoardTask } from "@/types";
 
-const priorityClasses: Record<
-	BoardTask["priority"],
-	string
-> = {
+const priorityClasses: Record<BoardTask["priority"], string> = {
 	low:
 		"border-emerald-200 bg-emerald-50 text-emerald-700 " +
 		"dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
@@ -47,9 +44,7 @@ type TaskCardContentProps = {
 	dragHandleProps?: {
 		attributes?: React.HTMLAttributes<HTMLButtonElement>;
 		listeners?: React.HTMLAttributes<HTMLButtonElement>;
-		setActivatorNodeRef?: (
-			element: HTMLButtonElement | null,
-		) => void;
+		setActivatorNodeRef?: (element: HTMLButtonElement | null) => void;
 	};
 };
 
@@ -76,24 +71,20 @@ export function TaskCardContent({
 				"transition-[border-color,box-shadow,background-color]",
 				"duration-150 ease-out",
 
-				!overlay &&
-					"hover:border-blue_munsell-500 hover:shadow-md",
+				!overlay && "hover:border-blue_munsell-500 hover:shadow-md",
 
-				selected &&
-					!overlay &&
-					"ring-2 ring-blue_munsell-500",
+				selected && !overlay && "ring-2 ring-blue_munsell-500",
 
 				/*
 				 * DragOverlay appearance
 				 */
-				overlay &&
-					[
-						"scale-[1.02]",
-						"border-blue_munsell-400",
-						"shadow-2xl",
-						"ring-1 ring-blue_munsell-500/30",
-						"cursor-grabbing",
-					],
+				overlay && [
+					"scale-[1.02]",
+					"border-blue_munsell-400",
+					"shadow-2xl",
+					"ring-1 ring-blue_munsell-500/30",
+					"cursor-grabbing",
+				],
 			)}
 		>
 			{/* Header */}
@@ -101,9 +92,7 @@ export function TaskCardContent({
 				{/* Drag Handle */}
 				{!disabled && dragHandleProps ? (
 					<button
-						ref={
-							dragHandleProps.setActivatorNodeRef
-						}
+						ref={dragHandleProps.setActivatorNodeRef}
 						type="button"
 						aria-label={`Drag ${task.title}`}
 						className={cn(
@@ -165,9 +154,7 @@ export function TaskCardContent({
 							className="size-4 accent-blue_munsell-500"
 						/>
 
-						<span className="sr-only">
-							Select {task.title}
-						</span>
+						<span className="sr-only">Select {task.title}</span>
 					</label>
 				) : null}
 			</div>
@@ -175,18 +162,12 @@ export function TaskCardContent({
 			{/* Labels */}
 			{task.labels.length > 0 ? (
 				<div className="mb-3 flex flex-wrap gap-1">
-					{task.labels
-						.slice(0, 3)
-						.map((label) => (
-							<Badge key={label}>
-								{label}
-							</Badge>
-						))}
+					{task.labels.slice(0, 3).map((label) => (
+						<Badge key={label}>{label}</Badge>
+					))}
 
 					{task.labels.length > 3 ? (
-						<Badge>
-							+{task.labels.length - 3}
-						</Badge>
+						<Badge>+{task.labels.length - 3}</Badge>
 					) : null}
 				</div>
 			) : null}
@@ -194,30 +175,17 @@ export function TaskCardContent({
 			{/* Footer */}
 			<div className="flex items-end justify-between gap-2">
 				<div className="space-y-1 text-xs text-paynes_gray-500 dark:text-french_gray-400">
-					<Badge
-						className={cn(
-							"capitalize",
-							priorityClasses[
-								task.priority
-							],
-						)}
-					>
+					<Badge className={cn("capitalize", priorityClasses[task.priority])}>
 						{task.priority}
 					</Badge>
 
 					{task.dueDate ? (
 						<span className="flex items-center gap-1">
-							<CalendarDays
-								size={12}
-								className="shrink-0"
-							/>
+							<CalendarDays size={12} className="shrink-0" />
 
-							{formatDate(
-								task.dueDate,
-								{
-									year: undefined,
-								},
-							)}
+							{formatDate(task.dueDate, {
+								year: undefined,
+							})}
 						</span>
 					) : null}
 				</div>
@@ -225,29 +193,18 @@ export function TaskCardContent({
 				<div className="flex items-center gap-2">
 					{task.commentsCount > 0 ? (
 						<span className="flex items-center gap-1 text-xs text-paynes_gray-500">
-							<MessageSquare
-								size={13}
-							/>
+							<MessageSquare size={13} />
 
 							{task.commentsCount}
 						</span>
 					) : (
-						<CheckSquare
-							size={14}
-							className="text-french_gray-500"
-						/>
+						<CheckSquare size={14} className="text-french_gray-500" />
 					)}
 
 					{task.assignee ? (
 						<Avatar
-							name={
-								task.assignee
-									.name
-							}
-							src={
-								task.assignee
-									.avatarUrl
-							}
+							name={task.assignee.name}
+							src={task.assignee.avatarUrl}
 							className="size-7"
 						/>
 					) : null}
@@ -268,20 +225,13 @@ export function TaskCard({
 	task: BoardTask;
 	disabled?: boolean;
 }) {
-	const openTaskDetail = useUIStore(
-		(state) => state.openTaskDetail,
-	);
+	const openTaskDetail = useUIStore((state) => state.openTaskDetail);
 
-	const selectedTaskIds = useUIStore(
-		(state) => state.selectedTaskIds,
-	);
+	const selectedTaskIds = useUIStore((state) => state.selectedTaskIds);
 
-	const toggleTaskSelection = useUIStore(
-		(state) => state.toggleTaskSelection,
-	);
+	const toggleTaskSelection = useUIStore((state) => state.toggleTaskSelection);
 
-	const selected =
-		selectedTaskIds.includes(task.id);
+	const selected = selectedTaskIds.includes(task.id);
 
 	const {
 		attributes,
@@ -303,8 +253,7 @@ export function TaskCard({
 		 */
 		transition: {
 			duration: 180,
-			easing:
-				"cubic-bezier(0.25, 1, 0.5, 1)",
+			easing: "cubic-bezier(0.25, 1, 0.5, 1)",
 		},
 	});
 
@@ -316,9 +265,7 @@ export function TaskCard({
 		 * Browser can prepare the transform layer
 		 * while the card is actively moving.
 		 */
-		willChange: isDragging
-			? "transform"
-			: undefined,
+		willChange: isDragging ? "transform" : undefined,
 	};
 
 	return (
@@ -333,20 +280,15 @@ export function TaskCard({
 				 * but hide the original while DragOverlay
 				 * is displaying the floating card.
 				 */
-				isDragging &&
-					"z-0 opacity-20",
+				isDragging && "z-0 opacity-20",
 			)}
 		>
 			<TaskCardContent
 				task={task}
 				selected={selected}
 				disabled={disabled}
-				onOpen={() =>
-					openTaskDetail(task.id)
-				}
-				onToggleSelection={() =>
-					toggleTaskSelection(task.id)
-				}
+				onOpen={() => openTaskDetail(task.id)}
+				onToggleSelection={() => toggleTaskSelection(task.id)}
 				dragHandleProps={
 					disabled
 						? undefined
@@ -361,17 +303,10 @@ export function TaskCard({
 	);
 }
 
-export function TaskCardOverlay({
-	task,
-}: {
-	task: BoardTask;
-}) {
+export function TaskCardOverlay({ task }: { task: BoardTask }) {
 	return (
 		<div className="w-full">
-			<TaskCardContent
-				task={task}
-				overlay
-			/>
+			<TaskCardContent task={task} overlay />
 		</div>
 	);
 }

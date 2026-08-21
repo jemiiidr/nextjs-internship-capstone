@@ -1,12 +1,12 @@
 "use client";
 
 import {
-	closestCorners,
 	type CollisionDetection,
+	closestCorners,
 	DndContext,
-	DragOverlay,
 	type DragEndEvent,
 	type DragOverEvent,
+	DragOverlay,
 	type DragStartEvent,
 	KeyboardSensor,
 	MouseSensor,
@@ -64,10 +64,7 @@ function moveInArray(tasks: BoardTask[], move: TaskMove) {
 		.filter((task) => task.listId === move.toListId)
 		.sort((a, b) => a.position - b.position);
 
-	const safePosition = Math.max(
-		0,
-		Math.min(move.position, destination.length),
-	);
+	const safePosition = Math.max(0, Math.min(move.position, destination.length));
 
 	destination.splice(safePosition, 0, {
 		...moving,
@@ -341,9 +338,9 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	});
 
 	const activeTask = activeTaskId
-		? tasks.find((task) => task.id === activeTaskId) ??
+		? (tasks.find((task) => task.id === activeTaskId) ??
 			dragSnapshotRef.current?.find((task) => task.id === activeTaskId) ??
-			null
+			null)
 		: null;
 
 	const onDragStart = (event: DragStartEvent) => {
@@ -632,11 +629,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 							action={createList}
 							className="w-[min(86vw,20rem)] shrink-0 rounded-xl border border-dashed border-french_gray-300 bg-white p-3 dark:border-paynes_gray-400 dark:bg-outer_space-500"
 						>
-							<input
-								type="hidden"
-								name="projectId"
-								value={data.project.id}
-							/>
+							<input type="hidden" name="projectId" value={data.project.id} />
 							<Input
 								name="name"
 								required

@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			className={cn(
-				"rounded-xl border border-french_gray-300 bg-white shadow-sm dark:border-paynes_gray-400 dark:bg-outer_space-500",
+				"flowora-panel rounded-2xl border border-french_gray-300/80 bg-white dark:border-paynes_gray-800 dark:bg-outer_space-500",
 				className,
 			)}
 			{...props}
