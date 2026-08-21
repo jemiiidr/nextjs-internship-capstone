@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { requireDbUser } from "@/lib/auth";
+import { requireWorkspaceContext } from "@/lib/auth";
 import { getCalendarTasks } from "@/lib/db";
 import { cn } from "@/lib/utils";
 
@@ -93,12 +93,16 @@ export default async function CalendarPage({
 		month?: string;
 	}>;
 }) {
-	const user = await requireDbUser();
+	const context = await requireWorkspaceContext();
 	const params = await searchParams;
 
-	const tasks = (await getCalendarTasks(user.id)).filter(
-		(task) => task.dueDate,
-	);
+	const tasks = (
+		await getCalendarTasks({
+			userId: context.user.id,
+			workspaceId: context.workspaceId,
+			role: context.role,
+		})
+	).filter((task) => task.dueDate);
 
 	const { year, month } = parseMonth(params.month);
 
@@ -153,7 +157,7 @@ export default async function CalendarPage({
 			<header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 				<div>
 					<h1 className="flex items-center gap-2 text-2xl font-bold text-outer_space-900 sm:text-3xl dark:text-platinum-50">
-						<CalendarDays size={28} className="text-blue_munsell-500" />
+						<CalendarDays size={28} className="text-blue_munsell-600" />
 						Calendar
 					</h1>
 
