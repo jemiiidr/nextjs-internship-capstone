@@ -43,7 +43,10 @@ import {
 } from "@/components/modals/create-task-modal";
 import { TaskCard } from "@/components/task-card";
 import { Button } from "@/components/ui/button";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 import { useBoardStore } from "@/stores/board-store";
 import { useUIStore } from "@/stores/ui-store";
@@ -248,6 +251,12 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const [isSaving, startTransition] = useTransition();
 	const [message, setMessage] = useState("");
 	const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+	const [listToDelete, setListToDelete] = useState<BoardList | null>(null);
+	const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+	const [deleteError, setDeleteError] = useState("");
+	const [listToRename, setListToRename] = useState<BoardList | null>(null);
+	const [listName, setListName] = useState("");
+	const [renameError, setRenameError] = useState("");
 
 	const hydrate = useBoardStore((state) => state.hydrate);
 	const lists = useBoardStore((state) => state.lists);
@@ -509,36 +518,55 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		});
 	};
 
-	const renameList = (list: BoardList) => {
-		const name = window.prompt("List name", list.name)?.trim();
-		if (!name || name === list.name) return;
+	const openRenameModal = (list: BoardList) => {
+		setListToRename(list);
+		setListName(list.name);
+		setRenameError("");
+	};
+
+	const closeRenameModal = () => {
+		if (!isSaving) setListToRename(null);
+	};
+
+	const renameList = () => {
+		const name = listName.trim();
+		if (!listToRename || !name) {
+			setRenameError("List name is required.");
+			return;
+		}
+		if (name === listToRename.name) {
+			closeRenameModal();
+			return;
+		}
 
 		const formData = new FormData();
 		formData.set("projectId", data.project.id);
-		formData.set("listId", list.id);
+		formData.set("listId", listToRename.id);
 		formData.set("name", name);
+		const listId = listToRename.id;
 
 		startTransition(async () => {
 			const result = await updateListAction(formData);
 			setMessage(result.message);
-			if (result.success) updateListName(list.id, name);
+			if (result.success) {
+				updateListName(listId, name);
+				setListToRename(null);
+			} else setRenameError(result.message);
 		});
 	};
 
 	const deleteList = (list: BoardList) => {
-		if (!window.confirm(`Delete “${list.name}” and every task in it?`)) return;
-
 		startTransition(async () => {
 			const result = await deleteListAction(data.project.id, list.id);
 			setMessage(result.message);
-			if (result.success) removeList(list.id);
+			if (result.success) {
+				removeList(list.id);
+				setListToDelete(null);
+			} else setDeleteError(result.message);
 		});
 	};
 
 	const bulkDelete = () => {
-		if (!window.confirm(`Delete ${selectedTaskIds.length} selected tasks?`))
-			return;
-
 		startTransition(async () => {
 			const result = await bulkDeleteTasksAction(
 				data.project.id,
@@ -550,7 +578,8 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 			if (result.success) {
 				removeTasks(selectedTaskIds);
 				clearTaskSelection();
-			}
+				setBulkDeleteOpen(false);
+			} else setDeleteError(result.message);
 		});
 	};
 
@@ -590,7 +619,14 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				</label>
 
 				{selectedTaskIds.length > 0 && canEdit ? (
-					<Button variant="danger" onClick={bulkDelete} disabled={isSaving}>
+					<Button
+						variant="danger"
+						onClick={() => {
+							setDeleteError("");
+							setBulkDeleteOpen(true);
+						}}
+						disabled={isSaving}
+					>
 						<Trash2 size={16} /> Delete {selectedTaskIds.length}
 					</Button>
 				) : null}
@@ -633,8 +669,11 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 							canEdit={canEdit}
 							activeTaskId={activeTaskId}
 							onCreateTask={() => openCreateTask(list.id)}
-							onRename={() => renameList(list)}
-							onDelete={() => deleteList(list)}
+							onRename={() => openRenameModal(list)}
+							onDelete={() => {
+								setDeleteError("");
+								setListToDelete(list);
+							}}
 						/>
 					))}
 
@@ -675,6 +714,90 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 
 			<CreateTaskModal projectId={data.project.id} />
 			<TaskDetailModal projectId={data.project.id} />
+			<Modal
+				open={listToRename !== null}
+				onClose={closeRenameModal}
+				title="Rename list"
+				description="Choose a clear name for this stage of the board."
+				className="max-w-md"
+			>
+				<form
+					onSubmit={(event) => {
+						event.preventDefault();
+						renameList();
+					}}
+					className="space-y-5"
+				>
+					<div className="space-y-1.5">
+						<Label htmlFor="rename-list-name">List name</Label>
+						<Input
+							id="rename-list-name"
+							value={listName}
+							onChange={(event) => {
+								setListName(event.target.value);
+								setRenameError("");
+							}}
+							required
+							maxLength={60}
+							autoFocus
+						/>
+						{renameError ? (
+							<p
+								role="alert"
+								className="text-sm text-red-600 dark:text-red-400"
+							>
+								{renameError}
+							</p>
+						) : null}
+					</div>
+					<div className="flex justify-end gap-2">
+						<Button
+							variant="secondary"
+							onClick={closeRenameModal}
+							disabled={isSaving}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={isSaving || !listName.trim()}>
+							{isSaving ? "Renaming…" : "Rename list"}
+						</Button>
+					</div>
+				</form>
+			</Modal>
+			<ConfirmationModal
+				open={listToDelete !== null}
+				onClose={() => {
+					if (!isSaving) setListToDelete(null);
+				}}
+				onConfirm={() => {
+					if (listToDelete) deleteList(listToDelete);
+				}}
+				title="Delete list?"
+				confirmLabel="Delete list"
+				pending={isSaving}
+				error={deleteError}
+			>
+				<p>
+					Deleting <strong>{listToDelete?.name}</strong> will permanently remove
+					the list and every task in it.
+				</p>
+			</ConfirmationModal>
+			<ConfirmationModal
+				open={bulkDeleteOpen}
+				onClose={() => {
+					if (!isSaving) setBulkDeleteOpen(false);
+				}}
+				onConfirm={bulkDelete}
+				title="Delete selected tasks?"
+				confirmLabel={`Delete ${selectedTaskIds.length} tasks`}
+				pending={isSaving}
+				error={deleteError}
+			>
+				<p>
+					The <strong>{selectedTaskIds.length} selected tasks</strong> will be
+					permanently removed.
+				</p>
+			</ConfirmationModal>
 		</div>
 	);
 }

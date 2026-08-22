@@ -13,6 +13,7 @@ import {
 } from "@/app/actions/tasks";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
@@ -253,44 +254,67 @@ export function TaskDetailModal({ projectId }: { projectId: string }) {
 	);
 	const removeTask = useBoardStore((state) => state.removeTask);
 	const [isDeleting, startTransition] = useTransition();
+	const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+	const [deleteError, setDeleteError] = useState("");
 	if (!task) return null;
 
 	const deleteTask = () => {
-		if (!window.confirm(`Delete “${task.title}”?`)) return;
 		startTransition(async () => {
 			const result = await deleteTaskAction(projectId, task.id);
 			if (result.success) {
 				removeTask(task.id);
+				setDeleteConfirmationOpen(false);
 				close();
-			} else window.alert(result.message);
+			} else setDeleteError(result.message);
 		});
 	};
 
 	return (
-		<Modal
-			open={open}
-			onClose={close}
-			title="Task details"
-			className="max-w-2xl"
-		>
-			<TaskForm
-				projectId={projectId}
-				listId={task.listId}
-				task={task}
+		<>
+			<Modal
+				open={open}
 				onClose={close}
-			/>
-			<Comments projectId={projectId} task={task} />
-			<div className="mt-5 border-t border-french_gray-300 pt-4 text-right dark:border-paynes_gray-400">
-				<Button
-					variant="danger"
-					size="sm"
-					disabled={isDeleting}
-					onClick={deleteTask}
-				>
-					<Trash2 size={14} />
-					{isDeleting ? "Deleting…" : "Delete task"}
-				</Button>
-			</div>
-		</Modal>
+				title="Task details"
+				className="max-w-2xl"
+			>
+				<TaskForm
+					projectId={projectId}
+					listId={task.listId}
+					task={task}
+					onClose={close}
+				/>
+				<Comments projectId={projectId} task={task} />
+				<div className="mt-5 border-t border-french_gray-300 pt-4 text-right dark:border-paynes_gray-400">
+					<Button
+						variant="danger"
+						size="sm"
+						disabled={isDeleting}
+						onClick={() => {
+							setDeleteError("");
+							setDeleteConfirmationOpen(true);
+						}}
+					>
+						<Trash2 size={14} />
+						{isDeleting ? "Deleting…" : "Delete task"}
+					</Button>
+				</div>
+			</Modal>
+			<ConfirmationModal
+				open={deleteConfirmationOpen}
+				onClose={() => {
+					if (!isDeleting) setDeleteConfirmationOpen(false);
+				}}
+				onConfirm={deleteTask}
+				title="Delete task?"
+				confirmLabel="Delete task"
+				pending={isDeleting}
+				error={deleteError}
+			>
+				<p>
+					Deleting <strong>{task.title}</strong> will permanently remove the
+					task and its comments.
+				</p>
+			</ConfirmationModal>
+		</>
 	);
 }
