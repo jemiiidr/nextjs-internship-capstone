@@ -4,6 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { upsertClerkUser } from "@/lib/users";
 import type {
 	MemberRole,
 	UserSummary,
@@ -44,20 +45,7 @@ async function upsertWorkspaceUser(input: {
 	name: string;
 	avatarUrl: string | null;
 }) {
-	const [saved] = await db
-		.insert(users)
-		.values(input)
-		.onConflictDoUpdate({
-			target: users.clerkId,
-			set: {
-				email: input.email,
-				name: input.name,
-				avatarUrl: input.avatarUrl,
-				updatedAt: new Date(),
-			},
-		})
-		.returning();
-	return saved;
+	return upsertClerkUser(input);
 }
 
 export async function getUserWorkspaces(

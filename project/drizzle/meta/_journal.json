@@ -15,6 +15,13 @@
 			"when": 1787326715011,
 			"tag": "0001_flowora_workspaces",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1787395318884,
+			"tag": "0002_common_sister_grimm",
+			"breakpoints": true
 		}
 	]
 }

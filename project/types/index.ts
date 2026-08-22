@@ -1,6 +1,12 @@
 export type MemberRole = "owner" | "admin" | "member" | "viewer";
 export type TaskPriority = "low" | "medium" | "high";
 export type ProjectVisibility = "private" | "workspace";
+export type NotificationType =
+	| "task_assigned"
+	| "task_reassigned"
+	| "deadline_today"
+	| "task_overdue"
+	| "member_joined";
 
 export interface UserSummary {
 	id: string;
@@ -31,6 +37,16 @@ export interface WorkspaceInvitation {
 	role: Exclude<MemberRole, "owner" | "viewer">;
 	createdAt: string;
 	expiresAt: string;
+}
+
+export interface NotificationItem {
+	id: string;
+	type: NotificationType;
+	title: string;
+	message: string;
+	href: string;
+	read: boolean;
+	createdAt: string;
 }
 
 export interface ProjectSummary {

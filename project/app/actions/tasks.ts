@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { canEditProject, requireProjectAccess } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activities, lists, tasks, users } from "@/lib/db/schema";
+import { createNotification } from "@/lib/notifications";
 import { parseLabels, toDateOrNull } from "@/lib/utils";
 import {
 	moveTaskSchema,
@@ -15,6 +16,8 @@ import type { ActionResult, BoardTask } from "@/types";
 
 function revalidateTaskSurfaces(projectId: string) {
 	revalidatePath(`/projects/${projectId}`);
+	revalidatePath("/notifications");
+	revalidatePath("/", "layout");
 	revalidatePath("/dashboard");
 	revalidatePath("/my-tasks");
 	revalidatePath("/calendar");
@@ -140,6 +143,22 @@ export async function createTaskAction(
 		action: "task_created",
 		metadata: { taskTitle: created.title, listName: editable.list.name },
 	});
+	if (created.assigneeId && editable.access.workspaceId) {
+		await createNotification({
+			recipientId: created.assigneeId,
+			workspaceId: editable.access.workspaceId,
+			projectId: parsed.data.projectId,
+			taskId: created.id,
+			type: "task_assigned",
+			title: "New task assigned",
+			message:
+				created.assigneeId === editable.access.user.id
+					? `You assigned “${created.title}” to yourself.`
+					: `${editable.access.user.name} assigned you “${created.title}”.`,
+			href: `/projects/${parsed.data.projectId}`,
+			eventKey: `task-assigned:${created.id}`,
+		});
+	}
 
 	revalidateTaskSurfaces(parsed.data.projectId);
 	return {
@@ -234,6 +253,46 @@ export async function updateTaskAction(
 		action: "task_updated",
 		metadata: { taskTitle: updated.title },
 	});
+	if (
+		existing.assigneeId !== updated.assigneeId &&
+		editable.access.workspaceId
+	) {
+		const eventVersion = updated.updatedAt.getTime();
+		if (updated.assigneeId) {
+			await createNotification({
+				recipientId: updated.assigneeId,
+				workspaceId: editable.access.workspaceId,
+				projectId: parsed.data.projectId,
+				taskId: updated.id,
+				type: existing.assigneeId ? "task_reassigned" : "task_assigned",
+				title: existing.assigneeId
+					? "Task reassigned to you"
+					: "Task assigned to you",
+				message:
+					updated.assigneeId === editable.access.user.id
+						? `You assigned “${updated.title}” to yourself.`
+						: `${editable.access.user.name} assigned you “${updated.title}”.`,
+				href: `/projects/${parsed.data.projectId}`,
+				eventKey: `task-reassigned:new:${updated.id}:${eventVersion}`,
+			});
+		}
+		if (
+			existing.assigneeId &&
+			existing.assigneeId !== editable.access.user.id
+		) {
+			await createNotification({
+				recipientId: existing.assigneeId,
+				workspaceId: editable.access.workspaceId,
+				projectId: parsed.data.projectId,
+				taskId: updated.id,
+				type: "task_reassigned",
+				title: "Task reassigned",
+				message: `“${updated.title}” was reassigned to another team member.`,
+				href: `/projects/${parsed.data.projectId}`,
+				eventKey: `task-reassigned:previous:${updated.id}:${eventVersion}`,
+			});
+		}
+	}
 
 	revalidateTaskSurfaces(parsed.data.projectId);
 	return {

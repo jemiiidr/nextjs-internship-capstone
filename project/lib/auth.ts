@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db, findUserByClerkId } from "@/lib/db";
 import { projects, users } from "@/lib/db/schema";
+import { upsertClerkUser } from "@/lib/users";
 import { normalizeWorkspaceRole } from "@/lib/workspaces";
 import type { MemberRole } from "@/types";
 
@@ -25,26 +26,12 @@ export async function syncCurrentUser() {
 		email.split("@")[0] ||
 		"Flowora user";
 
-	const [savedUser] = await db
-		.insert(users)
-		.values({
-			clerkId: userId,
-			email,
-			name,
-			avatarUrl: clerkUser.imageUrl,
-		})
-		.onConflictDoUpdate({
-			target: users.clerkId,
-			set: {
-				email,
-				name,
-				avatarUrl: clerkUser.imageUrl,
-				updatedAt: new Date(),
-			},
-		})
-		.returning();
-
-	return savedUser;
+	return upsertClerkUser({
+		clerkId: userId,
+		email,
+		name,
+		avatarUrl: clerkUser.imageUrl,
+	});
 }
 
 export async function requireDbUser() {

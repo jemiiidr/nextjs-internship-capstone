@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { getWorkspaceContext } from "@/lib/auth";
-import {
-	getWorkspaceMemberPreview,
-	getWorkspaceSummary,
-} from "@/lib/workspaces";
+import { getUserNotifications } from "@/lib/notifications";
+import { getWorkspaceSummary } from "@/lib/workspaces";
 
 export default async function ProtectedLayout({
 	children,
@@ -12,12 +10,21 @@ export default async function ProtectedLayout({
 	children: ReactNode;
 }) {
 	const context = await getWorkspaceContext();
-	const [workspace, members] = context.workspaceId
+	const [workspace, notifications] = context.workspaceId
 		? await Promise.all([
 				getWorkspaceSummary(context.workspaceId, context.workspaceRoleKey),
-				getWorkspaceMemberPreview(context.workspaceId, 4),
+				getUserNotifications({
+					userId: context.user.id,
+					workspaceId: context.workspaceId,
+				}),
 			])
-		: [null, []];
+		: [
+				null,
+				await getUserNotifications({
+					userId: context.user.id,
+					workspaceId: null,
+				}),
+			];
 
 	return (
 		<DashboardLayout
@@ -28,7 +35,7 @@ export default async function ProtectedLayout({
 				avatarUrl: context.user.avatarUrl,
 			}}
 			workspace={workspace}
-			workspaceMembers={members.slice(0, 4)}
+			notifications={notifications}
 		>
 			{children}
 		</DashboardLayout>

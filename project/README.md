@@ -410,6 +410,7 @@ As you progress through development, you'll need to replace placeholder dependen
    ```
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
    CLERK_SECRET_KEY=
+   CLERK_WEBHOOK_SIGNING_SECRET=
    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
    NEXT_PUBLIC_APP_URL=https://your-production-domain.com
@@ -419,9 +420,15 @@ As you progress through development, you'll need to replace placeholder dependen
    ```bash
    vercel env add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
    vercel env add CLERK_SECRET_KEY
+   vercel env add CLERK_WEBHOOK_SIGNING_SECRET
    vercel env add NEXT_PUBLIC_APP_URL
    vercel env add DATABASE_URL
    ```
+
+   Configure the Clerk webhook endpoint as `/api/webhooks/clerk` and subscribe
+   to `user.created`, `user.updated`, `user.deleted`, and
+   `organizationMembership.created`. The membership event powers the in-app
+   “new team member” notification.
 
 5. **Deploy a preview**
    ```bash

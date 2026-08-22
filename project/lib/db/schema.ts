@@ -80,6 +80,13 @@ export const activityActionEnum = pgEnum("activity_action", [
 	"task_deleted",
 	"comment_created",
 ]);
+export const notificationTypeEnum = pgEnum("notification_type", [
+	"task_assigned",
+	"task_reassigned",
+	"deadline_today",
+	"task_overdue",
+	"member_joined",
+]);
 
 export const users = pgTable(
 	"users",
@@ -264,12 +271,53 @@ export const activities = pgTable(
 	],
 );
 
+export const notifications = pgTable(
+	"notifications",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		recipientId: uuid("recipient_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		workspaceId: text("workspace_id").notNull(),
+		projectId: uuid("project_id").references(() => projects.id, {
+			onDelete: "cascade",
+		}),
+		taskId: uuid("task_id").references(() => tasks.id, {
+			onDelete: "cascade",
+		}),
+		type: notificationTypeEnum("type").notNull(),
+		title: text("title").notNull(),
+		message: text("message").notNull(),
+		href: text("href").notNull(),
+		eventKey: text("event_key").notNull(),
+		readAt: timestamp("read_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("notifications_recipient_event_idx").on(
+			table.recipientId,
+			table.eventKey,
+		),
+		index("notifications_recipient_created_idx").on(
+			table.recipientId,
+			table.createdAt,
+		),
+		index("notifications_recipient_read_idx").on(
+			table.recipientId,
+			table.readAt,
+		),
+	],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
 	ownedProjects: many(projects),
 	memberships: many(projectMembers),
 	assignedTasks: many(tasks),
 	comments: many(comments),
 	activities: many(activities),
+	notifications: many(notifications),
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
@@ -323,3 +371,4 @@ export type ListRow = typeof lists.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
 export type CommentRow = typeof comments.$inferSelect;
 export type ActivityRow = typeof activities.$inferSelect;
+export type NotificationRow = typeof notifications.$inferSelect;

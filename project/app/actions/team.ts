@@ -3,8 +3,14 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { requireWorkspaceContext } from "@/lib/auth";
+import { getWorkspaceContext, requireWorkspaceContext } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 import { workspaceInvitationSchema } from "@/lib/validations";
+import {
+	getWorkspaceMembers,
+	getWorkspaceSummary,
+	userBelongsToWorkspace,
+} from "@/lib/workspaces";
 import type { ActionResult } from "@/types";
 
 function invitationRedirectUrl(requestOrigin: string | null) {
@@ -115,4 +121,43 @@ export async function revokeWorkspaceInvitationAction(
 			message: "Clerk could not revoke the invitation. Please try again.",
 		};
 	}
+}
+
+export async function notifyWorkspaceJoinedAction(
+	workspaceId: string,
+): Promise<ActionResult> {
+	const context = await getWorkspaceContext();
+	if (!/^org_[A-Za-z0-9]+$/.test(workspaceId)) {
+		return { success: false, message: "Invalid workspace." };
+	}
+	const membership = await userBelongsToWorkspace(
+		workspaceId,
+		context.clerkUserId,
+	);
+	if (!membership) {
+		return { success: false, message: "Workspace membership was not found." };
+	}
+
+	const [workspace, members] = await Promise.all([
+		getWorkspaceSummary(workspaceId, membership.role),
+		getWorkspaceMembers(workspaceId),
+	]);
+	await Promise.all(
+		members
+			.filter((member) => member.clerkId !== context.clerkUserId)
+			.map((member) =>
+				createNotification({
+					recipientId: member.id,
+					workspaceId,
+					type: "member_joined",
+					title: "New team member",
+					message: `${context.user.name} joined ${workspace.name}.`,
+					href: "/team",
+					eventKey: `member-joined:${workspaceId}:${context.clerkUserId}`,
+				}),
+			),
+	);
+	revalidatePath("/", "layout");
+	revalidatePath("/team");
+	return { success: true, message: "Workspace joined." };
 }

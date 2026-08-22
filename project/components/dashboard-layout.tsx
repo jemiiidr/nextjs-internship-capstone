@@ -3,12 +3,13 @@
 import { UserButton } from "@clerk/nextjs";
 import {
 	BarChart3,
-	Bell,
 	CalendarDays,
 	CheckSquare2,
 	FolderKanban,
 	LayoutDashboard,
 	Menu,
+	PanelLeftClose,
+	PanelLeftOpen,
 	Settings,
 	Users,
 	X,
@@ -18,13 +19,14 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { FloworaLogo } from "@/components/flowora-logo";
 import { CreateProjectModal } from "@/components/modals/create-project-modal";
+import { NotificationCenter } from "@/components/notification-center";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
-import type { UserSummary, WorkspaceSummary } from "@/types";
+import type { NotificationItem, UserSummary, WorkspaceSummary } from "@/types";
 
 const primaryNavigation = [
 	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -43,15 +45,24 @@ export function DashboardLayout({
 	children,
 	user,
 	workspace,
+	notifications,
 }: {
 	children: ReactNode;
 	user: UserSummary;
 	workspace: WorkspaceSummary | null;
-	workspaceMembers: UserSummary[];
+	notifications: {
+		items: NotificationItem[];
+		unreadCount: number;
+		totalCount: number;
+	};
 }) {
 	const pathname = usePathname();
 	const sidebarOpen = useUIStore((state) => state.isSidebarOpen);
+	const sidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
 	const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
+	const toggleSidebarCollapsed = useUIStore(
+		(state) => state.toggleSidebarCollapsed,
+	);
 
 	const navLink = (item: (typeof primaryNavigation)[number]) => {
 		const active =
@@ -65,13 +76,18 @@ export function DashboardLayout({
 				onClick={() => setSidebarOpen(false)}
 				className={cn(
 					"flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+					sidebarCollapsed && "lg:justify-center lg:px-0",
 					active
 						? "bg-blue_munsell-50 text-blue_munsell-700 dark:bg-blue_munsell-900/35 dark:text-blue_munsell-200"
 						: "text-paynes_gray-500 hover:bg-platinum-100 hover:text-outer_space-900 dark:text-french_gray-400 dark:hover:bg-outer_space-400 dark:hover:text-platinum-50",
 				)}
+				title={sidebarCollapsed ? item.label : undefined}
+				aria-label={sidebarCollapsed ? item.label : undefined}
 			>
-				<item.icon size={17} />
-				{item.label}
+				<item.icon size={17} className="shrink-0" />
+				<span className={cn(sidebarCollapsed && "lg:hidden")}>
+					{item.label}
+				</span>
 			</Link>
 		);
 	};
@@ -90,12 +106,29 @@ export function DashboardLayout({
 
 			<aside
 				className={cn(
-					"fixed inset-y-0 left-1.5 z-50 flex w-70 flex-col border-r border-french_gray-300/80 bg-white px-3 transition-transform dark:border-paynes_gray-800 dark:bg-outer_space-500 lg:translate-x-0",
+					"fixed inset-y-0 left-1.5 z-50 flex w-70 flex-col border-r border-french_gray-300/80 bg-white px-3 transition-[width,transform] duration-200 dark:border-paynes_gray-800 dark:bg-outer_space-500 lg:translate-x-0",
+					sidebarCollapsed && "lg:w-20 lg:px-2",
 					sidebarOpen ? "translate-x-0" : "-translate-x-[calc(100%+8px)]",
 				)}
 			>
-				<div className="flex h-18 items-center justify-between px-2">
-					<FloworaLogo href="/dashboard" />
+				<div
+					className={cn(
+						"flex h-18 items-center justify-between px-2",
+						sidebarCollapsed && "lg:justify-center lg:px-0",
+					)}
+				>
+					{sidebarCollapsed ? (
+						<>
+							<div className="lg:hidden">
+								<FloworaLogo href="/dashboard" />
+							</div>
+							<div className="hidden lg:block">
+								<FloworaLogo href="/dashboard" compact />
+							</div>
+						</>
+					) : (
+						<FloworaLogo href="/dashboard" />
+					)}
 					<Button
 						variant="ghost"
 						size="icon"
@@ -106,31 +139,76 @@ export function DashboardLayout({
 						<X size={18} />
 					</Button>
 				</div>
+				<Button
+					variant="secondary"
+					size="icon"
+					className="absolute -right-4 top-5 z-10 hidden size-8 rounded-full bg-white shadow-md lg:inline-flex dark:bg-outer_space-400"
+					onClick={toggleSidebarCollapsed}
+					aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+					title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+				>
+					{sidebarCollapsed ? (
+						<PanelLeftOpen size={15} />
+					) : (
+						<PanelLeftClose size={15} />
+					)}
+				</Button>
 
-				<div className="px-1 pb-4">
+				<div className={cn("px-1 pb-4", sidebarCollapsed && "lg:hidden")}>
 					<WorkspaceSwitcher activeWorkspaceId={workspace?.id ?? null} />
 				</div>
 
 				<nav className="flex-1 space-y-1 overflow-y-auto px-1 scrollbar-thin">
-					<p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-paynes_gray-400">
+					<p
+						className={cn(
+							"px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-paynes_gray-400",
+							sidebarCollapsed && "lg:sr-only",
+						)}
+					>
 						Workspace
 					</p>
 					{primaryNavigation.map(navLink)}
-					<p className="px-3 pb-1 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-paynes_gray-400">
+					<NotificationCenter
+						items={notifications.items}
+						unreadCount={notifications.unreadCount}
+						variant="sidebar"
+						collapsed={sidebarCollapsed}
+					/>
+					<p
+						className={cn(
+							"px-3 pb-1 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-paynes_gray-400",
+							sidebarCollapsed && "lg:sr-only",
+						)}
+					>
 						Manage
 					</p>
 					{secondaryNavigation.map(navLink)}
 				</nav>
 
 				<div className="space-y-2 border-t border-french_gray-200 px-1 py-3 dark:border-paynes_gray-800">
-					<div className="relative flex items-center gap-2 rounded-xl p-2 transition hover:bg-platinum-100 focus-within:ring-2 focus-within:ring-blue_munsell-400 dark:hover:bg-outer_space-400">
-						<div className="flex min-w-0 flex-1 items-center gap-3">
+					<div
+						className={cn(
+							"relative flex items-center gap-2 rounded-xl p-2 transition hover:bg-platinum-100 focus-within:ring-2 focus-within:ring-blue_munsell-400 dark:hover:bg-outer_space-400",
+							sidebarCollapsed && "lg:justify-center lg:p-1.5",
+						)}
+					>
+						<div
+							className={cn(
+								"flex min-w-0 flex-1 items-center gap-3",
+								sidebarCollapsed && "lg:flex-none",
+							)}
+						>
 							<Avatar
 								name={user.name}
 								src={user.avatarUrl}
 								className="size-9"
 							/>
-							<div className="min-w-0 flex-1">
+							<div
+								className={cn(
+									"min-w-0 flex-1",
+									sidebarCollapsed && "lg:hidden",
+								)}
+							>
 								<p className="truncate text-sm font-semibold text-outer_space-900 dark:text-platinum-50">
 									{user.name}
 								</p>
@@ -149,13 +227,29 @@ export function DashboardLayout({
 							}}
 						/>
 					</div>
-					<div className="flex justify-end px-2">
-						<ThemeToggle />
+					<div className="px-1">
+						{sidebarCollapsed ? (
+							<>
+								<div className="lg:hidden">
+									<ThemeToggle />
+								</div>
+								<div className="hidden lg:flex lg:justify-center">
+									<ThemeToggle compact />
+								</div>
+							</>
+						) : (
+							<ThemeToggle />
+						)}
 					</div>
 				</div>
 			</aside>
 
-			<div className="lg:pl-72">
+			<div
+				className={cn(
+					"transition-[padding] duration-200 lg:pl-72",
+					sidebarCollapsed && "lg:pl-[5.25rem]",
+				)}
+			>
 				<header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-french_gray-300/80 bg-white/90 px-4 backdrop-blur-lg lg:hidden dark:border-paynes_gray-800 dark:bg-outer_space-500/90">
 					<Button
 						variant="ghost"
@@ -166,9 +260,11 @@ export function DashboardLayout({
 						<Menu size={20} />
 					</Button>
 					<FloworaLogo href="/dashboard" compact />
-					<Button variant="ghost" size="icon" aria-label="Notifications">
-						<Bell size={18} />
-					</Button>
+					<NotificationCenter
+						items={notifications.items}
+						unreadCount={notifications.unreadCount}
+						variant="icon"
+					/>
 				</header>
 				<main className="mx-auto max-w-[1680px] p-4 sm:p-6 lg:p-8 xl:p-10">
 					{children}

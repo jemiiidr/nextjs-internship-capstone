@@ -3,6 +3,9 @@ import { eq } from "drizzle-orm";
 import { Webhook } from "svix";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { createNotification } from "@/lib/notifications";
+import { upsertClerkUser } from "@/lib/users";
+import { getWorkspaceMembers } from "@/lib/workspaces";
 
 export async function POST(request: Request) {
 	const secret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
@@ -53,27 +56,44 @@ export async function POST(request: Request) {
 			email.split("@")[0] ||
 			"ProjectFlow user";
 
-		await db
-			.insert(users)
-			.values({
-				clerkId: data.id,
-				email,
-				name,
-				avatarUrl: data.image_url,
-			})
-			.onConflictDoUpdate({
-				target: users.clerkId,
-				set: {
-					email,
-					name,
-					avatarUrl: data.image_url,
-					updatedAt: new Date(),
-				},
-			});
+		await upsertClerkUser({
+			clerkId: data.id,
+			email,
+			name,
+			avatarUrl: data.image_url,
+		});
 	}
 
 	if (event.type === "user.deleted" && event.data.id) {
 		await db.delete(users).where(eq(users.clerkId, event.data.id));
+	}
+
+	if (event.type === "organizationMembership.created") {
+		const membership = event.data;
+		const joinedUserId = membership.public_user_data.user_id;
+		const joinedName =
+			[
+				membership.public_user_data.first_name,
+				membership.public_user_data.last_name,
+			]
+				.filter(Boolean)
+				.join(" ") || membership.public_user_data.identifier;
+		const members = await getWorkspaceMembers(membership.organization.id);
+		await Promise.all(
+			members
+				.filter((member) => member.clerkId !== joinedUserId)
+				.map((member) =>
+					createNotification({
+						recipientId: member.id,
+						workspaceId: membership.organization.id,
+						type: "member_joined",
+						title: "New team member",
+						message: `${joinedName} joined ${membership.organization.name}.`,
+						href: "/team",
+						eventKey: `member-joined:${membership.organization.id}:${joinedUserId}`,
+					}),
+				),
+		);
 	}
 
 	return Response.json({ received: true });

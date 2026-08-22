@@ -3,18 +3,23 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export function ThemeToggle() {
+export function ThemeToggle({ compact = false }: { compact?: boolean }) {
 	const { theme, setTheme } = useTheme();
 	const nextTheme = theme === "light" ? "dark" : "light";
 	return (
 		<Button
 			variant="ghost"
-			size="icon"
+			size={compact ? "icon" : "default"}
+			className={cn(!compact && "w-full justify-start px-3")}
 			onClick={() => setTheme(nextTheme)}
 			aria-label={`Switch to ${nextTheme} theme`}
 		>
 			{theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+			{compact ? null : (
+				<span>{theme === "light" ? "Dark mode" : "Light mode"}</span>
+			)}
 		</Button>
 	);
 }

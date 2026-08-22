@@ -1,10 +1,12 @@
 "use client";
 
-import { MailPlus, ShieldCheck, Trash2, Users } from "lucide-react";
+import { useOrganizationList } from "@clerk/nextjs";
+import { Building2, MailPlus, ShieldCheck, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import {
 	inviteWorkspaceMemberAction,
+	notifyWorkspaceJoinedAction,
 	revokeWorkspaceInvitationAction,
 } from "@/app/actions/team";
 import { Avatar } from "@/components/ui/avatar";
@@ -187,6 +189,42 @@ export function TeamTabs({
 	const [activeTab, setActiveTab] = useState<"members" | "invitations">(
 		"members",
 	);
+	const router = useRouter();
+	const [acceptError, setAcceptError] = useState("");
+	const [acceptingId, setAcceptingId] = useState<string | null>(null);
+	const [isAccepting, startAccepting] = useTransition();
+	const { isLoaded, setActive, userInvitations } = useOrganizationList({
+		userInvitations: { status: "pending", infinite: true, pageSize: 20 },
+	});
+	const incomingInvitations = userInvitations.data ?? [];
+	const pendingCount = invitations.length + incomingInvitations.length;
+
+	const acceptInvitation = (
+		invitation: (typeof incomingInvitations)[number],
+	) => {
+		if (!setActive) return;
+		setAcceptError("");
+		setAcceptingId(invitation.id);
+		startAccepting(async () => {
+			try {
+				await invitation.accept();
+				await userInvitations.revalidate();
+				await setActive({
+					organization: invitation.publicOrganizationData.id,
+				});
+				await notifyWorkspaceJoinedAction(invitation.publicOrganizationData.id);
+				router.push("/team");
+				router.refresh();
+			} catch (error) {
+				console.error("Unable to accept Clerk organization invitation", error);
+				setAcceptError(
+					"Clerk could not accept this invitation. Please try again.",
+				);
+			} finally {
+				setAcceptingId(null);
+			}
+		});
+	};
 
 	return (
 		<section className="space-y-5">
@@ -223,9 +261,9 @@ export function TeamTabs({
 					}`}
 				>
 					Pending Invites
-					{invitations.length > 0 ? (
+					{pendingCount > 0 ? (
 						<span className="inline-flex items-center justify-center rounded-full bg-blue_munsell-100 px-1.5 py-0.5 text-[11px] font-bold text-blue_munsell-700 dark:bg-blue_munsell-900/50 dark:text-blue_munsell-200">
-							({invitations.length})
+							({pendingCount})
 						</span>
 					) : null}
 					{activeTab === "invitations" ? (
@@ -274,9 +312,74 @@ export function TeamTabs({
 						</p>
 					</div>
 				)
-			) : invitations.length > 0 ? (
-				<div role="tabpanel">
-					<PendingInvitations invitations={invitations} />
+			) : pendingCount > 0 || !isLoaded ? (
+				<div role="tabpanel" className="space-y-6">
+					{!isLoaded ? (
+						<div className="rounded-2xl border border-french_gray-300 bg-white p-5 text-sm text-paynes_gray-500 dark:border-paynes_gray-800 dark:bg-outer_space-500">
+							Loading invitations…
+						</div>
+					) : null}
+					{incomingInvitations.length > 0 ? (
+						<section className="space-y-3">
+							<div>
+								<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
+									Invitations for you
+								</h2>
+								<p className="text-sm text-paynes_gray-500">
+									Accept an invitation to join and open its workspace.
+								</p>
+							</div>
+							{acceptError ? (
+								<p
+									role="alert"
+									className="text-sm text-red-600 dark:text-red-400"
+								>
+									{acceptError}
+								</p>
+							) : null}
+							<div className="overflow-hidden rounded-2xl border border-blue_munsell-200 bg-blue_munsell-50/30 dark:border-blue_munsell-800 dark:bg-blue_munsell-950/20">
+								{incomingInvitations.map((invitation) => (
+									<div
+										key={invitation.id}
+										className="flex flex-col gap-3 border-b border-blue_munsell-100 p-4 last:border-b-0 sm:flex-row sm:items-center dark:border-blue_munsell-900"
+									>
+										<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue_munsell-600 shadow-sm dark:bg-outer_space-400 dark:text-blue_munsell-300">
+											<Building2 size={19} />
+										</span>
+										<div className="min-w-0 flex-1">
+											<p className="truncate font-semibold text-outer_space-900 dark:text-platinum-50">
+												{invitation.publicOrganizationData.name}
+											</p>
+											<p className="truncate text-sm text-paynes_gray-500">
+												Invited as {invitation.role.replace("org:", "")}
+											</p>
+										</div>
+										<Button
+											onClick={() => acceptInvitation(invitation)}
+											disabled={isAccepting}
+										>
+											{acceptingId === invitation.id
+												? "Accepting…"
+												: "Accept invitation"}
+										</Button>
+									</div>
+								))}
+							</div>
+						</section>
+					) : null}
+					{invitations.length > 0 ? (
+						<section className="space-y-3">
+							<div>
+								<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
+									Sent invitations
+								</h2>
+								<p className="text-sm text-paynes_gray-500">
+									Waiting for these people to join this workspace.
+								</p>
+							</div>
+							<PendingInvitations invitations={invitations} />
+						</section>
+					) : null}
 				</div>
 			) : (
 				<div

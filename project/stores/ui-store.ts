@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 interface UIState {
 	isSidebarOpen: boolean;
+	isSidebarCollapsed: boolean;
 	isCreateProjectOpen: boolean;
 	isCreateTaskOpen: boolean;
 	isTaskDetailOpen: boolean;
@@ -12,6 +13,7 @@ interface UIState {
 	selectedTaskIds: string[];
 	setSidebarOpen: (open: boolean) => void;
 	toggleSidebar: () => void;
+	toggleSidebarCollapsed: () => void;
 	openCreateProject: () => void;
 	closeCreateProject: () => void;
 	openCreateTask: (listId: string) => void;
@@ -24,6 +26,7 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
 	isSidebarOpen: false,
+	isSidebarCollapsed: false,
 	isCreateProjectOpen: false,
 	isCreateTaskOpen: false,
 	isTaskDetailOpen: false,
@@ -33,6 +36,8 @@ export const useUIStore = create<UIState>((set) => ({
 	setSidebarOpen: (open) => set({ isSidebarOpen: open }),
 	toggleSidebar: () =>
 		set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+	toggleSidebarCollapsed: () =>
+		set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 	openCreateProject: () => set({ isCreateProjectOpen: true }),
 	closeCreateProject: () => set({ isCreateProjectOpen: false }),
 	openCreateTask: (listId) =>
