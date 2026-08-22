@@ -85,5 +85,15 @@ export const userSchema = z.object({
 	email: z.string().email(),
 });
 
+export const workspaceInvitationSchema = z.object({
+	email: z
+		.string()
+		.trim()
+		.toLowerCase()
+		.email("Enter a valid email address")
+		.max(254),
+	role: z.enum(["org:member", "org:admin"]),
+});
+
 export type ProjectInput = z.infer<typeof projectSchema>;
 export type TaskInput = z.infer<typeof taskSchema>;

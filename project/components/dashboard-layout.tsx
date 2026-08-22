@@ -6,7 +6,6 @@ import {
 	Bell,
 	CalendarDays,
 	CheckSquare2,
-	CircleHelp,
 	FolderKanban,
 	LayoutDashboard,
 	Menu,
@@ -21,7 +20,6 @@ import { FloworaLogo } from "@/components/flowora-logo";
 import { CreateProjectModal } from "@/components/modals/create-project-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
-import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { cn } from "@/lib/utils";
@@ -45,7 +43,6 @@ export function DashboardLayout({
 	children,
 	user,
 	workspace,
-	workspaceMembers,
 }: {
 	children: ReactNode;
 	user: UserSummary;
@@ -112,18 +109,6 @@ export function DashboardLayout({
 
 				<div className="px-1 pb-4">
 					<WorkspaceSwitcher activeWorkspaceId={workspace?.id ?? null} />
-					{workspace ? (
-						<div className="mt-2 flex items-center justify-between px-2 text-xs text-paynes_gray-500">
-							<span className="capitalize">
-								{workspace.role} · {workspace.memberCount} members
-							</span>
-							<AvatarStack
-								users={workspaceMembers}
-								total={workspace.memberCount}
-								limit={3}
-							/>
-						</div>
-					) : null}
 				</div>
 
 				<nav className="flex-1 space-y-1 overflow-y-auto px-1 scrollbar-thin">
@@ -138,11 +123,8 @@ export function DashboardLayout({
 				</nav>
 
 				<div className="space-y-2 border-t border-french_gray-200 px-1 py-3 dark:border-paynes_gray-800">
-					<div className="flex items-center gap-2 rounded-xl p-2">
-						<Link
-							href="/settings"
-							className="flex min-w-0 flex-1 items-center gap-3 rounded-lg transition hover:opacity-80"
-						>
+					<div className="relative flex items-center gap-2 rounded-xl p-2 transition hover:bg-platinum-100 focus-within:ring-2 focus-within:ring-blue_munsell-400 dark:hover:bg-outer_space-400">
+						<div className="flex min-w-0 flex-1 items-center gap-3">
 							<Avatar
 								name={user.name}
 								src={user.avatarUrl}
@@ -156,13 +138,18 @@ export function DashboardLayout({
 									{user.email}
 								</p>
 							</div>
-						</Link>
-						<UserButton appearance={{ elements: { avatarBox: "size-8" } }} />
+						</div>
+						<UserButton
+							appearance={{
+								elements: {
+									rootBox: "absolute inset-0 z-10 size-full",
+									userButtonTrigger: "size-full rounded-xl opacity-0",
+									avatarBox: "size-full",
+								},
+							}}
+						/>
 					</div>
-					<div className="flex items-center justify-between px-2">
-						<span className="flex items-center gap-2 text-xs text-paynes_gray-500">
-							<CircleHelp size={14} /> Help & support
-						</span>
+					<div className="flex justify-end px-2">
 						<ThemeToggle />
 					</div>
 				</div>

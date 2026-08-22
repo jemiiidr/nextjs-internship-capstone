@@ -7,9 +7,28 @@ import { users } from "@/lib/db/schema";
 import type {
 	MemberRole,
 	UserSummary,
+	WorkspaceInvitation,
 	WorkspaceMember,
 	WorkspaceSummary,
 } from "@/types";
+
+export async function getPendingWorkspaceInvitations(
+	workspaceId: string,
+): Promise<WorkspaceInvitation[]> {
+	const client = await clerkClient();
+	const { data } = await client.organizations.getOrganizationInvitationList({
+		organizationId: workspaceId,
+		status: ["pending"],
+		limit: 100,
+	});
+	return data.map((invitation) => ({
+		id: invitation.id,
+		email: invitation.emailAddress,
+		role: invitation.role === "org:admin" ? "admin" : "member",
+		createdAt: new Date(invitation.createdAt).toISOString(),
+		expiresAt: new Date(invitation.expiresAt).toISOString(),
+	}));
+}
 
 export function normalizeWorkspaceRole(
 	role: string | null | undefined,

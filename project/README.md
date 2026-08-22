@@ -412,12 +412,14 @@ As you progress through development, you'll need to replace placeholder dependen
    CLERK_SECRET_KEY=
    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+   NEXT_PUBLIC_APP_URL=https://your-production-domain.com
    DATABASE_URL=
    ```
    Or push them via CLI:
    ```bash
    vercel env add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
    vercel env add CLERK_SECRET_KEY
+   vercel env add NEXT_PUBLIC_APP_URL
    vercel env add DATABASE_URL
    ```
 

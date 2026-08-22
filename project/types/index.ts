@@ -25,6 +25,14 @@ export interface WorkspaceSummary {
 	memberCount: number;
 }
 
+export interface WorkspaceInvitation {
+	id: string;
+	email: string;
+	role: Exclude<MemberRole, "owner" | "viewer">;
+	createdAt: string;
+	expiresAt: string;
+}
+
 export interface ProjectSummary {
 	id: string;
 	workspaceId: string | null;
