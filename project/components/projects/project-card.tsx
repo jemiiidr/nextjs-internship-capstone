@@ -3,6 +3,7 @@
 import {
 	CalendarDays,
 	CheckCircle2,
+	Pencil,
 	Lock,
 	MoreHorizontal,
 	Trash2,
@@ -15,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { EditProjectModal } from "@/components/projects/edit-project-modal";
 import { hasPermission } from "@/lib/rbac";
 import { formatDate } from "@/lib/utils";
 import type { ProjectSummary } from "@/types";
@@ -22,13 +24,14 @@ import type { ProjectSummary } from "@/types";
 export function ProjectCard({ project }: { project: ProjectSummary }) {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [deleteError, setDeleteError] = useState("");
 	const [isPending, startTransition] = useTransition();
 	const progress =
 		project.taskCount === 0
 			? 0
 			: Math.round((project.completedTaskCount / project.taskCount) * 100);
-	const canDelete =
+	const canManage =
 		project.isOwner || hasPermission(project.role, "project:delete");
 
 	const openDeleteModal = () => {
@@ -55,6 +58,11 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 	return (
 		<>
 			<Card className="group relative overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
+				<Link
+					href={`/projects/${project.id}`}
+					aria-label={`Open ${project.name}`}
+					className="absolute inset-0 z-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue_munsell-400"
+				/>
 				<CardHeader className="pb-3">
 					<div className="flex items-start justify-between gap-3">
 						<div className="min-w-0">
@@ -68,14 +76,11 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 									<Badge>Workspace</Badge>
 								)}
 							</div>
-							<Link
-								href={`/projects/${project.id}`}
-								className="block truncate text-lg font-semibold text-outer_space-500 hover:text-blue_munsell-500 dark:text-platinum-500"
-							>
+							<h2 className="truncate text-lg font-semibold text-outer_space-500 transition group-hover:text-blue_munsell-500 dark:text-platinum-500">
 								{project.name}
-							</Link>
+							</h2>
 						</div>
-						<div className="relative">
+						{canManage ? <div className="relative z-10">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -86,31 +91,32 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 							</Button>
 							{menuOpen ? (
 								<div className="absolute right-0 top-10 z-10 min-w-40 rounded-lg border border-french_gray-300 bg-white p-1 shadow-lg dark:border-paynes_gray-400 dark:bg-outer_space-400">
-									<Link
-										href={`/projects/${project.id}`}
-										className="block rounded-md px-3 py-2 text-sm hover:bg-platinum-700 dark:hover:bg-paynes_gray-400"
+									<button
+										type="button"
+										onClick={() => { setMenuOpen(false); setEditModalOpen(true); }}
+										className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-platinum-700 dark:hover:bg-paynes_gray-400"
 									>
-										Open project
-									</Link>
-									{canDelete ? (
+										<Pencil size={14} /> Edit Project Details
+									</button>
+									{canManage ? (
 										<button
 											type="button"
 											disabled={isPending}
 											onClick={openDeleteModal}
 											className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
 										>
-											<Trash2 size={14} /> {isPending ? "Deleting…" : "Delete"}
+											<Trash2 size={14} /> {isPending ? "Deleting…" : "Delete Project"}
 										</button>
 									) : null}
 								</div>
 							) : null}
-						</div>
+						</div> : null}
 					</div>
 					<p className="line-clamp-2 min-h-10 text-sm text-paynes_gray-500 dark:text-french_gray-400">
 						{project.description || "No description yet."}
 					</p>
 				</CardHeader>
-				<CardContent className="space-y-4">
+				<CardContent className="relative z-0 space-y-4 pointer-events-none">
 					<div className="grid grid-cols-3 gap-2 text-xs text-paynes_gray-500 dark:text-french_gray-400">
 						<span className="flex items-center gap-1">
 							<Users size={14} /> {project.memberCount}
@@ -140,6 +146,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 					</div>
 				</CardContent>
 			</Card>
+			<EditProjectModal project={project} open={editModalOpen} onClose={() => setEditModalOpen(false)} />
 			<ConfirmationModal
 				open={deleteModalOpen}
 				onClose={closeDeleteModal}

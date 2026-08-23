@@ -150,7 +150,7 @@ export async function updateProjectAction(
 	}
 
 	const access = await requireProjectAccess(parsed.data.projectId);
-	if (!access || !canEditProject(access.role)) {
+	if (!access || !canManageProject(access.role)) {
 		return {
 			success: false,
 			message: "You do not have permission to edit this project.",
