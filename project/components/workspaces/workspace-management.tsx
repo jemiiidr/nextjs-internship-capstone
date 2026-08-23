@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { CreateWorkspaceForm } from "@/components/workspaces/create-workspace-form";
 import { WorkspaceActivateButton } from "@/components/workspaces/workspace-activate-button";
+import { hasPermission } from "@/lib/rbac";
 import type { ActionResult, UserSummary, WorkspaceSummary } from "@/types";
 
 const initialState: ActionResult = { success: false, message: "" };
@@ -142,7 +143,8 @@ export function WorkspaceManagement({
 								<p className="mt-1 font-semibold capitalize">{selected.role}</p>
 							</div>
 						</div>
-						{selected.role === "admin" && selected.id === activeWorkspaceId ? (
+						{hasPermission(selected.role, "workspace:update") &&
+						selected.id === activeWorkspaceId ? (
 							<form action={action} className="space-y-3">
 								<input type="hidden" name="workspaceId" value={selected.id} />
 								<div className="space-y-2">
@@ -178,7 +180,7 @@ export function WorkspaceManagement({
 							</form>
 						) : (
 							<p className="rounded-xl bg-platinum-100 p-3 text-sm text-paynes_gray-500 dark:bg-outer_space-400">
-								{selected.role !== "admin"
+								{!hasPermission(selected.role, "workspace:update")
 									? "Only workspace administrators can change workspace settings."
 									: "Activate this workspace to edit its settings."}
 							</p>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { InviteMemberButton, TeamTabs } from "@/components/team/team-management";
 import { requireWorkspaceContext } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import {
 	getPendingWorkspaceInvitations,
 	getWorkspaceMembers,
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: "Team" };
 
 export default async function TeamPage() {
 	const context = await requireWorkspaceContext();
-	const canManageMembers = context.role === "admin";
+	const canManageMembers = hasPermission(context.role, "team:manage");
 	const [workspace, members, invitations] = await Promise.all([
 		getWorkspaceSummary(context.workspaceId, context.workspaceRoleKey),
 		getWorkspaceMembers(context.workspaceId),

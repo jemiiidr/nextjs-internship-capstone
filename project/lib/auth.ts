@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db, findUserByClerkId } from "@/lib/db";
 import { projects, users } from "@/lib/db/schema";
+import { hasPermission } from "@/lib/rbac";
 import { upsertClerkUser } from "@/lib/users";
 import { normalizeWorkspaceRole } from "@/lib/workspaces";
 import type { MemberRole } from "@/types";
@@ -91,11 +92,11 @@ export async function requireProjectAccess(projectId: string) {
 }
 
 export function canManageProject(role: MemberRole) {
-	return role === "owner" || role === "admin";
+	return hasPermission(role, "project:delete");
 }
 
 export function canEditProject(role: MemberRole) {
-	return role !== "viewer";
+	return hasPermission(role, "project:update");
 }
 
 export function requireProjectRole(role: MemberRole, allowed: MemberRole[]) {

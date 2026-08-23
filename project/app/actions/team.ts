@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getWorkspaceContext, requireWorkspaceContext } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
+import { hasPermission } from "@/lib/rbac";
 import { workspaceInvitationSchema } from "@/lib/validations";
 import {
 	getWorkspaceMembers,
@@ -40,7 +41,7 @@ export async function inviteWorkspaceMemberAction(
 	formData: FormData,
 ): Promise<ActionResult> {
 	const context = await requireWorkspaceContext();
-	if (context.role !== "admin") {
+	if (!hasPermission(context.role, "team:manage")) {
 		return {
 			success: false,
 			message: "Only workspace admins can invite team members.",
@@ -95,7 +96,7 @@ export async function revokeWorkspaceInvitationAction(
 	invitationId: string,
 ): Promise<ActionResult> {
 	const context = await requireWorkspaceContext();
-	if (context.role !== "admin") {
+	if (!hasPermission(context.role, "team:manage")) {
 		return {
 			success: false,
 			message: "Only workspace admins can revoke invitations.",

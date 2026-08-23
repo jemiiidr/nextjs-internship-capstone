@@ -10,6 +10,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { hasPermission } from "@/lib/rbac";
 import type { MemberRole, ProjectMember, UserSummary } from "@/types";
 
 export function ProjectMembers({
@@ -26,7 +27,7 @@ export function ProjectMembers({
 	const router = useRouter();
 	const [message, setMessage] = useState("");
 	const [isPending, startTransition] = useTransition();
-	const canManage = role === "owner" || role === "admin";
+	const canManage = hasPermission(role, "project:manage-members");
 	const memberIds = new Set(members.map((member) => member.user.id));
 	const availableUsers = workspaceUsers.filter(
 		(user) => !memberIds.has(user.id),

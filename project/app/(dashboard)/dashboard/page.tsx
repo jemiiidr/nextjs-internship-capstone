@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getDashboardData, getMyTasks } from "@/lib/db";
 import { formatDate } from "@/lib/utils";
+import { hasPermission } from "@/lib/rbac";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -37,13 +38,13 @@ export default async function DashboardPage() {
 						A focused view of progress, deadlines, and the work waiting for you.
 					</p>
 				</div>
-				{context.role !== "viewer" ? <CreateProjectButton /> : null}
+				{hasPermission(context.role, "project:create") ? <CreateProjectButton /> : null}
 			</header>
 
 			<DashboardStats stats={data.stats} />
 
 			<div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(20rem,.7fr)]">
-			<RecentProjects projects={data.projects} canCreate={context.role !== "viewer"} />
+			<RecentProjects projects={data.projects} canCreate={hasPermission(context.role, "project:create")} />
 				<Card>
 					<CardContent className="p-5">
 						<div className="flex items-center justify-between">

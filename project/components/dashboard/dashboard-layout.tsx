@@ -24,6 +24,7 @@ import { PageTransition } from "@/components/page-transition";
 import { CreateProjectModal } from "@/components/projects/create-project-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { hasPermission } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import type { NotificationItem, UserSummary, WorkspaceSummary } from "@/types";
@@ -233,7 +234,9 @@ export function DashboardLayout({
 					<PageTransition>{children}</PageTransition>
 				</main>
 			</div>
-			{workspace?.role !== "viewer" ? <CreateProjectModal /> : null}
+			{workspace && hasPermission(workspace.role, "project:create") ? (
+				<CreateProjectModal />
+			) : null}
 		</div>
 	);
 }

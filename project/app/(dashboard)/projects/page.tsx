@@ -5,6 +5,7 @@ import { ProjectGrid } from "@/components/projects/project-grid";
 import { Input } from "@/components/ui/input";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getProjectsForUser } from "@/lib/db";
+import { hasPermission } from "@/lib/rbac";
 
 export const metadata: Metadata = {
 	title: "Projects",
@@ -49,7 +50,7 @@ export default async function ProjectsPage({
 					</p>
 				</div>
 
-				{context.role !== "viewer" ? <CreateProjectButton /> : null}
+				{hasPermission(context.role, "project:create") ? <CreateProjectButton /> : null}
 			</header>
 
 			<form className="relative max-w-xl">
@@ -70,7 +71,7 @@ export default async function ProjectsPage({
 				</button>
 			</form>
 
-			<ProjectGrid projects={projects} canCreate={context.role !== "viewer"} />
+			<ProjectGrid projects={projects} canCreate={hasPermission(context.role, "project:create")} />
 		</div>
 	);
 }

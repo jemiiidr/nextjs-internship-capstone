@@ -4,6 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireWorkspaceContext } from "@/lib/auth";
+import { hasPermission } from "@/lib/rbac";
 import type { ActionResult } from "@/types";
 
 const workspaceSchema = z.object({ name: z.string().trim().min(2).max(100) });
@@ -13,7 +14,7 @@ export async function updateWorkspaceAction(
 	formData: FormData,
 ): Promise<ActionResult> {
 	const context = await requireWorkspaceContext();
-	if (context.role !== "admin")
+	if (!hasPermission(context.role, "workspace:update"))
 		return {
 			success: false,
 			message: "Only workspace admins can change workspace settings.",

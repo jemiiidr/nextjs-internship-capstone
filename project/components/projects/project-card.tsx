@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { hasPermission } from "@/lib/rbac";
 import { formatDate } from "@/lib/utils";
 import type { ProjectSummary } from "@/types";
 
@@ -27,7 +28,8 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 		project.taskCount === 0
 			? 0
 			: Math.round((project.completedTaskCount / project.taskCount) * 100);
-	const canDelete = project.isOwner || project.role === "admin";
+	const canDelete =
+		project.isOwner || hasPermission(project.role, "project:delete");
 
 	const openDeleteModal = () => {
 		setMenuOpen(false);
