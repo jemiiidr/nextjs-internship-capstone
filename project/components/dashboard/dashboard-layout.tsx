@@ -1,6 +1,5 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import {
 	BarChart3,
 	CalendarDays,
@@ -17,13 +16,13 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { FloworaLogo } from "@/components/flowora-logo";
+import { AccountMenu } from "@/components/dashboard/account-menu";
 import { NotificationCenter } from "@/components/dashboard/notification-center";
 import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
+import { FloworaLogo } from "@/components/flowora-logo";
 import { PageTransition } from "@/components/page-transition";
 import { CreateProjectModal } from "@/components/projects/create-project-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
@@ -187,47 +186,7 @@ export function DashboardLayout({
 				</nav>
 
 				<div className="space-y-2 border-t border-french_gray-200 px-1 py-3 dark:border-paynes_gray-800">
-					<div
-						className={cn(
-							"relative flex items-center gap-2 rounded-xl p-2 transition hover:bg-platinum-100 focus-within:ring-2 focus-within:ring-blue_munsell-400 dark:hover:bg-outer_space-400",
-							sidebarCollapsed && "lg:justify-center lg:p-1.5",
-						)}
-					>
-						<div
-							className={cn(
-								"flex min-w-0 flex-1 items-center gap-3",
-								sidebarCollapsed && "lg:flex-none",
-							)}
-						>
-							<Avatar
-								name={user.name}
-								src={user.avatarUrl}
-								className="size-9"
-							/>
-							<div
-								className={cn(
-									"min-w-0 flex-1",
-									sidebarCollapsed && "lg:hidden",
-								)}
-							>
-								<p className="truncate text-sm font-semibold text-outer_space-900 dark:text-platinum-50">
-									{user.name}
-								</p>
-								<p className="truncate text-[11px] text-paynes_gray-500">
-									{user.email}
-								</p>
-							</div>
-						</div>
-						<UserButton
-							appearance={{
-								elements: {
-									rootBox: "absolute inset-0 z-10 size-full",
-									userButtonTrigger: "size-full rounded-xl opacity-0",
-									avatarBox: "size-full",
-								},
-							}}
-						/>
-					</div>
+					<AccountMenu user={user} collapsed={sidebarCollapsed} />
 					<div className="px-1">
 						{sidebarCollapsed ? (
 							<>

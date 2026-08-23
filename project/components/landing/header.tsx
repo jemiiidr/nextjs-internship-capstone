@@ -1,14 +1,21 @@
 "use client";
 
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { ArrowRight } from "lucide-react";
+import { useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { ArrowRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { FloworaLogo } from "@/components/flowora-logo";
 import { SpectrumAura } from "@/components/landing/landing-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
+	const { isLoaded, isSignedIn } = useAuth();
+	const { signOut } = useClerk();
+	const { user } = useUser();
+	const [accountOpen, setAccountOpen] = useState(false);
+
 	return (
 		<header className="sticky top-0 z-40 border-b border-french_gray-300/70 bg-white/85 backdrop-blur-xl dark:border-paynes_gray-800 dark:bg-outer_space-800/85">
 			<SpectrumAura />
@@ -36,26 +43,60 @@ export function Header() {
 				</nav>
 				<div className="flex items-center gap-2">
 					<ThemeToggle compact />
-					<SignedOut>
-						<Link href="/sign-in">
-							<Button variant="ghost" size="sm">
-								Log in
-							</Button>
-						</Link>
-						<Link href="/sign-up">
-							<Button size="sm">
-								Get started <ArrowRight size={14} />
-							</Button>
-						</Link>
-					</SignedOut>
-					<SignedIn>
-						<Link href="/dashboard">
-							<Button size="sm">
-								Open Flowora <ArrowRight size={14} />
-							</Button>
-						</Link>
-						<UserButton />
-					</SignedIn>
+					{isLoaded && !isSignedIn ? (
+						<>
+							<Link href="/sign-in">
+								<Button variant="ghost" size="sm">
+									Log in
+								</Button>
+							</Link>
+							<Link href="/sign-up">
+								<Button size="sm">
+									Get started <ArrowRight size={14} />
+								</Button>
+							</Link>
+						</>
+					) : null}
+					{isLoaded && isSignedIn ? (
+						<>
+							<Link href="/dashboard">
+								<Button size="sm">
+									Open Flowora <ArrowRight size={14} />
+								</Button>
+							</Link>
+							<div className="relative">
+								<button
+									type="button"
+									aria-label="Open account menu"
+									onClick={() => setAccountOpen((value) => !value)}
+								>
+									<Avatar
+										name={user?.fullName ?? "User"}
+										src={user?.imageUrl}
+										className="size-8"
+									/>
+								</button>
+								{accountOpen ? (
+									<div className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400">
+										<Link
+											href="/settings"
+											onClick={() => setAccountOpen(false)}
+											className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-platinum-100 dark:hover:bg-outer_space-300"
+										>
+											<Settings size={15} /> Settings
+										</Link>
+										<button
+											type="button"
+											onClick={() => void signOut({ redirectUrl: "/sign-in" })}
+											className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+										>
+											<LogOut size={15} /> Sign out
+										</button>
+									</div>
+								) : null}
+							</div>
+						</>
+					) : null}
 				</div>
 			</div>
 		</header>

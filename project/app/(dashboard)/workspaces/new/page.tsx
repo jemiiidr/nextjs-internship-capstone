@@ -1,7 +1,7 @@
-import { CreateOrganization } from "@clerk/nextjs";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CreateWorkspaceForm } from "@/components/workspaces/create-workspace-form";
 
 export const metadata: Metadata = { title: "New workspace" };
 
@@ -23,12 +23,7 @@ export default function NewWorkspacePage() {
 					and permissions.
 				</p>
 			</div>
-			<div className="max-w-xl overflow-hidden rounded-3xl border border-french_gray-300 bg-white p-3 dark:border-paynes_gray-800 dark:bg-outer_space-500">
-				<CreateOrganization
-					routing="hash"
-					afterCreateOrganizationUrl="/dashboard"
-				/>
-			</div>
+			<div className="max-w-xl"><CreateWorkspaceForm /></div>
 		</div>
 	);
 }
