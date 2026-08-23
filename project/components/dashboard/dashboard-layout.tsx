@@ -36,10 +36,12 @@ const primaryNavigation = [
 	{ href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-const secondaryNavigation = [
-	{ href: "/team", label: "Team", icon: Users },
-	{ href: "/settings", label: "Settings", icon: Settings },
-];
+const secondaryNavigation = [{ href: "/team", label: "Team", icon: Users }];
+const settingsNavigation = {
+	href: "/settings",
+	label: "Settings",
+	icon: Settings,
+};
 
 export function DashboardLayout({
 	children,
@@ -183,11 +185,7 @@ export function DashboardLayout({
 						Manage
 					</p>
 					{secondaryNavigation.map(navLink)}
-				</nav>
-
-				<div className="space-y-2 border-t border-french_gray-200 px-1 py-3 dark:border-paynes_gray-800">
-					<AccountMenu user={user} collapsed={sidebarCollapsed} />
-					<div className="px-1">
+					<div className="px-1 py-1">
 						{sidebarCollapsed ? (
 							<>
 								<div className="lg:hidden">
@@ -201,6 +199,11 @@ export function DashboardLayout({
 							<ThemeToggle />
 						)}
 					</div>
+					{navLink(settingsNavigation)}
+				</nav>
+
+				<div className="space-y-2 border-t border-french_gray-200 px-1 py-3 dark:border-paynes_gray-800">
+					<AccountMenu user={user} collapsed={sidebarCollapsed} />
 				</div>
 			</aside>
 
@@ -230,7 +233,7 @@ export function DashboardLayout({
 					<PageTransition>{children}</PageTransition>
 				</main>
 			</div>
-			<CreateProjectModal />
+			{workspace?.role !== "viewer" ? <CreateProjectModal /> : null}
 		</div>
 	);
 }

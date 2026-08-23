@@ -302,31 +302,3 @@ export async function getProjectMembersForAction(projectId: string) {
 		.where(eq(projectMembers.projectId, projectId))
 		.orderBy(asc(users.name));
 }
-
-export async function moveLegacyProjectToActiveWorkspaceAction(
-	projectId: string,
-): Promise<ActionResult> {
-	const context = await requireWorkspaceContext();
-	const project = await db.query.projects.findFirst({
-		where: eq(projects.id, projectId),
-	});
-	if (!project || project.ownerId !== context.user.id || project.workspaceId) {
-		return { success: false, message: "This legacy project cannot be moved." };
-	}
-	if (!canEditProject(context.role)) {
-		return {
-			success: false,
-			message: "Viewers cannot move projects into a workspace.",
-		};
-	}
-	await db
-		.update(projects)
-		.set({
-			workspaceId: context.workspaceId,
-			visibility: "workspace",
-			updatedAt: new Date(),
-		})
-		.where(eq(projects.id, projectId));
-	revalidateProjectSurfaces(projectId);
-	return { success: true, message: "Project moved to the active workspace." };
-}

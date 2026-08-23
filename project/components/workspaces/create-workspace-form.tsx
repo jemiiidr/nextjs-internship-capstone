@@ -7,8 +7,13 @@ import { type FormEvent, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
-export function CreateWorkspaceForm() {
+export function CreateWorkspaceForm({
+	embedded = false,
+}: {
+	embedded?: boolean;
+}) {
 	const router = useRouter();
 	const { createOrganization, setActive } = useOrganizationList();
 	const [name, setName] = useState("");
@@ -47,7 +52,11 @@ export function CreateWorkspaceForm() {
 	return (
 		<form
 			onSubmit={submit}
-			className="space-y-5 rounded-3xl border border-french_gray-300 bg-white p-6 dark:border-paynes_gray-800 dark:bg-outer_space-500"
+			className={cn(
+				"space-y-5",
+				!embedded &&
+					"rounded-3xl border border-french_gray-300 bg-white p-6 dark:border-paynes_gray-800 dark:bg-outer_space-500",
+			)}
 		>
 			<div className="grid size-12 place-items-center rounded-2xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
 				<Building2 size={21} />

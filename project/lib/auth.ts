@@ -87,17 +87,7 @@ export async function requireProjectAccess(projectId: string) {
 		};
 	}
 
-	// Legacy rows created before workspaces were introduced stay private to the
-	// original owner until they are assigned a Clerk Organization workspace.
-	if (project.ownerId !== context.user.id) return null;
-	return {
-		project,
-		role: "admin" as const,
-		isOwner: true,
-		user: context.user,
-		workspaceId: null,
-		clerkUserId: context.clerkUserId,
-	};
+	return null;
 }
 
 export function canManageProject(role: MemberRole) {

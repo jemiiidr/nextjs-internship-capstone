@@ -49,13 +49,22 @@ export function ClerkAuth({
 		);
 	}
 
+	if (mode === "invitation")
+		return (
+			<SignUp
+				routing="hash"
+				signInUrl="/sign-in"
+				forceRedirectUrl="/team"
+				appearance={appearance}
+			/>
+		);
+
 	return (
 		<SignUp
-			routing={mode === "invitation" ? "hash" : "path"}
-			path={mode === "sign-up" ? "/sign-up" : undefined}
+			routing="path"
+			path="/sign-up"
 			signInUrl="/sign-in"
-			fallbackRedirectUrl={mode === "invitation" ? undefined : "/workspaces"}
-			forceRedirectUrl={mode === "invitation" ? "/team" : undefined}
+			fallbackRedirectUrl="/workspaces"
 			appearance={appearance}
 		/>
 	);

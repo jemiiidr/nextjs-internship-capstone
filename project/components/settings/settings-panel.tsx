@@ -1,18 +1,26 @@
 "use client";
 
-import { useClerk, useUser } from "@clerk/nextjs";
-import { Building2, KeyRound, Loader2, LogOut, UserRound } from "lucide-react";
-import { type FormEvent, useActionState, useState } from "react";
+import { useClerk, useReverification, useUser } from "@clerk/nextjs";
 import {
-	updateProfileAction,
-	updateWorkspaceAction,
-} from "@/app/actions/settings";
+	Bell,
+	Building2,
+	KeyRound,
+	Loader2,
+	LogOut,
+	Palette,
+	UserRound,
+	Users,
+} from "lucide-react";
+import Link from "next/link";
+import { type FormEvent, useActionState, useState } from "react";
+import { updateProfileAction } from "@/app/actions/settings";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ActionResult, UserSummary, WorkspaceSummary } from "@/types";
+import type { ActionResult, UserSummary } from "@/types";
 
 const initialState: ActionResult = { success: false, message: "" };
 
@@ -32,27 +40,26 @@ function ResultMessage({ state }: { state: ActionResult }) {
 	);
 }
 
-export function SettingsPanel({
-	user: initialUser,
-	workspace,
-	canManageWorkspace,
-}: {
-	user: UserSummary;
-	workspace: WorkspaceSummary;
-	canManageWorkspace: boolean;
-}) {
+export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 	const { user } = useUser();
 	const { signOut } = useClerk();
 	const [profileState, profileAction, profilePending] = useActionState(
 		updateProfileAction,
 		initialState,
 	);
-	const [workspaceState, workspaceAction, workspacePending] = useActionState(
-		updateWorkspaceAction,
-		initialState,
-	);
 	const [passwordPending, setPasswordPending] = useState(false);
 	const [passwordMessage, setPasswordMessage] = useState("");
+
+	const updatePasswordWithReverification = useReverification(
+		async (currentPassword: string, newPassword: string) => {
+			if (!user) throw new Error("Your account is still loading.");
+			return user.updatePassword({
+				currentPassword,
+				newPassword,
+				signOutOfOtherSessions: true,
+			});
+		},
+	);
 
 	const updatePassword = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -67,11 +74,7 @@ export function SettingsPanel({
 		setPasswordPending(true);
 		setPasswordMessage("");
 		try {
-			await user.updatePassword({
-				currentPassword,
-				newPassword,
-				signOutOfOtherSessions: true,
-			});
+			await updatePasswordWithReverification(currentPassword, newPassword);
 			event.currentTarget.reset();
 			setPasswordMessage("Password updated. Other sessions were signed out.");
 		} catch (error) {
@@ -205,49 +208,47 @@ export function SettingsPanel({
 				</CardContent>
 			</Card>
 			<Card className="xl:col-span-2">
-				<CardContent className="space-y-5 p-6">
-					<div className="flex items-start gap-3">
-						<span className="grid size-10 place-items-center rounded-xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
-							<Building2 size={18} />
-						</span>
-						<div>
-							<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
-								Workspace settings
-							</h2>
-							<p className="text-sm text-paynes_gray-500">
-								Update the active Clerk organization. Member access remains on
-								the Team page.
-							</p>
+				<CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,.8fr)]">
+					<div>
+						<div className="flex items-center gap-3">
+							<span className="grid size-10 place-items-center rounded-xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
+								<Palette size={18} />
+							</span>
+							<div>
+								<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
+									Appearance
+								</h2>
+								<p className="text-sm text-paynes_gray-500">
+									Choose the interface theme used across Flowora.
+								</p>
+							</div>
+						</div>
+						<div className="mt-4 max-w-xs">
+							<ThemeToggle />
 						</div>
 					</div>
-					<form
-						action={workspaceAction}
-						className="flex max-w-xl flex-col gap-3 sm:flex-row sm:items-end"
-					>
-						<div className="flex-1 space-y-2">
-							<Label htmlFor="workspaceName">Workspace name</Label>
-							<Input
-								id="workspaceName"
-								name="name"
-								defaultValue={workspace.name}
-								disabled={!canManageWorkspace}
-								required
-								maxLength={100}
-							/>
-						</div>
-						<Button disabled={!canManageWorkspace || workspacePending}>
-							{workspacePending ? (
-								<Loader2 size={16} className="animate-spin" />
-							) : null}{" "}
-							Save workspace
-						</Button>
-					</form>
-					{!canManageWorkspace ? (
-						<p className="text-sm text-amber-700 dark:text-amber-300">
-							Only workspace administrators can edit these settings.
-						</p>
-					) : null}
-					<ResultMessage state={workspaceState} />
+					<div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+						<Link
+							href="/notifications"
+							className="flex items-center gap-3 rounded-xl border border-french_gray-200 p-3 text-sm font-medium hover:border-blue_munsell-300 dark:border-paynes_gray-800"
+						>
+							<Bell size={16} className="text-blue_munsell-500" /> Notification
+							inbox
+						</Link>
+						<Link
+							href="/team"
+							className="flex items-center gap-3 rounded-xl border border-french_gray-200 p-3 text-sm font-medium hover:border-blue_munsell-300 dark:border-paynes_gray-800"
+						>
+							<Users size={16} className="text-blue_munsell-500" /> Team access
+						</Link>
+						<Link
+							href="/workspaces"
+							className="flex items-center gap-3 rounded-xl border border-french_gray-200 p-3 text-sm font-medium hover:border-blue_munsell-300 dark:border-paynes_gray-800"
+						>
+							<Building2 size={16} className="text-blue_munsell-500" /> Manage
+							workspaces
+						</Link>
+					</div>
 				</CardContent>
 			</Card>
 		</div>

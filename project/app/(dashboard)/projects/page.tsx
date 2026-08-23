@@ -49,7 +49,7 @@ export default async function ProjectsPage({
 					</p>
 				</div>
 
-				<CreateProjectButton />
+				{context.role !== "viewer" ? <CreateProjectButton /> : null}
 			</header>
 
 			<form className="relative max-w-xl">
@@ -70,7 +70,7 @@ export default async function ProjectsPage({
 				</button>
 			</form>
 
-			<ProjectGrid projects={projects} />
+			<ProjectGrid projects={projects} canCreate={context.role !== "viewer"} />
 		</div>
 	);
 }

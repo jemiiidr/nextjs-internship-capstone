@@ -21,7 +21,8 @@ export function WorkspaceActivateButton({
 			variant={active ? "secondary" : "default"}
 			size="sm"
 			disabled={active || isPending || !setActive}
-			onClick={() => {
+			onClick={(event) => {
+				event.stopPropagation();
 				if (!setActive) return;
 				startTransition(async () => {
 					await setActive({ organization: workspaceId });

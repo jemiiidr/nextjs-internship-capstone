@@ -4,14 +4,20 @@ import { ProjectCard } from "@/components/projects/project-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ProjectSummary } from "@/types";
 
-export function ProjectGrid({ projects }: { projects: ProjectSummary[] }) {
+export function ProjectGrid({
+	projects,
+	canCreate = true,
+}: {
+	projects: ProjectSummary[];
+	canCreate?: boolean;
+}) {
 	if (projects.length === 0) {
 		return (
 			<EmptyState
 				icon={<FolderKanban size={22} />}
 				title="No projects found"
 				description="Create a project or change the search term to see matching work."
-				action={<CreateProjectButton />}
+				action={canCreate ? <CreateProjectButton /> : undefined}
 			/>
 		);
 	}

@@ -69,11 +69,7 @@ export default async function ProjectPage({
 
 							<Badge className="capitalize">{board.project.role}</Badge>
 
-							{board.project.workspaceId ? (
-								<Badge>Workspace</Badge>
-							) : (
-								<Badge>Legacy project</Badge>
-							)}
+							<Badge>Workspace</Badge>
 						</div>
 
 						<p className="mt-2 max-w-3xl text-sm leading-6 text-paynes_gray-500">

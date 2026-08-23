@@ -3,7 +3,13 @@ import Link from "next/link";
 import { ProjectGrid } from "@/components/projects/project-grid";
 import type { ProjectSummary } from "@/types";
 
-export function RecentProjects({ projects }: { projects: ProjectSummary[] }) {
+export function RecentProjects({
+	projects,
+	canCreate,
+}: {
+	projects: ProjectSummary[];
+	canCreate: boolean;
+}) {
 	return (
 		<section className="space-y-4">
 			<div className="flex items-center justify-between">
@@ -22,7 +28,7 @@ export function RecentProjects({ projects }: { projects: ProjectSummary[] }) {
 					View all <ArrowRight size={15} />
 				</Link>
 			</div>
-			<ProjectGrid projects={projects} />
+			<ProjectGrid projects={projects} canCreate={canCreate} />
 		</section>
 	);
 }

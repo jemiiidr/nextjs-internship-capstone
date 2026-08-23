@@ -27,7 +27,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 		project.taskCount === 0
 			? 0
 			: Math.round((project.completedTaskCount / project.taskCount) * 100);
-	const canDelete = project.role === "owner";
+	const canDelete = project.isOwner || project.role === "admin";
 
 	const openDeleteModal = () => {
 		setMenuOpen(false);

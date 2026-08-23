@@ -4,7 +4,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getWorkspaceContext, requireWorkspaceContext } from "@/lib/auth";
+import { getWorkspaceContext } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import type { ActionResult } from "@/types";
@@ -13,7 +13,6 @@ const profileSchema = z.object({
 	firstName: z.string().trim().min(1).max(64),
 	lastName: z.string().trim().max(64),
 });
-const workspaceSchema = z.object({ name: z.string().trim().min(2).max(100) });
 
 export async function updateProfileAction(
 	_previous: ActionResult,
@@ -50,39 +49,6 @@ export async function updateProfileAction(
 		return {
 			success: false,
 			message: "Unable to update your profile. Please try again.",
-		};
-	}
-}
-
-export async function updateWorkspaceAction(
-	_previous: ActionResult,
-	formData: FormData,
-): Promise<ActionResult> {
-	const context = await requireWorkspaceContext();
-	if (context.role !== "admin")
-		return {
-			success: false,
-			message: "Only workspace admins can change workspace settings.",
-		};
-	const parsed = workspaceSchema.safeParse({ name: formData.get("name") });
-	if (!parsed.success)
-		return {
-			success: false,
-			message: "Workspace name must contain 2 to 100 characters.",
-			fieldErrors: parsed.error.flatten().fieldErrors,
-		};
-	try {
-		const client = await clerkClient();
-		await client.organizations.updateOrganization(context.workspaceId, {
-			name: parsed.data.name,
-		});
-		revalidatePath("/", "layout");
-		return { success: true, message: "Workspace updated." };
-	} catch (error) {
-		console.error("Unable to update Clerk workspace", error);
-		return {
-			success: false,
-			message: "Unable to update the workspace. Please try again.",
 		};
 	}
 }

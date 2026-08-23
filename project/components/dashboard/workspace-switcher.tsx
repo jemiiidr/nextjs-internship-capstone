@@ -115,7 +115,7 @@ export function WorkspaceSwitcher({
 							<Building2 size={15} /> Manage workspaces
 						</Link>
 						<Link
-							href="/workspaces/new"
+							href="/workspaces?create=1"
 							onClick={() => setOpen(false)}
 							className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-blue_munsell-600 hover:bg-blue_munsell-50 dark:text-blue_munsell-300 dark:hover:bg-blue_munsell-900/30"
 						>

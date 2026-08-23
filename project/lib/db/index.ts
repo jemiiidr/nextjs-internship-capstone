@@ -63,24 +63,6 @@ export async function findUserByClerkId(clerkId: string) {
 	return db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
 }
 
-export async function getLegacyProjectsForOwner(userId: string) {
-	const rows = await db
-		.select({
-			id: projects.id,
-			name: projects.name,
-			description: projects.description,
-			updatedAt: projects.updatedAt,
-		})
-		.from(projects)
-		.where(and(eq(projects.ownerId, userId), isNull(projects.workspaceId)))
-		.orderBy(desc(projects.updatedAt));
-
-	return rows.map((project) => ({
-		...project,
-		updatedAt: project.updatedAt.toISOString(),
-	}));
-}
-
 function projectScopeCondition(input: {
 	userId: string;
 	workspaceId: string | null;
@@ -110,8 +92,7 @@ export async function getProjectAccess(
 			isOwner: project.ownerId === input.userId,
 		};
 	}
-	if (project.ownerId !== input.userId) return null;
-	return { project, role: "admin" as const, isOwner: true };
+	return null;
 }
 
 export function canManageProject(role: MemberRole) {

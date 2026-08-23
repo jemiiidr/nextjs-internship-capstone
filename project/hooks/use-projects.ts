@@ -20,13 +20,16 @@ export function useProjects(initialProjects: ProjectSummary[]) {
 		(formData: FormData, onComplete?: (message: string) => void) => {
 			const optimistic: ProjectSummary = {
 				id: `optimistic-${crypto.randomUUID()}`,
+				workspaceId: null,
 				name: String(formData.get("name") || "New project"),
 				description: String(formData.get("description") || "") || null,
 				dueDate: String(formData.get("dueDate") || "") || null,
 				visibility:
 					formData.get("visibility") === "workspace" ? "workspace" : "private",
 				role: "owner",
+				isOwner: true,
 				memberCount: 1,
+				members: [],
 				taskCount: 0,
 				completedTaskCount: 0,
 				updatedAt: new Date().toISOString(),
