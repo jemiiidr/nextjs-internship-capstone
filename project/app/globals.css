@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "lenis/dist/lenis.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -202,6 +203,27 @@
 			circle at 74% 88%,
 			rgba(118, 202, 165, 0.1),
 			transparent 31%
+		),
+		var(--background);
+}
+
+.flowora-auth-background {
+	background:
+		linear-gradient(135deg, rgba(116, 103, 240, 0.06), transparent 44%),
+		radial-gradient(
+			circle at 12% 20%,
+			rgba(145, 135, 245, 0.2),
+			transparent 30%
+		),
+		radial-gradient(
+			circle at 88% 14%,
+			rgba(233, 137, 184, 0.14),
+			transparent 28%
+		),
+		radial-gradient(
+			circle at 70% 88%,
+			rgba(118, 202, 165, 0.15),
+			transparent 30%
 		),
 		var(--background);
 }

@@ -1,11 +1,11 @@
 import { Building2, Plus, ShieldCheck, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LegacyProjectMoveButton } from "@/components/legacy-project-move-button";
+import { LegacyProjectMoveButton } from "@/components/workspaces/legacy-project-move-button";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { WorkspaceActivateButton } from "@/components/workspace-activate-button";
+import { WorkspaceActivateButton } from "@/components/workspaces/workspace-activate-button";
 import { getWorkspaceContext } from "@/lib/auth";
 import { getLegacyProjectsForOwner } from "@/lib/db";
 import { getUserWorkspaces, getWorkspaceMemberPreview } from "@/lib/workspaces";

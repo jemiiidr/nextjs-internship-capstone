@@ -4,12 +4,14 @@ import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { FloworaLogo } from "@/components/flowora-logo";
+import { SpectrumAura } from "@/components/landing/landing-motion";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
 export function Header() {
 	return (
 		<header className="sticky top-0 z-40 border-b border-french_gray-300/70 bg-white/85 backdrop-blur-xl dark:border-paynes_gray-800 dark:bg-outer_space-800/85">
-			<div className="flowora-rainbow-line h-1 w-full" />
+			<SpectrumAura />
 			<div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 				<FloworaLogo />
 				<nav className="hidden items-center gap-7 text-sm font-medium text-paynes_gray-500 md:flex">
@@ -33,6 +35,7 @@ export function Header() {
 					</Link>
 				</nav>
 				<div className="flex items-center gap-2">
+					<ThemeToggle compact />
 					<SignedOut>
 						<Link href="/sign-in">
 							<Button variant="ghost" size="sm">

@@ -1,6 +1,6 @@
 import { FolderKanban } from "lucide-react";
-import { CreateProjectButton } from "@/components/create-project-button";
-import { ProjectCard } from "@/components/project-card";
+import { CreateProjectButton } from "@/components/projects/create-project-button";
+import { ProjectCard } from "@/components/projects/project-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ProjectSummary } from "@/types";
 

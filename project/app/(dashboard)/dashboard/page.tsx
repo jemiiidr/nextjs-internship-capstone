@@ -1,9 +1,9 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CreateProjectButton } from "@/components/create-project-button";
-import { DashboardStats } from "@/components/dashboard-stats";
-import { RecentProjects } from "@/components/recent-projects";
+import { DashboardStats } from "@/components/dashboard/dashboard-stats";
+import { RecentProjects } from "@/components/dashboard/recent-projects";
+import { CreateProjectButton } from "@/components/projects/create-project-button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getDashboardData, getMyTasks } from "@/lib/db";

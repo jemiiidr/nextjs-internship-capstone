@@ -1,7 +1,7 @@
 import { Search } from "lucide-react";
 import type { Metadata } from "next";
-import { CreateProjectButton } from "@/components/create-project-button";
-import { ProjectGrid } from "@/components/project-grid";
+import { CreateProjectButton } from "@/components/projects/create-project-button";
+import { ProjectGrid } from "@/components/projects/project-grid";
 import { Input } from "@/components/ui/input";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getProjectsForUser } from "@/lib/db";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AnalyticsOverview } from "@/components/analytics-overview";
+import { AnalyticsOverview } from "@/components/analytics/analytics-overview";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getAnalyticsData, getProjectsForUser } from "@/lib/db";
 

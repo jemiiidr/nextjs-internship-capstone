@@ -18,12 +18,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { FloworaLogo } from "@/components/flowora-logo";
-import { CreateProjectModal } from "@/components/modals/create-project-modal";
-import { NotificationCenter } from "@/components/notification-center";
+import { NotificationCenter } from "@/components/dashboard/notification-center";
+import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
+import { PageTransition } from "@/components/page-transition";
+import { CreateProjectModal } from "@/components/projects/create-project-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import type { NotificationItem, UserSummary, WorkspaceSummary } from "@/types";
@@ -267,7 +268,7 @@ export function DashboardLayout({
 					/>
 				</header>
 				<main className="mx-auto max-w-[1680px] p-4 sm:p-6 lg:p-8 xl:p-10">
-					{children}
+					<PageTransition>{children}</PageTransition>
 				</main>
 			</div>
 			<CreateProjectModal />

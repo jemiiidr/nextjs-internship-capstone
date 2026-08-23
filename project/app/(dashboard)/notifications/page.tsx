@@ -1,6 +1,6 @@
 import { Bell } from "lucide-react";
 import type { Metadata } from "next";
-import { NotificationInbox } from "@/components/notification-center";
+import { NotificationInbox } from "@/components/dashboard/notification-center";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getUserNotifications } from "@/lib/notifications";
 

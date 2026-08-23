@@ -40,8 +40,8 @@ import { bulkDeleteTasksAction, moveTaskAction } from "@/app/actions/tasks";
 import {
 	CreateTaskModal,
 	TaskDetailModal,
-} from "@/components/modals/create-task-modal";
-import { TaskCard } from "@/components/task-card";
+} from "@/components/project-detail/create-task-modal";
+import { TaskCard } from "@/components/project-detail/task-card";
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";

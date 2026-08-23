@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { ProjectGrid } from "@/components/project-grid";
+import { ProjectGrid } from "@/components/projects/project-grid";
 import type { ProjectSummary } from "@/types";
 
 export function RecentProjects({ projects }: { projects: ProjectSummary[] }) {

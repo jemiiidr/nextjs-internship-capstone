@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { InviteMemberButton, TeamTabs } from "@/components/team-management";
+import { InviteMemberButton, TeamTabs } from "@/components/team/team-management";
 import { requireWorkspaceContext } from "@/lib/auth";
 import {
 	getPendingWorkspaceInvitations,
