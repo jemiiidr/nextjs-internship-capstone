@@ -1,9 +1,13 @@
 "use client";
 
-import { Building2, Loader2, Plus, ShieldCheck, Users } from "lucide-react";
+import { useOrganization } from "@clerk/nextjs";
+import { Building2, FolderKanban, Loader2, Plus, ShieldCheck, Upload, Users } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { updateWorkspaceAction } from "@/app/actions/workspaces";
 import { AvatarStack } from "@/components/ui/avatar-stack";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,27 +16,50 @@ import { Modal } from "@/components/ui/modal";
 import { CreateWorkspaceForm } from "@/components/workspaces/create-workspace-form";
 import { WorkspaceActivateButton } from "@/components/workspaces/workspace-activate-button";
 import { hasPermission } from "@/lib/rbac";
-import type { ActionResult, UserSummary, WorkspaceSummary } from "@/types";
+import type { ActionResult, WorkspaceMember, WorkspaceSummary } from "@/types";
 
 const initialState: ActionResult = { success: false, message: "" };
 
 export function WorkspaceManagement({
 	workspaces,
-	previews,
+	membersByWorkspace,
+	projectCounts,
 	activeWorkspaceId,
 	initialCreateOpen = false,
 }: {
 	workspaces: WorkspaceSummary[];
-	previews: Record<string, UserSummary[]>;
+	membersByWorkspace: Record<string, WorkspaceMember[]>;
+	projectCounts: Record<string, number>;
 	activeWorkspaceId: string | null;
 	initialCreateOpen?: boolean;
 }) {
 	const [createOpen, setCreateOpen] = useState(initialCreateOpen);
 	const [selected, setSelected] = useState<WorkspaceSummary | null>(null);
+	const [logoPending, setLogoPending] = useState(false);
+	const [logoError, setLogoError] = useState("");
+	const { organization } = useOrganization();
+	const router = useRouter();
 	const [state, action, pending] = useActionState(
 		updateWorkspaceAction,
 		initialState,
 	);
+
+	const updateLogo = async (file: File | undefined) => {
+		if (!file || !selected || !organization) return;
+		if (!file.type.startsWith("image/")) return setLogoError("Choose an image file.");
+		if (file.size > 10 * 1024 * 1024) return setLogoError("The workspace icon must be 10MB or smaller.");
+		setLogoPending(true);
+		setLogoError("");
+		try {
+			const updated = await organization.setLogo({ file });
+			setSelected({ ...selected, imageUrl: updated.imageUrl });
+			router.refresh();
+		} catch (error) {
+			setLogoError(error instanceof Error ? error.message : "Unable to update the workspace icon.");
+		} finally {
+			setLogoPending(false);
+		}
+	};
 
 	return (
 		<>
@@ -77,9 +104,11 @@ export function WorkspaceManagement({
 								/>
 								<CardContent className="p-5">
 									<div className="flex items-start justify-between gap-3">
-										<span className="grid size-11 place-items-center rounded-2xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
-											<Building2 size={20} />
-										</span>
+										{workspace.imageUrl ? (
+											<span className="relative size-11 overflow-hidden rounded-2xl"><Image src={workspace.imageUrl} alt="" fill sizes="44px" className="object-cover" /></span>
+										) : (
+											<span className="grid size-11 place-items-center rounded-2xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300"><Building2 size={20} /></span>
+										)}
 										{active ? (
 											<span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
 												Active
@@ -102,7 +131,7 @@ export function WorkspaceManagement({
 									</div>
 									<div className="mt-5 flex items-center justify-between">
 										<AvatarStack
-											users={previews[workspace.id] ?? []}
+											users={(membersByWorkspace[workspace.id] ?? []).slice(0, 4)}
 											total={workspace.memberCount}
 										/>
 										<WorkspaceActivateButton
@@ -127,16 +156,26 @@ export function WorkspaceManagement({
 			</Modal>
 			<Modal
 				open={Boolean(selected)}
-				onClose={() => setSelected(null)}
+				onClose={() => { setSelected(null); setLogoError(""); }}
 				title={selected?.name ?? "Workspace"}
 				description="View workspace details and manage settings available to your role."
+				className="max-w-5xl"
 			>
 				{selected ? (
-					<div key={selected.id} className="space-y-5">
-						<div className="grid grid-cols-2 gap-3">
+					<div key={selected.id} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+						<div className="space-y-5">
+						<div className="flex items-center gap-4">
+							{selected.imageUrl ? <span className="relative size-16 overflow-hidden rounded-2xl"><Image src={selected.imageUrl} alt={`${selected.name} icon`} fill sizes="64px" className="object-cover" /></span> : <span className="grid size-16 place-items-center rounded-2xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300"><Building2 size={26} /></span>}
+							<div><p className="font-semibold text-outer_space-900 dark:text-platinum-50">{selected.name}</p><p className="text-sm text-paynes_gray-500">{selected.slug ? `@${selected.slug}` : selected.id}</p></div>
+						</div>
+						<div className="grid grid-cols-3 gap-3">
 							<div className="rounded-xl bg-platinum-100 p-3 dark:bg-outer_space-400">
 								<p className="text-xs text-paynes_gray-500">Members</p>
-								<p className="mt-1 font-semibold">{selected.memberCount}</p>
+								<p className="mt-1 flex items-center gap-2 font-semibold"><Users size={15} />{selected.memberCount}</p>
+							</div>
+							<div className="rounded-xl bg-platinum-100 p-3 dark:bg-outer_space-400">
+								<p className="text-xs text-paynes_gray-500">Projects</p>
+								<p className="mt-1 flex items-center gap-2 font-semibold"><FolderKanban size={15} />{projectCounts[selected.id] ?? 0}</p>
 							</div>
 							<div className="rounded-xl bg-platinum-100 p-3 dark:bg-outer_space-400">
 								<p className="text-xs text-paynes_gray-500">Your role</p>
@@ -145,6 +184,13 @@ export function WorkspaceManagement({
 						</div>
 						{hasPermission(selected.role, "workspace:update") &&
 						selected.id === activeWorkspaceId ? (
+							<div className="space-y-5">
+								<div className="space-y-2">
+									<Label htmlFor={`workspace-logo-${selected.id}`}>Workspace icon</Label>
+									<label htmlFor={`workspace-logo-${selected.id}`} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-french_gray-300 p-3 text-sm font-medium text-paynes_gray-600 hover:border-blue_munsell-300 hover:text-blue_munsell-600 dark:border-paynes_gray-700 dark:text-french_gray-300"><Upload size={16} />{logoPending ? "Uploading…" : "Upload new icon"}</label>
+									<input id={`workspace-logo-${selected.id}`} type="file" accept="image/*" className="sr-only" disabled={logoPending} onChange={(event) => void updateLogo(event.target.files?.[0])} />
+									{logoError ? <p className="text-sm text-red-600">{logoError}</p> : null}
+								</div>
 							<form action={action} className="space-y-3">
 								<input type="hidden" name="workspaceId" value={selected.id} />
 								<div className="space-y-2">
@@ -178,6 +224,7 @@ export function WorkspaceManagement({
 									Save changes
 								</Button>
 							</form>
+							</div>
 						) : (
 							<p className="rounded-xl bg-platinum-100 p-3 text-sm text-paynes_gray-500 dark:bg-outer_space-400">
 								{!hasPermission(selected.role, "workspace:update")
@@ -185,6 +232,13 @@ export function WorkspaceManagement({
 									: "Activate this workspace to edit its settings."}
 							</p>
 						)}
+						</div>
+						<aside className="border-t border-french_gray-200 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0 dark:border-paynes_gray-800">
+							<div className="flex items-center justify-between"><h3 className="font-semibold text-outer_space-900 dark:text-platinum-50">Members</h3><span className="text-xs text-paynes_gray-500">{selected.memberCount} total</span></div>
+							<div className="mt-4 max-h-96 space-y-2 overflow-y-auto pr-1 scrollbar-thin">
+								{(membersByWorkspace[selected.id] ?? []).map((member) => <div key={member.id} className="flex items-center gap-3 rounded-xl p-2 hover:bg-platinum-100 dark:hover:bg-outer_space-400"><Avatar name={member.name} src={member.avatarUrl} className="size-9" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-outer_space-900 dark:text-platinum-50">{member.name}</p><p className="truncate text-xs text-paynes_gray-500">{member.email}</p></div><span className="text-xs capitalize text-paynes_gray-500">{member.role}</span></div>)}
+							</div>
+						</aside>
 					</div>
 				) : null}
 			</Modal>

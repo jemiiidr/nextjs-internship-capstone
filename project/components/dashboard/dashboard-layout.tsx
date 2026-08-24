@@ -97,7 +97,6 @@ export function DashboardLayout({
 
 	return (
 		<div className="min-h-screen bg-background">
-			<div className="flowora-rainbow-line fixed inset-y-0 left-0 z-60 w-1.5" />
 			{sidebarOpen ? (
 				<button
 					type="button"
@@ -109,14 +108,14 @@ export function DashboardLayout({
 
 			<aside
 				className={cn(
-					"fixed inset-y-0 left-1.5 z-50 flex w-70 flex-col border-r border-french_gray-300/80 bg-white px-3 transition-[width,transform] duration-200 dark:border-paynes_gray-800 dark:bg-outer_space-500 lg:translate-x-0",
+					"fixed inset-y-0 left-0 z-50 flex w-70 flex-col border-r border-french_gray-300/80 bg-white px-3 transition-[width,transform] duration-200 dark:border-paynes_gray-800 dark:bg-outer_space-500 lg:translate-x-0",
 					sidebarCollapsed && "lg:w-20 lg:px-2",
 					sidebarOpen ? "translate-x-0" : "-translate-x-[calc(100%+8px)]",
 				)}
 			>
 				<div
 					className={cn(
-						"flex h-18 items-center justify-between px-2",
+						"flex h-18 items-center justify-between gap-2 px-2",
 						sidebarCollapsed && "lg:justify-center lg:px-0",
 					)}
 				>
@@ -135,6 +134,20 @@ export function DashboardLayout({
 					<Button
 						variant="ghost"
 						size="icon"
+						className="hidden shrink-0 lg:inline-flex"
+						onClick={toggleSidebarCollapsed}
+						aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+						title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+					>
+						{sidebarCollapsed ? (
+							<PanelLeftOpen size={17} />
+						) : (
+							<PanelLeftClose size={17} />
+						)}
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
 						className="lg:hidden"
 						onClick={() => setSidebarOpen(false)}
 						aria-label="Close menu"
@@ -142,23 +155,11 @@ export function DashboardLayout({
 						<X size={18} />
 					</Button>
 				</div>
-				<Button
-					variant="secondary"
-					size="icon"
-					className="absolute -right-4 top-5 z-10 hidden size-8 rounded-full bg-white shadow-md lg:inline-flex dark:bg-outer_space-400"
-					onClick={toggleSidebarCollapsed}
-					aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-					title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-				>
-					{sidebarCollapsed ? (
-						<PanelLeftOpen size={15} />
-					) : (
-						<PanelLeftClose size={15} />
-					)}
-				</Button>
-
-				<div className={cn("px-1 pb-4", sidebarCollapsed && "lg:hidden")}>
-					<WorkspaceSwitcher activeWorkspaceId={workspace?.id ?? null} />
+				<div className="px-1 pb-4">
+					<WorkspaceSwitcher
+						activeWorkspaceId={workspace?.id ?? null}
+						collapsed={sidebarCollapsed}
+					/>
 				</div>
 
 				<nav className="flex-1 space-y-1 overflow-y-auto px-1 scrollbar-thin">

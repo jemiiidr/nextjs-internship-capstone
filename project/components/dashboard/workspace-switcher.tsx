@@ -10,8 +10,10 @@ import { cn } from "@/lib/utils";
 
 export function WorkspaceSwitcher({
 	activeWorkspaceId,
+	collapsed = false,
 }: {
 	activeWorkspaceId: string | null;
+	collapsed?: boolean;
 }) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
@@ -42,8 +44,13 @@ export function WorkspaceSwitcher({
 			<button
 				type="button"
 				onClick={() => setOpen((value) => !value)}
-				className="flex w-full items-center gap-3 rounded-xl border border-french_gray-300 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-blue_munsell-200 dark:border-paynes_gray-800 dark:bg-outer_space-400"
+				className={cn(
+					"flex w-full items-center gap-3 rounded-xl border border-french_gray-300 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-blue_munsell-200 dark:border-paynes_gray-800 dark:bg-outer_space-400",
+					collapsed && "lg:justify-center lg:border-0 lg:bg-transparent lg:p-1 lg:shadow-none dark:lg:bg-transparent",
+				)}
 				aria-expanded={open}
+				aria-label={collapsed ? `Workspace: ${active?.organization.name ?? "Choose workspace"}` : undefined}
+				title={collapsed ? active?.organization.name ?? "Choose workspace" : undefined}
 			>
 				{active?.organization.imageUrl ? (
 					<span className="relative size-8 overflow-hidden rounded-lg">
@@ -60,7 +67,7 @@ export function WorkspaceSwitcher({
 						<Building2 size={16} />
 					</span>
 				)}
-				<span className="min-w-0 flex-1">
+				<span className={cn("min-w-0 flex-1", collapsed && "lg:hidden")}>
 					<span className="block truncate text-[11px] font-medium uppercase tracking-wide text-paynes_gray-400">
 						Workspace
 					</span>
@@ -70,11 +77,14 @@ export function WorkspaceSwitcher({
 							: (active?.organization.name ?? "Choose workspace")}
 					</span>
 				</span>
-				<ChevronsUpDown size={15} className="text-paynes_gray-400" />
+				<ChevronsUpDown size={15} className={cn("text-paynes_gray-400", collapsed && "lg:hidden")} />
 			</button>
 
 			{open ? (
-				<div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[70] overflow-hidden rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400">
+				<div className={cn(
+					"absolute left-0 right-0 top-[calc(100%+8px)] z-[70] overflow-hidden rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400",
+					collapsed && "lg:left-full lg:right-auto lg:top-0 lg:ml-3 lg:w-64",
+				)}>
 					<div className="max-h-64 overflow-y-auto scrollbar-thin">
 						{memberships.map((membership) => (
 							<button

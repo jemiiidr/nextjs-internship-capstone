@@ -3,6 +3,7 @@ import "server-only";
 import {
 	and,
 	asc,
+	count,
 	desc,
 	eq,
 	gte,
@@ -61,6 +62,21 @@ function isInProgressList(name: string) {
 
 export async function findUserByClerkId(clerkId: string) {
 	return db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+}
+
+export async function getWorkspaceProjectCounts(workspaceIds: string[]) {
+	if (workspaceIds.length === 0) return {} as Record<string, number>;
+	const rows = await db
+		.select({ workspaceId: projects.workspaceId, total: count(projects.id) })
+		.from(projects)
+		.where(inArray(projects.workspaceId, workspaceIds))
+		.groupBy(projects.workspaceId);
+
+	return Object.fromEntries(
+		rows.flatMap((row) =>
+			row.workspaceId ? [[row.workspaceId, Number(row.total)] as const] : [],
+		),
+	);
 }
 
 function projectScopeCondition(input: {

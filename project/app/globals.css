@@ -6,15 +6,16 @@
 
 :root {
 	--radius: 0.875rem;
+	--brand-color: #7467f0;
 
 	/* Flowora: mostly neutral surfaces with soft rainbow accents. */
 	--platinum: #eef0f4;
 	--french-gray: #dfe2e8;
 	--outer-space: #172033;
 	--paynes-gray: #667085;
-	--blue-munsell: #7467f0;
+	--blue-munsell: var(--brand-color);
 
-	--flow-violet: #7467f0;
+	--flow-violet: var(--brand-color);
 	--flow-pink: #e989b8;
 	--flow-coral: #f29586;
 	--flow-peach: #f5ad78;
@@ -28,19 +29,19 @@
 	--card-foreground: #172033;
 	--popover: #ffffff;
 	--popover-foreground: #172033;
-	--primary: #7467f0;
+	--primary: var(--brand-color);
 	--primary-foreground: #ffffff;
 	--secondary: #f3f4f8;
 	--secondary-foreground: #273044;
 	--muted: #f1f3f7;
 	--muted-foreground: #667085;
-	--accent: #efedff;
-	--accent-foreground: #5146c9;
+	--accent: color-mix(in srgb, var(--brand-color) 12%, white);
+	--accent-foreground: color-mix(in srgb, var(--brand-color) 72%, black);
 	--destructive: #dc5c67;
 	--destructive-foreground: #ffffff;
 	--border: #e5e7ed;
 	--input: #dfe2e8;
-	--ring: #7467f0;
+	--ring: var(--brand-color);
 }
 
 .dark {
@@ -50,19 +51,19 @@
 	--card-foreground: #f7f8fb;
 	--popover: #191f2e;
 	--popover-foreground: #f7f8fb;
-	--primary: #9187f5;
+	--primary: color-mix(in srgb, var(--brand-color) 75%, white);
 	--primary-foreground: #111522;
 	--secondary: #22293a;
 	--secondary-foreground: #f3f4f8;
 	--muted: #22293a;
 	--muted-foreground: #aeb5c4;
-	--accent: #2b2850;
-	--accent-foreground: #c8c2ff;
+	--accent: color-mix(in srgb, var(--brand-color) 28%, #111522);
+	--accent-foreground: color-mix(in srgb, var(--brand-color) 45%, white);
 	--destructive: #ef7a83;
 	--destructive-foreground: #1a1012;
 	--border: #30384a;
 	--input: #3b4458;
-	--ring: #9187f5;
+	--ring: color-mix(in srgb, var(--brand-color) 75%, white);
 }
 
 @theme inline {
@@ -143,16 +144,16 @@
 	--color-paynes_gray-800: #2e3544;
 	--color-paynes_gray-900: #e9edf3;
 
-	--color-blue_munsell-50: #f1efff;
-	--color-blue_munsell-100: #e3dfff;
-	--color-blue_munsell-200: #cbc5ff;
-	--color-blue_munsell-300: #afa6fb;
-	--color-blue_munsell-400: #9187f5;
-	--color-blue_munsell-500: #7467f0;
-	--color-blue_munsell-600: #6558df;
-	--color-blue_munsell-700: #5146c9;
-	--color-blue_munsell-800: #4037a6;
-	--color-blue_munsell-900: #2f2b68;
+	--color-blue_munsell-50: color-mix(in srgb, var(--brand-color) 8%, white);
+	--color-blue_munsell-100: color-mix(in srgb, var(--brand-color) 16%, white);
+	--color-blue_munsell-200: color-mix(in srgb, var(--brand-color) 30%, white);
+	--color-blue_munsell-300: color-mix(in srgb, var(--brand-color) 48%, white);
+	--color-blue_munsell-400: color-mix(in srgb, var(--brand-color) 72%, white);
+	--color-blue_munsell-500: var(--brand-color);
+	--color-blue_munsell-600: color-mix(in srgb, var(--brand-color) 88%, black);
+	--color-blue_munsell-700: color-mix(in srgb, var(--brand-color) 74%, black);
+	--color-blue_munsell-800: color-mix(in srgb, var(--brand-color) 58%, black);
+	--color-blue_munsell-900: color-mix(in srgb, var(--brand-color) 40%, black);
 }
 
 @layer base {
@@ -170,15 +171,15 @@
 		-webkit-font-smoothing: antialiased;
 	}
 	::selection {
-		background: #d9d4ff;
-		color: #30277c;
+		background: color-mix(in srgb, var(--brand-color) 28%, white);
+		color: color-mix(in srgb, var(--brand-color) 55%, black);
 	}
 }
 
 .flowora-rainbow-line {
 	background: linear-gradient(
 		90deg,
-		#9187f5,
+		var(--brand-color),
 		#e989b8,
 		#f29586,
 		#e9be65,
@@ -191,7 +192,7 @@
 	background:
 		radial-gradient(
 			circle at 10% 10%,
-			rgba(116, 103, 240, 0.14),
+			 color-mix(in srgb, var(--brand-color) 14%, transparent),
 			transparent 32%
 		),
 		radial-gradient(
@@ -209,10 +210,10 @@
 
 .flowora-auth-background {
 	background:
-		linear-gradient(135deg, rgba(116, 103, 240, 0.06), transparent 44%),
+		linear-gradient(135deg, color-mix(in srgb, var(--brand-color) 6%, transparent), transparent 44%),
 		radial-gradient(
 			circle at 12% 20%,
-			rgba(145, 135, 245, 0.2),
+			color-mix(in srgb, var(--brand-color) 20%, transparent),
 			transparent 30%
 		),
 		radial-gradient(

@@ -3,7 +3,7 @@
 import { useClerk } from "@clerk/nextjs";
 import { Check, LogOut, Plus, Settings, SwitchCamera } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { UserSummary } from "@/types";
@@ -19,9 +19,22 @@ export function AccountMenu({
 	const [open, setOpen] = useState(false);
 	const [isPending, startTransition] = useTransition();
 	const [switching, setSwitching] = useState(false);
+	const menuRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!open) return;
+		const closeOnOutsideClick = (event: PointerEvent) => {
+			if (!menuRef.current?.contains(event.target as Node)) {
+				setOpen(false);
+				setSwitching(false);
+			}
+		};
+		document.addEventListener("pointerdown", closeOnOutsideClick);
+		return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+	}, [open]);
 
 	return (
-		<div className="relative">
+		<div ref={menuRef} className="relative">
 			<button
 				type="button"
 				onClick={() => setOpen((value) => !value)}

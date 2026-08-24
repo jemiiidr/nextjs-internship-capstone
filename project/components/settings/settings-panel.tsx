@@ -2,8 +2,6 @@
 
 import { useClerk, useReverification, useUser } from "@clerk/nextjs";
 import {
-	Bell,
-	Building2,
 	Clock3,
 	Copy,
 	ExternalLink,
@@ -15,18 +13,16 @@ import {
 	Smartphone,
 	Trash2,
 	UserRound,
-	Users,
 } from "lucide-react";
-import Link from "next/link";
 import { type FormEvent, useActionState, useCallback, useEffect, useState } from "react";
 import { updateProfileAction } from "@/app/actions/settings";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AccentColorPicker, ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Modal } from "@/components/ui/modal";
 import type { ActionResult, UserSummary } from "@/types";
 
@@ -125,10 +121,10 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 	};
 
 	const updatePasswordWithReverification = useReverification(
-		async (currentPassword: string, newPassword: string) => {
+		async (currentPassword: string | undefined, newPassword: string) => {
 			if (!user) throw new Error("Your account is still loading.");
 			return user.updatePassword({
-				currentPassword,
+				...(currentPassword ? { currentPassword } : {}),
 				newPassword,
 				signOutOfOtherSessions: true,
 			});
@@ -138,8 +134,11 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 	const updatePassword = async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (!user) return;
-		const form = new FormData(event.currentTarget);
-		const currentPassword = String(form.get("currentPassword") ?? "");
+		const formElement = event.currentTarget;
+		const form = new FormData(formElement);
+		const currentPassword = user.passwordEnabled
+			? String(form.get("currentPassword") ?? "")
+			: undefined;
 		const newPassword = String(form.get("newPassword") ?? "");
 		if (newPassword.length < 8)
 			return setPasswordMessage(
@@ -149,8 +148,13 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 		setPasswordMessage("");
 		try {
 			await updatePasswordWithReverification(currentPassword, newPassword);
-			event.currentTarget.reset();
-			setPasswordMessage("Password updated. Other sessions were signed out.");
+			formElement.reset();
+			await user.reload();
+			setPasswordMessage(
+				currentPassword
+					? "Password updated. Other sessions were signed out."
+					: "Password created. You can now sign in with your email and password.",
+			);
 		} catch (error) {
 			setPasswordMessage(
 				error instanceof Error ? error.message : "Unable to update password.",
@@ -161,7 +165,7 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 	};
 
 	return (
-		<><div className="grid gap-6 xl:grid-cols-2">
+		<><div className="mx-auto max-w-4xl space-y-6">
 			<Card>
 				<CardContent className="space-y-5 p-6">
 					<div className="flex items-center gap-3">
@@ -245,9 +249,6 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 					</div>
 				</CardContent>
 			</Card>
-			<Card className="border-red-200 dark:border-red-950">
-				<CardContent className="space-y-4 p-6"><div><h2 className="font-semibold text-red-700 dark:text-red-300">Delete account</h2><p className="mt-1 text-sm text-paynes_gray-500">Permanently remove your Clerk account and revoke all login sessions. This cannot be undone.</p></div><Button variant="danger" onClick={() => setDeleteOpen(true)} disabled={!user?.deleteSelfEnabled}><Trash2 size={16} /> Delete account</Button>{user && !user.deleteSelfEnabled ? <p className="text-xs text-paynes_gray-500">Self-service account deletion is disabled by the administrator.</p> : null}</CardContent>
-			</Card>
 			<Card>
 				<CardContent className="space-y-5 p-6">
 					<div>
@@ -258,18 +259,26 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 							Change your password and close other active sessions.
 						</p>
 					</div>
-					{user?.passwordEnabled ? (
+					{user ? (
 						<form onSubmit={updatePassword} className="space-y-4">
-							<div className="space-y-2">
-								<Label htmlFor="currentPassword">Current password</Label>
-								<Input
-									id="currentPassword"
-									name="currentPassword"
-									type="password"
-									autoComplete="current-password"
-									required
-								/>
-							</div>
+							{!user.passwordEnabled ? (
+								<p className="rounded-xl bg-platinum-100 p-4 text-sm text-paynes_gray-600 dark:bg-outer_space-400 dark:text-french_gray-300">
+									Your account currently uses an external provider. Create a
+									password to also sign in directly with your email.
+								</p>
+							) : null}
+							{user.passwordEnabled ? (
+								<div className="space-y-2">
+									<Label htmlFor="currentPassword">Current password</Label>
+									<Input
+										id="currentPassword"
+										name="currentPassword"
+										type="password"
+										autoComplete="current-password"
+										required
+									/>
+								</div>
+							) : null}
 							<div className="space-y-2">
 								<Label htmlFor="newPassword">New password</Label>
 								<Input
@@ -292,13 +301,12 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 								) : (
 									<KeyRound size={16} />
 								)}{" "}
-								Update password
+								{user.passwordEnabled ? "Update password" : "Create password"}
 							</Button>
 						</form>
 					) : (
 						<div className="rounded-xl bg-platinum-100 p-4 text-sm text-paynes_gray-600 dark:bg-outer_space-400 dark:text-french_gray-300">
-							Your account signs in through an external provider. Password
-							changes are managed by that provider.
+							Loading password settings…
 						</div>
 					)}
 					<div className="border-t border-french_gray-200 pt-4 dark:border-paynes_gray-800">
@@ -311,8 +319,8 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 					</div>
 				</CardContent>
 			</Card>
-			<Card className="xl:col-span-2">
-				<CardContent className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,.8fr)]">
+			<Card>
+				<CardContent className="space-y-6 p-6">
 					<div>
 						<div className="flex items-center gap-3">
 							<span className="grid size-10 place-items-center rounded-xl bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/40 dark:text-blue_munsell-300">
@@ -331,29 +339,13 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 							<ThemeToggle />
 						</div>
 					</div>
-					<div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-						<Link
-							href="/notifications"
-							className="flex items-center gap-3 rounded-xl border border-french_gray-200 p-3 text-sm font-medium hover:border-blue_munsell-300 dark:border-paynes_gray-800"
-						>
-							<Bell size={16} className="text-blue_munsell-500" /> Notification
-							inbox
-						</Link>
-						<Link
-							href="/team"
-							className="flex items-center gap-3 rounded-xl border border-french_gray-200 p-3 text-sm font-medium hover:border-blue_munsell-300 dark:border-paynes_gray-800"
-						>
-							<Users size={16} className="text-blue_munsell-500" /> Team access
-						</Link>
-						<Link
-							href="/workspaces"
-							className="flex items-center gap-3 rounded-xl border border-french_gray-200 p-3 text-sm font-medium hover:border-blue_munsell-300 dark:border-paynes_gray-800"
-						>
-							<Building2 size={16} className="text-blue_munsell-500" /> Manage
-							workspaces
-						</Link>
+					<div className="border-t border-french_gray-200 pt-5 dark:border-paynes_gray-800">
+						<AccentColorPicker />
 					</div>
 				</CardContent>
+			</Card>
+			<Card className="border-red-200 dark:border-red-950">
+				<CardContent className="space-y-4 p-6"><div><h2 className="font-semibold text-red-700 dark:text-red-300">Delete account</h2><p className="mt-1 text-sm text-paynes_gray-500">Permanently remove your Clerk account and revoke all login sessions. This cannot be undone.</p></div><Button variant="danger" onClick={() => setDeleteOpen(true)} disabled={!user?.deleteSelfEnabled}><Trash2 size={16} /> Delete account</Button>{user && !user.deleteSelfEnabled ? <p className="text-xs text-paynes_gray-500">Self-service account deletion is disabled by the administrator.</p> : null}</CardContent>
 			</Card>
 		</div>
 		<Modal open={totpOpen} onClose={() => !totpPending && setTotpOpen(false)} title="Set up an authenticator" description="Add this key to your authenticator app, then enter the generated six-digit code.">

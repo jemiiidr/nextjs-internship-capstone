@@ -30,6 +30,11 @@ const themeScript = `
 		document.documentElement.style.colorScheme = isDark
 			? "dark"
 			: "light";
+
+		const savedAccent = localStorage.getItem("flowora-accent-color");
+		if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
+			document.documentElement.style.setProperty("--brand-color", savedAccent);
+		}
 	} catch {}
 })();
 `;

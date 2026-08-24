@@ -11,16 +11,20 @@ import {
 } from "react";
 
 type Theme = "dark" | "light";
+const DEFAULT_ACCENT_COLOR = "#7467f0";
 
 interface ThemeContextValue {
 	theme: Theme;
 	setTheme: (theme: Theme) => void;
+	accentColor: string;
+	setAccentColor: (color: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
 	const [theme, setThemeState] = useState<Theme>("light");
+	const [accentColor, setAccentColorState] = useState(DEFAULT_ACCENT_COLOR);
 
 	useEffect(() => {
 		const currentTheme: Theme = document.documentElement.classList.contains(
@@ -30,6 +34,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 			: "light";
 
 		setThemeState(currentTheme);
+		const savedAccent = localStorage.getItem("flowora-accent-color");
+		if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
+			document.documentElement.style.setProperty("--brand-color", savedAccent);
+			setAccentColorState(savedAccent);
+		}
 	}, []);
 
 	const setTheme = useCallback((nextTheme: Theme) => {
@@ -42,12 +51,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 		setThemeState(nextTheme);
 	}, []);
 
+	const setAccentColor = useCallback((color: string) => {
+		if (!/^#[0-9a-f]{6}$/i.test(color)) return;
+		document.documentElement.style.setProperty("--brand-color", color);
+		localStorage.setItem("flowora-accent-color", color);
+		setAccentColorState(color);
+	}, []);
+
 	const value = useMemo(
 		() => ({
 			theme,
 			setTheme,
+			accentColor,
+			setAccentColor,
 		}),
-		[theme, setTheme],
+		[theme, setTheme, accentColor, setAccentColor],
 	);
 
 	return (
