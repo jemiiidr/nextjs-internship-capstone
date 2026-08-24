@@ -6,10 +6,12 @@ import {
 	DndContext,
 	type DragEndEvent,
 	DragOverlay,
+	type DragOverEvent,
 	type DragStartEvent,
 	KeyboardSensor,
-	PointerSensor,
+	MouseSensor,
 	pointerWithin,
+	TouchSensor,
 	useDroppable,
 	useSensor,
 	useSensors,
@@ -132,16 +134,6 @@ function columnAccent(name: string) {
 	if (["done", "complete", "completed"].includes(normalized)) return "bg-emerald-500";
 	if (normalized.includes("block")) return "bg-rose-500";
 	return "bg-blue-500";
-}
-
-class DoubleClickPointerSensor extends PointerSensor {
-	static activators = [
-		{
-			eventName: "onPointerDown" as const,
-			handler: ({ nativeEvent: event }: React.PointerEvent) =>
-				event.isPrimary && event.button === 0 && event.detail >= 2,
-		},
-	];
 }
 
 function TaskListView({ tasks, lists }: { tasks: BoardTask[]; lists: BoardList[] }) {
@@ -317,9 +309,14 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	}, [tasks]);
 
 	const sensors = useSensors(
-		useSensor(DoubleClickPointerSensor, {
+		useSensor(MouseSensor, {
 			activationConstraint: {
-				delay: 400,
+				distance: 6,
+			},
+		}),
+		useSensor(TouchSensor, {
+			activationConstraint: {
+				delay: 250,
 				tolerance: 6,
 			},
 		}),
@@ -404,6 +401,67 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		setMessage("");
 	};
 
+	const getMoveTarget = (
+		event: DragOverEvent | DragEndEvent,
+		currentTasks: BoardTask[],
+	) => {
+		if (!event.over) return null;
+
+		const taskId = String(event.active.id);
+		const overId = String(event.over.id);
+		const activeTask = currentTasks.find((task) => task.id === taskId);
+
+		if (overId === taskId && activeTask) {
+			return {
+				taskId,
+				toListId: activeTask.listId,
+				position: activeTask.position,
+			};
+		}
+
+		const overTask = currentTasks.find((task) => task.id === overId);
+		const targetListId =
+			overTask?.listId ?? lists.find((list) => list.id === overId)?.id;
+
+		if (!targetListId) return null;
+
+		const destination = currentTasks
+			.filter((task) => task.listId === targetListId && task.id !== taskId)
+			.sort((a, b) => a.position - b.position);
+		let position = destination.length;
+
+		if (overTask && overTask.id !== taskId) {
+			const overIndex = destination.findIndex((task) => task.id === overTask.id);
+			const translated = event.active.rect.current.translated;
+			const isBelow = translated
+				? translated.top + translated.height / 2 >
+					event.over.rect.top + event.over.rect.height / 2
+				: false;
+
+			if (overIndex >= 0) position = overIndex + (isBelow ? 1 : 0);
+		}
+
+		return { taskId, toListId: targetListId, position };
+	};
+
+	const onDragOver = (event: DragOverEvent) => {
+		if (!canEdit || !dragSnapshotRef.current) return;
+
+		const move = getMoveTarget(event, tasksRef.current);
+		if (!move) return;
+
+		const moving = tasksRef.current.find((task) => task.id === move.taskId);
+		if (
+			moving?.listId === move.toListId &&
+			moving.position === move.position
+		)
+			return;
+
+		const nextTasks = moveInArray(tasksRef.current, move);
+		tasksRef.current = nextTasks;
+		replaceTasks(nextTasks);
+	};
+
 	const onDragEnd = (event: DragEndEvent) => {
 		const taskId = String(event.active.id);
 		const snapshot = dragSnapshotRef.current;
@@ -423,26 +481,16 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		}
 
 		const originalTask = snapshot.find((task) => task.id === taskId);
-		const overId = String(event.over.id);
-		const overTask = snapshot.find((task) => task.id === overId);
-		const targetListId = overTask?.listId ?? lists.find((list) => list.id === overId)?.id;
+		const finalMove = getMoveTarget(event, tasksRef.current);
 
-		if (!originalTask || !targetListId) {
+		if (!originalTask || !finalMove) {
 			tasksRef.current = snapshot;
 			replaceTasks(snapshot);
 			dragSnapshotRef.current = null;
 			return;
 		}
 
-		const destination = snapshot.filter((task) => task.listId === targetListId && task.id !== taskId).sort((a, b) => a.position - b.position);
-		let finalPosition = destination.length;
-		if (overTask) {
-			const overIndex = destination.findIndex((task) => task.id === overTask.id);
-			const translated = event.active.rect.current.translated;
-			const below = translated ? translated.top > event.over.rect.top + event.over.rect.height / 2 : false;
-			if (overIndex >= 0) finalPosition = overIndex + (below ? 1 : 0);
-		}
-		const nextTasks = moveInArray(snapshot, { taskId, toListId: targetListId, position: finalPosition });
+		const nextTasks = moveInArray(tasksRef.current, finalMove);
 		const finalTask = nextTasks.find((task) => task.id === taskId);
 		const didMove = Boolean(finalTask && (originalTask.listId !== finalTask.listId || originalTask.position !== finalTask.position));
 
@@ -453,7 +501,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 
 		if (!finalTask) return;
 		const finalListId = finalTask.listId;
-		finalPosition = finalTask.position;
+		const finalPosition = finalTask.position;
 		tasksRef.current = nextTasks;
 		replaceTasks(nextTasks);
 		dragSnapshotRef.current = null;
@@ -623,7 +671,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 							? "Saving changes…"
 							: activeTaskId
 								? "Release to drop task."
-								: "Drag tasks between lists. Press N to create a task.")}
+								: "Click a task to open it, or drag it to reorder. Press N to create a task.")}
 				</span>
 				<button
 					type="button"
@@ -638,6 +686,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				sensors={sensors}
 				collisionDetection={collisionDetectionStrategy}
 				onDragStart={onDragStart}
+				onDragOver={onDragOver}
 				onDragEnd={onDragEnd}
 				onDragCancel={onDragCancel}
 			>

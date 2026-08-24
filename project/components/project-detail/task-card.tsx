@@ -190,7 +190,7 @@ export function TaskCard({
 	const toggleTaskSelection = useUIStore((state) => state.toggleTaskSelection);
 
 	const selected = selectedTaskIds.includes(task.id);
-	const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const didDragRef = useRef(false);
 
 	const {
 		attributes,
@@ -215,14 +215,9 @@ export function TaskCard({
 		},
 	});
 
-	useEffect(() => () => {
-		if (openTimerRef.current) clearTimeout(openTimerRef.current);
-	}, []);
-
-	const pointerDownListener = listeners?.onPointerDown;
-	const remainingListeners = listeners
-		? Object.fromEntries(Object.entries(listeners).filter(([key]) => key !== "onPointerDown"))
-		: {};
+	useEffect(() => {
+		if (isDragging) didDragRef.current = true;
+	}, [isDragging]);
 
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
@@ -242,26 +237,14 @@ export function TaskCard({
 			ref={setNodeRef}
 			style={style}
 			{...attributes}
-			{...remainingListeners}
-			onPointerDown={(event) => {
-				if (event.detail >= 2 && openTimerRef.current) {
-					clearTimeout(openTimerRef.current);
-					openTimerRef.current = null;
-				}
-				pointerDownListener?.(event);
+			{...listeners}
+			onPointerDownCapture={() => {
+				if (!isDragging) didDragRef.current = false;
 			}}
 			role="button"
 			tabIndex={0}
-			onClick={(event) => {
-				if (event.detail > 1 || isDragging) {
-					if (openTimerRef.current) clearTimeout(openTimerRef.current);
-					openTimerRef.current = null;
-					return;
-				}
-				openTimerRef.current = setTimeout(() => {
-					openTaskDetail(task.id);
-					openTimerRef.current = null;
-				}, 520);
+			onClick={() => {
+				if (!isDragging && !didDragRef.current) openTaskDetail(task.id);
 			}}
 			onKeyDown={(event) => {
 				if ((event.key === "Enter" || event.key === " ") && !isDragging) {
