@@ -218,7 +218,7 @@ export async function getDashboardData(input: {
 	}).length;
 
 	return {
-		projects: projectSummaries.slice(0, 4),
+		projects: projectSummaries,
 		stats: {
 			projectCount: projectSummaries.length,
 			totalTasks,
@@ -226,6 +226,34 @@ export async function getDashboardData(input: {
 			dueSoon,
 		},
 	};
+}
+
+export async function getRecentWorkspaceActivity(
+	input: { userId: string; workspaceId: string | null; role: MemberRole },
+	limit = 6,
+) {
+	const accessibleProjects = await getProjectsForUser(input);
+	const projectIds = accessibleProjects.map((project) => project.id);
+	if (projectIds.length === 0) return [];
+
+	const rows = await db
+		.select({ activity: activities, actor: users, project: projects })
+		.from(activities)
+		.innerJoin(users, eq(activities.actorId, users.id))
+		.innerJoin(projects, eq(activities.projectId, projects.id))
+		.where(inArray(activities.projectId, projectIds))
+		.orderBy(desc(activities.createdAt))
+		.limit(limit);
+
+	return rows.map(({ activity, actor, project }) => ({
+		id: activity.id,
+		action: activity.action,
+		metadata: activity.metadata,
+		createdAt: activity.createdAt.toISOString(),
+		actor: serializeUser(actor),
+		projectId: project.id,
+		projectName: project.name,
+	}));
 }
 
 export async function getProjectBoard(
