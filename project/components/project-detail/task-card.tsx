@@ -7,6 +7,7 @@ import {
 	CheckSquare,
 	MessageSquare,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -189,6 +190,7 @@ export function TaskCard({
 	const toggleTaskSelection = useUIStore((state) => state.toggleTaskSelection);
 
 	const selected = selectedTaskIds.includes(task.id);
+	const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const {
 		attributes,
@@ -213,6 +215,15 @@ export function TaskCard({
 		},
 	});
 
+	useEffect(() => () => {
+		if (openTimerRef.current) clearTimeout(openTimerRef.current);
+	}, []);
+
+	const pointerDownListener = listeners?.onPointerDown;
+	const remainingListeners = listeners
+		? Object.fromEntries(Object.entries(listeners).filter(([key]) => key !== "onPointerDown"))
+		: {};
+
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
 		transition,
@@ -231,11 +242,26 @@ export function TaskCard({
 			ref={setNodeRef}
 			style={style}
 			{...attributes}
-			{...listeners}
+			{...remainingListeners}
+			onPointerDown={(event) => {
+				if (event.detail >= 2 && openTimerRef.current) {
+					clearTimeout(openTimerRef.current);
+					openTimerRef.current = null;
+				}
+				pointerDownListener?.(event);
+			}}
 			role="button"
 			tabIndex={0}
-			onClick={() => {
-				if (!isDragging) openTaskDetail(task.id);
+			onClick={(event) => {
+				if (event.detail > 1 || isDragging) {
+					if (openTimerRef.current) clearTimeout(openTimerRef.current);
+					openTimerRef.current = null;
+					return;
+				}
+				openTimerRef.current = setTimeout(() => {
+					openTaskDetail(task.id);
+					openTimerRef.current = null;
+				}, 520);
 			}}
 			onKeyDown={(event) => {
 				if ((event.key === "Enter" || event.key === " ") && !isDragging) {
