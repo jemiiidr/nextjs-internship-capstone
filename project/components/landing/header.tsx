@@ -3,7 +3,7 @@
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { ArrowRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FloworaLogo } from "@/components/flowora-logo";
 import { SpectrumAura } from "@/components/landing/landing-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -15,6 +15,13 @@ export function Header() {
 	const { signOut } = useClerk();
 	const { user } = useUser();
 	const [accountOpen, setAccountOpen] = useState(false);
+	const accountRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (!accountOpen) return;
+		const close = (event: PointerEvent) => { if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false); };
+		document.addEventListener("pointerdown", close);
+		return () => document.removeEventListener("pointerdown", close);
+	}, [accountOpen]);
 
 	return (
 		<header className="sticky top-0 z-40 border-b border-french_gray-300/70 bg-white/85 backdrop-blur-xl dark:border-paynes_gray-800 dark:bg-outer_space-800/85">
@@ -64,7 +71,7 @@ export function Header() {
 									Open Flowora <ArrowRight size={14} />
 								</Button>
 							</Link>
-							<div className="relative">
+							<div ref={accountRef} className="relative">
 								<button
 									type="button"
 									aria-label="Open account menu"
@@ -77,7 +84,7 @@ export function Header() {
 									/>
 								</button>
 								{accountOpen ? (
-									<div className="absolute right-0 top-[calc(100%+8px)] w-48 rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400">
+									<div className="absolute right-0 top-[calc(100%+8px)] w-48 animate-in fade-in slide-in-from-top-1 rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400">
 										<Link
 											href="/settings"
 											onClick={() => setAccountOpen(false)}

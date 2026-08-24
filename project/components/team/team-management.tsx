@@ -17,6 +17,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
 import type {
 	ActionResult,
@@ -72,15 +73,12 @@ export function InviteMemberButton() {
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="invite-role">Workspace role</Label>
-						<select
+						<Select
 							id="invite-role"
 							name="role"
 							defaultValue="org:member"
-							className="h-10 w-full rounded-lg border border-french_gray-300 bg-white px-3 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
-						>
-							<option value="org:member">Member</option>
-							<option value="org:admin">Admin</option>
-						</select>
+							options={[{ value: "org:member", label: "Member" }, { value: "org:admin", label: "Admin" }]}
+						/>
 						<p className="text-xs text-paynes_gray-500">
 							Admins can manage members and workspace projects.
 						</p>

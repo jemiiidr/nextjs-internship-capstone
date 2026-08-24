@@ -5,7 +5,7 @@ import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 export function WorkspaceSwitcher({
@@ -18,6 +18,7 @@ export function WorkspaceSwitcher({
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [isPending, startTransition] = useTransition();
+	const switcherRef = useRef<HTMLDivElement>(null);
 	const { isLoaded, setActive, userMemberships } = useOrganizationList({
 		userMemberships: { infinite: true, pageSize: 20 },
 	});
@@ -25,6 +26,14 @@ export function WorkspaceSwitcher({
 	const active = memberships.find(
 		(membership) => membership.organization.id === activeWorkspaceId,
 	);
+	useEffect(() => {
+		if (!open) return;
+		const close = (event: PointerEvent) => {
+			if (!switcherRef.current?.contains(event.target as Node)) setOpen(false);
+		};
+		document.addEventListener("pointerdown", close);
+		return () => document.removeEventListener("pointerdown", close);
+	}, [open]);
 
 	const selectWorkspace = (organizationId: string) => {
 		if (!setActive || organizationId === activeWorkspaceId) {
@@ -40,7 +49,7 @@ export function WorkspaceSwitcher({
 	};
 
 	return (
-		<div className="relative">
+		<div ref={switcherRef} className="relative">
 			<button
 				type="button"
 				onClick={() => setOpen((value) => !value)}
@@ -77,12 +86,12 @@ export function WorkspaceSwitcher({
 							: (active?.organization.name ?? "Choose workspace")}
 					</span>
 				</span>
-				<ChevronsUpDown size={15} className={cn("text-paynes_gray-400", collapsed && "lg:hidden")} />
+				<ChevronsUpDown size={15} className={cn("text-paynes_gray-400 transition-transform duration-200", open && "rotate-180", collapsed && "lg:hidden")} />
 			</button>
 
 			{open ? (
 				<div className={cn(
-					"absolute left-0 right-0 top-[calc(100%+8px)] z-[70] overflow-hidden rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400",
+					"absolute left-0 right-0 top-[calc(100%+8px)] z-[70] animate-in fade-in slide-in-from-top-1 overflow-hidden rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400",
 					collapsed && "lg:left-full lg:right-auto lg:top-0 lg:ml-3 lg:w-64",
 				)}>
 					<div className="max-h-64 overflow-y-auto scrollbar-thin">

@@ -47,7 +47,8 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
-import { cn } from "@/lib/utils";
+import { Select } from "@/components/ui/select";
+import { cn, decodeLabel } from "@/lib/utils";
 import { useBoardStore } from "@/stores/board-store";
 import { useUIStore } from "@/stores/ui-store";
 import type { BoardList, BoardTask, ProjectBoardData } from "@/types";
@@ -114,14 +115,10 @@ function TaskDragPreview({ task }: { task: BoardTask }) {
 			) : null}
 			{task.labels.length > 0 ? (
 				<div className="mt-2 flex flex-wrap gap-1">
-					{task.labels.slice(0, 3).map((label) => (
-						<span
-							key={label}
-							className="rounded-full bg-blue_munsell-500/10 px-2 py-0.5 text-[10px] text-blue_munsell-600 dark:text-blue_munsell-300"
-						>
-							{label}
-						</span>
-					))}
+					{task.labels.slice(0, 3).map((label) => {
+						const decoded = decodeLabel(label);
+						return <span key={label} className="rounded-full border px-2 py-0.5 text-[10px] font-medium" style={{ borderColor: `${decoded.color}55`, backgroundColor: `${decoded.color}18`, color: decoded.color }}>{decoded.name}</span>;
+					})}
 				</div>
 			) : null}
 		</div>
@@ -599,24 +596,20 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					/>
 				</div>
 
-				<label className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
+				<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
 					<Filter size={16} />
 					<span className="sr-only">Filter priority</span>
-					<select
+					<Select
 						value={priorityFilter}
-						onChange={(event) =>
+						onValueChange={(value) =>
 							setPriorityFilter(
-								event.target.value as "all" | BoardTask["priority"],
+								value as "all" | BoardTask["priority"],
 							)
 						}
-						className="h-10 rounded-lg border border-french_gray-300 bg-white px-3 dark:border-paynes_gray-400 dark:bg-outer_space-400"
-					>
-						<option value="all">All priorities</option>
-						<option value="low">Low</option>
-						<option value="medium">Medium</option>
-						<option value="high">High</option>
-					</select>
-				</label>
+						className="w-40"
+						options={[{ value: "all", label: "All priorities" }, { value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }]}
+					/>
+				</div>
 
 				{selectedTaskIds.length > 0 && canEdit ? (
 					<Button

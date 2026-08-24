@@ -10,7 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { deleteProjectAction } from "@/app/actions/projects";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,13 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 	const [editModalOpen, setEditModalOpen] = useState(false);
 	const [deleteError, setDeleteError] = useState("");
 	const [isPending, startTransition] = useTransition();
+	const menuRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (!menuOpen) return;
+		const close = (event: PointerEvent) => { if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false); };
+		document.addEventListener("pointerdown", close);
+		return () => document.removeEventListener("pointerdown", close);
+	}, [menuOpen]);
 	const progress =
 		project.taskCount === 0
 			? 0
@@ -80,7 +87,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 								{project.name}
 							</h2>
 						</div>
-						{canManage ? <div className="relative z-10">
+						{canManage ? <div ref={menuRef} className="relative z-10">
 							<Button
 								variant="ghost"
 								size="icon"
@@ -90,7 +97,7 @@ export function ProjectCard({ project }: { project: ProjectSummary }) {
 								<MoreHorizontal size={18} />
 							</Button>
 							{menuOpen ? (
-								<div className="absolute right-0 top-10 z-10 min-w-40 rounded-lg border border-french_gray-300 bg-white p-1 shadow-lg dark:border-paynes_gray-400 dark:bg-outer_space-400">
+								<div className="absolute right-0 top-10 z-10 min-w-40 animate-in fade-in slide-in-from-top-1 rounded-xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-700 dark:bg-outer_space-400">
 									<button
 										type="button"
 										onClick={() => { setMenuOpen(false); setEditModalOpen(true); }}

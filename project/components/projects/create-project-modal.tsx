@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUIStore } from "@/stores/ui-store";
 import type { ActionResult, ProjectSummary } from "@/types";
@@ -66,15 +67,12 @@ export function CreateProjectModal() {
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="project-visibility">Visibility</Label>
-						<select
+						<Select
 							id="project-visibility"
 							name="visibility"
 							defaultValue="private"
-							className="h-10 w-full rounded-lg border border-french_gray-300 bg-white px-3 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
-						>
-							<option value="private">Private</option>
-							<option value="workspace">Workspace</option>
-						</select>
+							options={[{ value: "private", label: "Private" }, { value: "workspace", label: "Workspace" }]}
+						/>
 					</div>
 				</div>
 				{state.message && !state.success ? (

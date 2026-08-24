@@ -11,7 +11,7 @@ import {
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { cn, formatDate } from "@/lib/utils";
+import { cn, decodeLabel, formatDate } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
 import type { BoardTask } from "@/types";
 
@@ -162,9 +162,10 @@ export function TaskCardContent({
 			{/* Labels */}
 			{task.labels.length > 0 ? (
 				<div className="mb-3 flex flex-wrap gap-1">
-					{task.labels.slice(0, 3).map((label) => (
-						<Badge key={label}>{label}</Badge>
-					))}
+					{task.labels.slice(0, 3).map((label) => {
+						const decoded = decodeLabel(label);
+						return <Badge key={label} style={{ borderColor: `${decoded.color}55`, backgroundColor: `${decoded.color}18`, color: decoded.color }}>{decoded.name}</Badge>;
+					})}
 
 					{task.labels.length > 3 ? (
 						<Badge>+{task.labels.length - 3}</Badge>

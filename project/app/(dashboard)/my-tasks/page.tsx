@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getMyTasks } from "@/lib/db";
-import { formatDate } from "@/lib/utils";
+import { decodeLabel, formatDate } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "My Tasks" };
 
@@ -68,14 +68,10 @@ export default async function MyTasksPage() {
 												</Link>
 												{task.labels.length ? (
 													<div className="mt-1 flex gap-1">
-														{task.labels.slice(0, 2).map((label) => (
-															<span
-																key={label}
-																className="text-[10px] text-paynes_gray-400"
-															>
-																#{label}
-															</span>
-														))}
+												{task.labels.slice(0, 2).map((label) => {
+													const decoded = decodeLabel(label);
+													return <span key={label} className="rounded-full border px-2 py-0.5 text-[10px] font-medium" style={{ borderColor: `${decoded.color}55`, backgroundColor: `${decoded.color}18`, color: decoded.color }}>{decoded.name}</span>;
+												})}
 													</div>
 												) : null}
 											</td>

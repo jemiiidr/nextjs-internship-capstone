@@ -11,12 +11,14 @@ import {
 	deleteTaskAction,
 	updateTaskAction,
 } from "@/app/actions/tasks";
+import { LabelEditor } from "@/components/project-detail/label-editor";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatRelativeDate } from "@/lib/utils";
 import { useBoardStore } from "@/stores/board-store";
@@ -86,16 +88,12 @@ function TaskForm({
 			<div className="grid gap-4 sm:grid-cols-2">
 				<div className="space-y-1.5">
 					<Label htmlFor={`${task?.id ?? "new"}-priority`}>Priority</Label>
-					<select
+					<Select
 						id={`${task?.id ?? "new"}-priority`}
 						name="priority"
 						defaultValue={task?.priority ?? "medium"}
-						className="h-10 w-full rounded-lg border border-french_gray-300 bg-white px-3 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
-					>
-						<option value="low">Low</option>
-						<option value="medium">Medium</option>
-						<option value="high">High</option>
-					</select>
+						options={[{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }]}
+					/>
 				</div>
 				<div className="space-y-1.5">
 					<Label htmlFor={`${task?.id ?? "new"}-due`}>Due date</Label>
@@ -109,29 +107,16 @@ function TaskForm({
 			</div>
 			<div className="space-y-1.5">
 				<Label htmlFor={`${task?.id ?? "new"}-assignee`}>Assignee</Label>
-				<select
+				<Select
 					id={`${task?.id ?? "new"}-assignee`}
 					name="assigneeId"
 					defaultValue={task?.assigneeId ?? ""}
-					className="h-10 w-full rounded-lg border border-french_gray-300 bg-white px-3 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
-				>
-					<option value="">Unassigned</option>
-					{members.map((member) => (
-						<option key={member.user.id} value={member.user.id}>
-							{member.user.name} · {member.role}
-						</option>
-					))}
-				</select>
+					options={[{ value: "", label: "Unassigned" }, ...members.map((member) => ({ value: member.user.id, label: `${member.user.name} · ${member.role}` }))]}
+				/>
 			</div>
 			<div className="space-y-1.5">
 				<Label htmlFor={`${task?.id ?? "new"}-labels`}>Labels</Label>
-				<Input
-					id={`${task?.id ?? "new"}-labels`}
-					name="labels"
-					defaultValue={task?.labels.join(", ")}
-					placeholder="frontend, bug, urgent"
-					maxLength={300}
-				/>
+				<LabelEditor initialLabels={task?.labels} />
 			</div>
 			{state.message && !state.success ? (
 				<p role="alert" className="text-sm text-red-600">

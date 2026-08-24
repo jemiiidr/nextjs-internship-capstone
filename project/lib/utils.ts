@@ -64,6 +64,20 @@ export function parseLabels(value: string | null | undefined) {
 	).slice(0, 8);
 }
 
+const labelPalette = ["#2563eb", "#7c3aed", "#0891b2", "#db2777", "#475569", "#4f46e5"];
+
+export function decodeLabel(value: string) {
+	const match = value.match(/^\[(#[0-9a-f]{6})\](.+)$/i);
+	if (match) return { color: match[1], name: match[2] };
+	let hash = 0;
+	for (const character of value) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+	return { color: labelPalette[hash % labelPalette.length], name: value };
+}
+
+export function encodeLabel(name: string, color: string) {
+	return `[${color}]${name.replaceAll(",", " ").trim()}`;
+}
+
 export function toDateOrNull(value: string | null | undefined) {
 	if (!value) return null;
 	const date = new Date(`${value}T12:00:00.000Z`);

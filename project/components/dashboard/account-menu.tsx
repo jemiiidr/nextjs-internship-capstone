@@ -57,7 +57,7 @@ export function AccountMenu({
 			{open ? (
 				<div
 					className={cn(
-						"absolute bottom-[calc(100%+8px)] left-0 z-70 w-56 rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400",
+						"absolute bottom-[calc(100%+8px)] left-0 z-70 w-56 animate-in fade-in slide-in-from-bottom-1 rounded-2xl border border-french_gray-300 bg-white p-1.5 shadow-xl dark:border-paynes_gray-800 dark:bg-outer_space-400",
 						collapsed && "lg:left-full lg:bottom-0 lg:ml-3",
 					)}
 				>

@@ -10,6 +10,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { hasPermission } from "@/lib/rbac";
 import type { MemberRole, ProjectMember, UserSummary } from "@/types";
 
@@ -87,31 +88,19 @@ export function ProjectMembers({
 					className="mt-4 space-y-2 border-t border-french_gray-300 pt-4 dark:border-paynes_gray-400"
 				>
 					<input type="hidden" name="projectId" value={projectId} />
-					<select
+					<Select
 						name="userId"
 						required
 						defaultValue=""
-						className="h-9 w-full rounded-lg border border-french_gray-300 bg-white px-2 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
-					>
-						<option value="" disabled>
-							Select a user
-						</option>
-						{availableUsers.map((user) => (
-							<option key={user.id} value={user.id}>
-								{user.name}
-							</option>
-						))}
-					</select>
+						options={[{ value: "", label: "Select a user", disabled: true }, ...availableUsers.map((user) => ({ value: user.id, label: user.name }))]}
+					/>
 					<div className="flex gap-2">
-						<select
+						<Select
 							name="role"
 							defaultValue="member"
-							className="h-9 min-w-0 flex-1 rounded-lg border border-french_gray-300 bg-white px-2 text-sm dark:border-paynes_gray-400 dark:bg-outer_space-400"
-						>
-							<option value="admin">Admin</option>
-							<option value="member">Member</option>
-							<option value="viewer">Viewer</option>
-						</select>
+							className="min-w-0 flex-1"
+							options={[{ value: "admin", label: "Admin" }, { value: "member", label: "Member" }, { value: "viewer", label: "Viewer" }]}
+						/>
 						<Button type="submit" size="sm" disabled={isPending}>
 							<UserPlus size={14} /> Add
 						</Button>
