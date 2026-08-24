@@ -1,22 +1,30 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState } from "react";
+import Image from "next/image";
 import { updateProjectAction } from "@/app/actions/projects";
+import { ProjectMembers } from "@/components/project-detail/project-members";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Textarea } from "@/components/ui/textarea";
-import type { ActionResult, ProjectSummary } from "@/types";
+import type { ActionResult, MemberRole, ProjectMember, ProjectSummary, UserSummary } from "@/types";
 
 const initialState: ActionResult = { success: false, message: "" };
 
 export function EditProjectModal({
 	project,
+	members = [],
+	workspaceUsers = [],
+	role = "viewer",
 	open,
 	onClose,
 }: {
-	project: ProjectSummary;
+	project: ProjectSummary | Pick<ProjectSummary, "id" | "name" | "description" | "dueDate" | "iconDataUrl">;
+	members?: ProjectMember[];
+	workspaceUsers?: UserSummary[];
+	role?: MemberRole;
 	open: boolean;
 	onClose: () => void;
 }) {
@@ -26,19 +34,20 @@ export function EditProjectModal({
 		initialState,
 	);
 
-	useEffect(() => {
-		if (state.success) onClose();
-	}, [onClose, state.success]);
-
 	return (
 		<Modal
 			open={open}
 			onClose={onClose}
 			title="Edit project details"
-			description="Update the project name, description, and target date."
+			description="Update project identity, deadline, and project-local member roles."
+			className="max-w-3xl"
 		>
-			<form action={action} className="space-y-4">
+			<form action={action} className="space-y-4" encType="multipart/form-data">
 				<input type="hidden" name="projectId" value={project.id} />
+				<div className="grid gap-4 sm:grid-cols-[5rem_1fr] sm:items-end">
+					<div className="relative grid size-20 place-items-center overflow-hidden rounded-2xl bg-blue_munsell-500 text-2xl font-bold text-white">{project.iconDataUrl ? <Image src={project.iconDataUrl} alt="Current project icon" fill sizes="80px" unoptimized className="object-cover"/> : project.name.slice(0, 1).toUpperCase()}</div>
+					<div className="space-y-1.5"><Label htmlFor={`project-icon-${project.id}`}>Project icon</Label><Input id={`project-icon-${project.id}`} name="icon" type="file" accept="image/*"/><p className="text-xs text-paynes_gray-500">PNG, JPG, WebP, or SVG up to 512KB.</p></div>
+				</div>
 				<div className="space-y-1.5">
 					<Label htmlFor={`project-name-${project.id}`}>Name</Label>
 					<Input
@@ -72,8 +81,8 @@ export function EditProjectModal({
 						defaultValue={project.dueDate?.slice(0, 10) ?? ""}
 					/>
 				</div>
-				{state.message && !state.success ? (
-					<p role="alert" className="text-sm text-red-600 dark:text-red-300">
+				{state.message ? (
+					<p role="status" className={state.success ? "text-sm text-emerald-600" : "text-sm text-red-600 dark:text-red-300"}>
 						{state.message}
 					</p>
 				) : null}
@@ -86,6 +95,7 @@ export function EditProjectModal({
 					</Button>
 				</div>
 			</form>
+			{members.length ? <div className="mt-6 border-t border-french_gray-200 pt-5 dark:border-paynes_gray-800"><h3 className="mb-3 font-semibold text-outer_space-900 dark:text-platinum-50">Project members and role labels</h3><ProjectMembers projectId={project.id} role={role} members={members} workspaceUsers={workspaceUsers} variant="manager"/></div> : null}
 		</Modal>
 	);
 }

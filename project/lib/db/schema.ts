@@ -115,6 +115,7 @@ export const projects = pgTable(
 		id: uuid("id").defaultRandom().primaryKey(),
 		name: text("name").notNull(),
 		description: text("description"),
+		iconDataUrl: text("icon_data_url"),
 		ownerId: uuid("owner_id")
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
@@ -153,6 +154,7 @@ export const projectMembers = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		role: memberRoleEnum("role").default("member").notNull(),
+		roleLabel: text("role_label"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),

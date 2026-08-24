@@ -5,7 +5,6 @@ import { CSS } from "@dnd-kit/utilities";
 import {
 	CalendarDays,
 	CheckSquare,
-	GripVertical,
 	MessageSquare,
 } from "lucide-react";
 
@@ -37,30 +36,21 @@ type TaskCardContentProps = {
 	task: BoardTask;
 	selected?: boolean;
 	overlay?: boolean;
-	disabled?: boolean;
-	onOpen?: () => void;
 	onToggleSelection?: () => void;
-
-	dragHandleProps?: {
-		attributes?: React.HTMLAttributes<HTMLButtonElement>;
-		listeners?: React.HTMLAttributes<HTMLButtonElement>;
-		setActivatorNodeRef?: (element: HTMLButtonElement | null) => void;
-	};
+	accentClass?: string;
 };
 
 export function TaskCardContent({
 	task,
 	selected = false,
 	overlay = false,
-	disabled = false,
-	onOpen,
 	onToggleSelection,
-	dragHandleProps,
+	accentClass,
 }: TaskCardContentProps) {
 	return (
 		<article
 			className={cn(
-				"group rounded-xl border p-3",
+				"group relative overflow-hidden rounded-xl border p-3.5",
 				"border-french_gray-300 bg-white shadow-sm",
 				"dark:border-paynes_gray-400 dark:bg-outer_space-400",
 
@@ -87,49 +77,11 @@ export function TaskCardContent({
 				],
 			)}
 		>
+			<span className={cn("absolute inset-y-3 left-0 w-0.5 rounded-r-full bg-blue-500", accentClass)} />
 			{/* Header */}
-			<div className="mb-2 flex items-start gap-2">
-				{/* Drag Handle */}
-				{!disabled && dragHandleProps ? (
-					<button
-						ref={dragHandleProps.setActivatorNodeRef}
-						type="button"
-						aria-label={`Drag ${task.title}`}
-						className={cn(
-							"mt-0.5 shrink-0",
-							"cursor-grab touch-none",
-							"rounded-md p-0.5",
-							"text-french_gray-500",
-							"transition-colors duration-150",
-							"hover:bg-platinum-700",
-							"hover:text-paynes_gray-500",
-							"focus-visible:outline-none",
-							"focus-visible:ring-2",
-							"focus-visible:ring-blue_munsell-500",
-							"active:cursor-grabbing",
-							"dark:hover:bg-outer_space-300",
-						)}
-						{...dragHandleProps.attributes}
-						{...dragHandleProps.listeners}
-					>
-						<GripVertical size={16} />
-					</button>
-				) : overlay ? (
-					<div className="mt-0.5 shrink-0 text-blue_munsell-500">
-						<GripVertical size={16} />
-					</div>
-				) : null}
-
+			<div className="mb-2 flex items-start gap-2 pl-1">
 				{/* Task information */}
-				<button
-					type="button"
-					disabled={overlay}
-					className={cn(
-						"min-w-0 flex-1 text-left",
-						!overlay && "cursor-pointer",
-					)}
-					onClick={onOpen}
-				>
+				<div className="min-w-0 flex-1 text-left">
 					<h4 className="wrap-break-word text-sm font-semibold text-outer_space-500 dark:text-platinum-500">
 						{task.title}
 					</h4>
@@ -139,7 +91,7 @@ export function TaskCardContent({
 							{task.description}
 						</p>
 					) : null}
-				</button>
+				</div>
 
 				{/* Bulk selection */}
 				{!overlay ? (
@@ -151,6 +103,8 @@ export function TaskCardContent({
 							type="checkbox"
 							checked={selected}
 							onChange={onToggleSelection}
+							onPointerDown={(event) => event.stopPropagation()}
+							onClick={(event) => event.stopPropagation()}
 							className="size-4 accent-blue_munsell-500"
 						/>
 
@@ -222,9 +176,11 @@ export function TaskCardContent({
 export function TaskCard({
 	task,
 	disabled = false,
+	accentClass,
 }: {
 	task: BoardTask;
 	disabled?: boolean;
+	accentClass?: string;
 }) {
 	const openTaskDetail = useUIStore((state) => state.openTaskDetail);
 
@@ -238,7 +194,6 @@ export function TaskCard({
 		attributes,
 		listeners,
 		setNodeRef,
-		setActivatorNodeRef,
 		transform,
 		transition,
 		isDragging,
@@ -270,11 +225,28 @@ export function TaskCard({
 	};
 
 	return (
+		// The sortable activator cannot be a native button because the card contains a checkbox.
+		// biome-ignore lint/a11y/useSemanticElements: nested interactive selection control requires a non-button activator
 		<div
 			ref={setNodeRef}
 			style={style}
+			{...attributes}
+			{...listeners}
+			role="button"
+			tabIndex={0}
+			onClick={() => {
+				if (!isDragging) openTaskDetail(task.id);
+			}}
+			onKeyDown={(event) => {
+				if ((event.key === "Enter" || event.key === " ") && !isDragging) {
+					event.preventDefault();
+					openTaskDetail(task.id);
+				}
+			}}
 			className={cn(
-				"relative",
+				"relative touch-none outline-none focus-visible:ring-2 focus-visible:ring-blue_munsell-500 focus-visible:ring-offset-2",
+				!disabled && "cursor-grab active:cursor-grabbing",
+				disabled && "cursor-pointer",
 
 				/*
 				 * Keep its physical space in the list,
@@ -287,27 +259,17 @@ export function TaskCard({
 			<TaskCardContent
 				task={task}
 				selected={selected}
-				disabled={disabled}
-				onOpen={() => openTaskDetail(task.id)}
 				onToggleSelection={() => toggleTaskSelection(task.id)}
-				dragHandleProps={
-					disabled
-						? undefined
-						: {
-								attributes,
-								listeners,
-								setActivatorNodeRef,
-							}
-				}
+				accentClass={accentClass}
 			/>
 		</div>
 	);
 }
 
-export function TaskCardOverlay({ task }: { task: BoardTask }) {
+export function TaskCardOverlay({ task, accentClass }: { task: BoardTask; accentClass?: string }) {
 	return (
 		<div className="w-full">
-			<TaskCardContent task={task} overlay />
+			<TaskCardContent task={task} overlay accentClass={accentClass} />
 		</div>
 	);
 }

@@ -54,6 +54,7 @@ export interface ProjectSummary {
 	workspaceId: string | null;
 	name: string;
 	description: string | null;
+	iconDataUrl: string | null;
 	dueDate: string | null;
 	visibility: ProjectVisibility;
 	role: MemberRole;
@@ -91,6 +92,7 @@ export interface BoardTask {
 export interface ProjectMember {
 	projectId: string;
 	role: MemberRole;
+	roleLabel: string | null;
 	user: UserSummary;
 }
 
@@ -129,6 +131,7 @@ export interface ProjectBoardData {
 		workspaceId: string | null;
 		name: string;
 		description: string | null;
+		iconDataUrl: string | null;
 		dueDate: string | null;
 		visibility: ProjectVisibility;
 		role: MemberRole;

@@ -9,9 +9,8 @@ import {
 	DragOverlay,
 	type DragStartEvent,
 	KeyboardSensor,
-	MouseSensor,
+	PointerSensor,
 	pointerWithin,
-	TouchSensor,
 	useDroppable,
 	useSensor,
 	useSensors,
@@ -21,7 +20,7 @@ import {
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Filter, Plus, Search, Trash2 } from "lucide-react";
+import { CalendarDays, Filter, LayoutGrid, List, MessageSquare, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
 	useCallback,
@@ -42,13 +41,15 @@ import {
 	TaskDetailModal,
 } from "@/components/project-detail/create-task-modal";
 import { TaskCard } from "@/components/project-detail/task-card";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
-import { cn, decodeLabel } from "@/lib/utils";
+import { cn, decodeLabel, formatDate } from "@/lib/utils";
 import { useBoardStore } from "@/stores/board-store";
 import { useUIStore } from "@/stores/ui-store";
 import type { BoardList, BoardTask, ProjectBoardData } from "@/types";
@@ -125,17 +126,38 @@ function TaskDragPreview({ task }: { task: BoardTask }) {
 	);
 }
 
-function columnTone(name: string) {
+function columnAccent(name: string) {
 	const normalized = name.trim().toLowerCase();
-	if (normalized.includes("progress"))
-		return "border-amber-200/80 bg-amber-50/45 dark:border-amber-900/50 dark:bg-amber-950/10";
-	if (normalized.includes("review"))
-		return "border-sky-200/80 bg-sky-50/45 dark:border-sky-900/50 dark:bg-sky-950/10";
-	if (["done", "complete", "completed"].includes(normalized))
-		return "border-emerald-200/80 bg-emerald-50/45 dark:border-emerald-900/50 dark:bg-emerald-950/10";
-	if (normalized.includes("block"))
-		return "border-rose-200/80 bg-rose-50/45 dark:border-rose-900/50 dark:bg-rose-950/10";
-	return "border-violet-200/70 bg-violet-50/30 dark:border-violet-900/50 dark:bg-violet-950/10";
+	if (normalized.includes("progress")) return "bg-violet-500";
+	if (normalized.includes("review")) return "bg-amber-500";
+	if (["done", "complete", "completed"].includes(normalized)) return "bg-emerald-500";
+	if (normalized.includes("block")) return "bg-rose-500";
+	return "bg-blue-500";
+}
+
+function TaskListView({ tasks, lists }: { tasks: BoardTask[]; lists: BoardList[] }) {
+	const openTaskDetail = useUIStore((state) => state.openTaskDetail);
+	const listNames = new Map(lists.map((list) => [list.id, list.name]));
+
+	return (
+		<div className="min-h-[34rem] overflow-hidden rounded-xl border border-french_gray-300 bg-white dark:border-paynes_gray-400 dark:bg-outer_space-500">
+			<div className="hidden grid-cols-[minmax(16rem,2fr)_1fr_0.8fr_1fr_0.8fr] gap-4 border-b border-french_gray-300 bg-platinum-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-paynes_gray-500 dark:border-paynes_gray-400 dark:bg-outer_space-400 dark:text-french_gray-400 md:grid">
+				<span>Task</span><span>Status</span><span>Priority</span><span>Assignee</span><span>Due date</span>
+			</div>
+			{tasks.length ? tasks.map((task) => (
+				<button key={task.id} type="button" onClick={() => openTaskDetail(task.id)} className="grid w-full gap-3 border-b border-french_gray-200 px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-platinum-50 dark:border-paynes_gray-400 dark:hover:bg-outer_space-400 md:grid-cols-[minmax(16rem,2fr)_1fr_0.8fr_1fr_0.8fr] md:items-center md:gap-4">
+					<div className="min-w-0">
+						<p className="truncate text-sm font-semibold text-outer_space-500 dark:text-platinum-500">{task.title}</p>
+						<div className="mt-1 flex flex-wrap gap-1">{task.labels.slice(0, 2).map((label) => { const decoded = decodeLabel(label); return <Badge key={label} style={{ borderColor: `${decoded.color}55`, backgroundColor: `${decoded.color}18`, color: decoded.color }}>{decoded.name}</Badge>; })}</div>
+					</div>
+					<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400"><span className={cn("size-2 rounded-full", columnAccent(listNames.get(task.listId) ?? ""))} />{listNames.get(task.listId) ?? "Unknown"}</div>
+					<span className="text-sm capitalize text-paynes_gray-500 dark:text-french_gray-400">{task.priority}</span>
+					<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">{task.assignee ? <><Avatar name={task.assignee.name} src={task.assignee.avatarUrl} className="size-7" /><span className="truncate">{task.assignee.name}</span></> : <span>Unassigned</span>}</div>
+					<div className="flex items-center gap-1.5 text-sm text-paynes_gray-500 dark:text-french_gray-400">{task.dueDate ? <><CalendarDays size={14} />{formatDate(task.dueDate, { year: undefined })}</> : "No deadline"}{task.commentsCount > 0 ? <span className="ml-auto flex items-center gap-1"><MessageSquare size={13} />{task.commentsCount}</span> : null}</div>
+				</button>
+			)) : <div className="flex min-h-[28rem] items-center justify-center text-sm text-paynes_gray-500 dark:text-french_gray-400">No tasks match the current filters.</div>}
+		</div>
+	);
 }
 
 function KanbanColumn({
@@ -164,13 +186,13 @@ function KanbanColumn({
 		<section
 			ref={setNodeRef}
 			className={cn(
-				"flex w-[min(86vw,19rem)] shrink-0 flex-col rounded-2xl border transition-[box-shadow,background-color] duration-150",
-				columnTone(list.name),
+				"flex min-h-[34rem] w-[min(86vw,19rem)] shrink-0 flex-col rounded-xl border border-french_gray-300 bg-platinum-50/60 transition-[box-shadow,background-color] duration-150 dark:border-paynes_gray-400 dark:bg-outer_space-500",
 				isOver && "bg-blue_munsell-500/5 ring-2 ring-blue_munsell-500",
 			)}
 		>
 			<header className="flex items-center justify-between border-b border-french_gray-300 p-3 dark:border-paynes_gray-400">
 				<div className="flex min-w-0 items-center gap-2">
+					<span className={cn("size-2.5 shrink-0 rounded-full", columnAccent(list.name))} />
 					<h2 className="truncate font-semibold text-outer_space-500 dark:text-platinum-500">
 						{list.name}
 					</h2>
@@ -181,6 +203,9 @@ function KanbanColumn({
 
 				{canEdit ? (
 					<div className="flex">
+						<Button size="icon" variant="ghost" className="size-8" onClick={onCreateTask} aria-label={`Add task to ${list.name}`}>
+							<Plus size={16} />
+						</Button>
 						<Button
 							size="icon"
 							variant="ghost"
@@ -207,7 +232,7 @@ function KanbanColumn({
 				items={tasks.map((task) => task.id)}
 				strategy={verticalListSortingStrategy}
 			>
-				<div className="min-h-40 flex-1 space-y-3 p-3">
+				<div className="min-h-40 flex-1 space-y-2 p-2.5">
 					{tasks.map((task) => (
 						<div
 							key={task.id}
@@ -216,13 +241,13 @@ function KanbanColumn({
 								activeTaskId === task.id && "opacity-25",
 							)}
 						>
-							<TaskCard task={task} disabled={!canEdit} />
+							<TaskCard task={task} disabled={!canEdit} accentClass={columnAccent(list.name)} />
 						</div>
 					))}
 
 					{tasks.length === 0 ? (
 						<p className="rounded-lg border border-dashed border-french_gray-300 py-8 text-center text-xs text-paynes_gray-500 dark:border-paynes_gray-400 dark:text-french_gray-400">
-							Drop a task here
+							No tasks in this stage
 						</p>
 					) : null}
 				</div>
@@ -232,7 +257,7 @@ function KanbanColumn({
 				<div className="p-3 pt-0">
 					<Button
 						variant="ghost"
-						className="w-full border border-dashed border-french_gray-300 dark:border-paynes_gray-400"
+						className="w-full justify-start text-blue_munsell-500"
 						onClick={onCreateTask}
 					>
 						<Plus size={16} /> Add task
@@ -254,6 +279,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const [listToRename, setListToRename] = useState<BoardList | null>(null);
 	const [listName, setListName] = useState("");
 	const [renameError, setRenameError] = useState("");
+	const [viewMode, setViewMode] = useState<"board" | "list">("board");
 
 	const hydrate = useBoardStore((state) => state.hydrate);
 	const lists = useBoardStore((state) => state.lists);
@@ -283,15 +309,10 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	}, [tasks]);
 
 	const sensors = useSensors(
-		useSensor(MouseSensor, {
-			activationConstraint: {
-				distance: 6,
-			},
-		}),
-		useSensor(TouchSensor, {
+		useSensor(PointerSensor, {
 			activationConstraint: {
 				delay: 180,
-				tolerance: 8,
+				tolerance: 6,
 			},
 		}),
 		useSensor(KeyboardSensor, {
@@ -611,6 +632,16 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					/>
 				</div>
 
+				<fieldset className="flex rounded-lg border border-french_gray-300 bg-platinum-50 p-1 dark:border-paynes_gray-400 dark:bg-outer_space-400">
+					<legend className="sr-only">Task view</legend>
+					<Button type="button" size="sm" variant={viewMode === "board" ? "default" : "ghost"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("board")} aria-pressed={viewMode === "board"}>
+						<LayoutGrid size={15} /> Board
+					</Button>
+					<Button type="button" size="sm" variant={viewMode === "list" ? "default" : "ghost"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+						<List size={15} /> List
+					</Button>
+				</fieldset>
+
 				{selectedTaskIds.length > 0 && canEdit ? (
 					<Button
 						variant="danger"
@@ -643,7 +674,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				</button>
 			</div>
 
-			<DndContext
+			{viewMode === "board" ? <DndContext
 				sensors={sensors}
 				collisionDetection={collisionDetectionStrategy}
 				onDragStart={onDragStart}
@@ -703,7 +734,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				>
 					{activeTask ? <TaskDragPreview task={activeTask} /> : null}
 				</DragOverlay>
-			</DndContext>
+			</DndContext> : <TaskListView tasks={filteredTasks} lists={lists} />}
 
 			<CreateTaskModal projectId={data.project.id} />
 			<TaskDetailModal projectId={data.project.id} />

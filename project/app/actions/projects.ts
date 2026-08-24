@@ -80,6 +80,7 @@ export async function createProjectAction(
 			projectId: project.id,
 			userId: context.user.id,
 			role: context.role,
+			roleLabel: "Owner",
 		});
 		await db.insert(lists).values([
 			{ projectId: project.id, name: "To Do", position: 0 },
@@ -104,6 +105,7 @@ export async function createProjectAction(
 				workspaceId: project.workspaceId,
 				name: project.name,
 				description: project.description,
+				iconDataUrl: project.iconDataUrl,
 				dueDate: project.dueDate?.toISOString() ?? null,
 				visibility: project.visibility,
 				role: context.role,
@@ -156,6 +158,14 @@ export async function updateProjectAction(
 			message: "You do not have permission to edit this project.",
 		};
 	}
+	const icon = formData.get("icon");
+	let iconDataUrl: string | undefined;
+	if (icon instanceof File && icon.size > 0) {
+		if (!icon.type.startsWith("image/") || icon.size > 512 * 1024) {
+			return { success: false, message: "Project icons must be image files no larger than 512KB." };
+		}
+		iconDataUrl = `data:${icon.type};base64,${Buffer.from(await icon.arrayBuffer()).toString("base64")}`;
+	}
 
 	await db
 		.update(projects)
@@ -163,6 +173,7 @@ export async function updateProjectAction(
 			name: parsed.data.name,
 			description: parsed.data.description,
 			dueDate: toDateOrNull(parsed.data.dueDate),
+			...(iconDataUrl ? { iconDataUrl } : {}),
 			updatedAt: new Date(),
 		})
 		.where(eq(projects.id, parsed.data.projectId));
@@ -215,6 +226,7 @@ export async function addProjectMemberAction(
 			message: "Only workspace admins can manage project collaborators.",
 		};
 	}
+	const roleLabel = String(formData.get("roleLabel") ?? "Contributor").trim().slice(0, 40) || "Contributor";
 
 	const workspaceMembers = await getWorkspaceMembers(access.workspaceId);
 	const target = workspaceMembers.find(
@@ -233,16 +245,17 @@ export async function addProjectMemberAction(
 			projectId: parsed.data.projectId,
 			userId: target.id,
 			role: target.role,
+			roleLabel,
 		})
 		.onConflictDoUpdate({
 			target: [projectMembers.projectId, projectMembers.userId],
-			set: { role: target.role },
+			set: { role: target.role, roleLabel },
 		});
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
 		actorId: access.user.id,
 		action: "project_member_added",
-		metadata: { memberName: target.name, role: target.role },
+		metadata: { memberName: target.name, role: roleLabel },
 	});
 
 	revalidateProjectSurfaces(parsed.data.projectId);
@@ -250,6 +263,18 @@ export async function addProjectMemberAction(
 		success: true,
 		message: `${target.name} was added as a collaborator.`,
 	};
+}
+
+export async function updateProjectMemberLabelAction(formData: FormData): Promise<ActionResult> {
+	const projectId = String(formData.get("projectId") ?? "");
+	const userId = String(formData.get("userId") ?? "");
+	const roleLabel = String(formData.get("roleLabel") ?? "").trim().slice(0, 40);
+	const access = await requireProjectAccess(projectId);
+	if (!access || !canManageProject(access.role)) return { success: false, message: "Only project admins can change role labels." };
+	if (!roleLabel) return { success: false, message: "Choose or enter a role label." };
+	await db.update(projectMembers).set({ roleLabel }).where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
+	revalidateProjectSurfaces(projectId);
+	return { success: true, message: "Project role updated." };
 }
 
 export async function removeProjectMemberAction(

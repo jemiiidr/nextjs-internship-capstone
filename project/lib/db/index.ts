@@ -184,6 +184,7 @@ export async function getProjectsForUser(input: {
 			workspaceId: project.workspaceId,
 			name: project.name,
 			description: project.description,
+			iconDataUrl: project.iconDataUrl,
 			dueDate: project.dueDate?.toISOString() ?? null,
 			visibility: project.visibility,
 			role: project.workspaceId ? input.role : "owner",
@@ -334,6 +335,7 @@ export async function getProjectBoard(
 	const members: ProjectMember[] = memberRows.map(({ membership, user }) => ({
 		projectId: membership.projectId,
 		role: user.id === access.project.ownerId ? "owner" : membership.role,
+		roleLabel: membership.roleLabel,
 		user: serializeUser(user),
 	}));
 
@@ -353,6 +355,7 @@ export async function getProjectBoard(
 			workspaceId: access.project.workspaceId,
 			name: access.project.name,
 			description: access.project.description,
+			iconDataUrl: access.project.iconDataUrl,
 			dueDate: access.project.dueDate?.toISOString() ?? null,
 			visibility: access.project.visibility,
 			role: access.role,

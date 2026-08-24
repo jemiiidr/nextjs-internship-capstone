@@ -23,6 +23,7 @@ export function useProjects(initialProjects: ProjectSummary[]) {
 				workspaceId: null,
 				name: String(formData.get("name") || "New project"),
 				description: String(formData.get("description") || "") || null,
+				iconDataUrl: null,
 				dueDate: String(formData.get("dueDate") || "") || null,
 				visibility:
 					formData.get("visibility") === "workspace" ? "workspace" : "private",
