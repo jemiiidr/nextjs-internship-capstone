@@ -19,7 +19,7 @@ import type { ReactNode } from "react";
 import { AccountMenu } from "@/components/dashboard/account-menu";
 import { NotificationCenter } from "@/components/dashboard/notification-center";
 import { WorkspaceSwitcher } from "@/components/dashboard/workspace-switcher";
-import { FloworaLogo } from "@/components/flowora-logo";
+import { KanvasLogo } from "@/components/kanvas-logo";
 import { PageTransition } from "@/components/page-transition";
 import { CreateProjectModal } from "@/components/projects/create-project-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -116,20 +116,21 @@ export function DashboardLayout({
 				<div
 					className={cn(
 						"flex h-18 items-center justify-between gap-2 px-2",
-						sidebarCollapsed && "lg:justify-center lg:px-0",
+						sidebarCollapsed &&
+							"lg:h-auto lg:flex-col lg:justify-center lg:gap-1 lg:px-0 lg:py-3",
 					)}
 				>
 					{sidebarCollapsed ? (
 						<>
 							<div className="lg:hidden">
-								<FloworaLogo href="/dashboard" />
+								<KanvasLogo href="/dashboard" />
 							</div>
 							<div className="hidden lg:block">
-								<FloworaLogo href="/dashboard" compact />
+								<KanvasLogo href="/dashboard" compact />
 							</div>
 						</>
 					) : (
-						<FloworaLogo href="/dashboard" />
+						<KanvasLogo href="/dashboard" />
 					)}
 					<Button
 						variant="ghost"
@@ -224,7 +225,7 @@ export function DashboardLayout({
 					>
 						<Menu size={20} />
 					</Button>
-					<FloworaLogo href="/dashboard" compact />
+					<KanvasLogo href="/dashboard" compact />
 					<NotificationCenter
 						items={notifications.items}
 						unreadCount={notifications.unreadCount}

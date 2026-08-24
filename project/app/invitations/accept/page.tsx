@@ -8,7 +8,7 @@ export default function AcceptInvitationPage() {
 	return (
 		<AuthShell
 			eyebrow="You’re invited"
-			title="Join your team on Flowora"
+			title="Join your team on Kanvas"
 			description="Complete your account details to accept the invitation and start collaborating."
 		>
 			<ClerkAuth mode="invitation" />

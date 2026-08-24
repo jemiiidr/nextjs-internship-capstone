@@ -126,7 +126,7 @@ export async function getWorkspaceMemberPreview(
 		const name =
 			[publicData.firstName, publicData.lastName].filter(Boolean).join(" ") ||
 			email.split("@")[0] ||
-			"Flowora member";
+			"Kanvas member";
 		return [
 			{
 				id: publicData.userId,
@@ -156,7 +156,7 @@ export async function getWorkspaceMembers(
 			const name =
 				[publicData.firstName, publicData.lastName].filter(Boolean).join(" ") ||
 				email.split("@")[0] ||
-				"Flowora member";
+				"Kanvas member";
 			const dbUser = await upsertWorkspaceUser({
 				clerkId: publicData.userId,
 				email,

@@ -24,7 +24,7 @@ const taskFlowBars = [
 const analyticsFeatures = [
 	"Live task and project metrics",
 	"Workspace-scoped reporting",
-	"Soft, readable visualizations",
+	"Clear, decision-ready visualizations",
 ] as const;
 
 const analyticsStats = [
@@ -67,13 +67,12 @@ export default function HomePage() {
 								</p>
 
 								<h2 className="mt-2 text-3xl font-bold tracking-tight text-outer_space-900 sm:text-4xl dark:text-platinum-50">
-									Analytics without leaving your workflow.
+									See the shape of work as it changes.
 								</h2>
 
 								<p className="mt-4 max-w-xl leading-7 text-paynes_gray-500">
-									Track completion rate, overdue work, status distribution, and
-									14-day task flow from the same workspace your team uses every
-									day.
+									Kanvas turns activity into a clear view of progress, overdue work,
+									status distribution, and team flow—without another reporting tool.
 								</p>
 
 								<div className="mt-6 space-y-3 text-sm text-paynes_gray-600 dark:text-french_gray-300">
@@ -138,18 +137,17 @@ export default function HomePage() {
 								</span>
 
 								<h2 className="mt-5 text-3xl font-bold tracking-tight text-outer_space-900 dark:text-platinum-50">
-									One account. Multiple workspaces.
+									A separate Kanvas for every team.
 								</h2>
 
 								<p className="relative mx-auto mt-3 max-w-2xl text-paynes_gray-500 dark:text-french_gray-400">
-									Switch between teams without mixing their projects. Clerk
-									Organizations keep workspace membership and roles isolated by
-									design.
+									Move between teams without mixing projects, members, or permissions.
+									Each workspace stays focused, secure, and ready for its own way of working.
 								</p>
 
 								<Link href="/sign-up" className="mt-7 inline-block">
 									<Button>
-										Start organizing
+										Open a blank Kanvas
 										<ArrowRight size={16} />
 									</Button>
 								</Link>

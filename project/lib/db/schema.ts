@@ -119,7 +119,7 @@ export const projects = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		// Clerk Organization ID. Nullable only for projects created before
-		// Flowora workspaces were introduced.
+		// Kanvas workspaces were introduced.
 		workspaceId: text("workspace_id"),
 		dueDate: timestamp("due_date", { withTimezone: true }),
 		visibility: projectVisibilityEnum("visibility")

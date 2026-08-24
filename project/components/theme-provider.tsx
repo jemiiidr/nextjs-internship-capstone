@@ -34,7 +34,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 			: "light";
 
 		setThemeState(currentTheme);
-		const savedAccent = localStorage.getItem("flowora-accent-color");
+		const savedAccent = localStorage.getItem("kanvas-accent-color") ?? localStorage.getItem("flowora-accent-color");
 		if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
 			document.documentElement.style.setProperty("--brand-color", savedAccent);
 			setAccentColorState(savedAccent);
@@ -46,7 +46,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 		document.documentElement.style.colorScheme = nextTheme;
 
-		localStorage.setItem("flowora-theme", nextTheme);
+		localStorage.setItem("kanvas-theme", nextTheme);
 
 		setThemeState(nextTheme);
 	}, []);
@@ -54,7 +54,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	const setAccentColor = useCallback((color: string) => {
 		if (!/^#[0-9a-f]{6}$/i.test(color)) return;
 		document.documentElement.style.setProperty("--brand-color", color);
-		localStorage.setItem("flowora-accent-color", color);
+		localStorage.setItem("kanvas-accent-color", color);
 		setAccentColorState(color);
 	}, []);
 

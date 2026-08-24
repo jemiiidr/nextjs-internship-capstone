@@ -331,7 +331,7 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 									Appearance
 								</h2>
 								<p className="text-sm text-paynes_gray-500">
-									Choose the interface theme used across Flowora.
+									Choose the interface theme used across Kanvas.
 								</p>
 							</div>
 						</div>

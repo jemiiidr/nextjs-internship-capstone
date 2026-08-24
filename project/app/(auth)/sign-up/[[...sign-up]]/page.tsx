@@ -8,7 +8,7 @@ export default function SignUpPage() {
 	return (
 		<AuthShell
 			eyebrow="Start creating"
-			title="Build your Flowora workspace"
+			title="Build your Kanvas workspace"
 			description="Create your account and bring projects, tasks, and teammates into focus."
 		>
 			<ClerkAuth mode="sign-up" />

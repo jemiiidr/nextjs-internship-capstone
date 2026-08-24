@@ -42,21 +42,21 @@ export function Hero() {
 			<div className="mx-auto max-w-7xl text-center">
 				<Reveal>
 					<span className="inline-flex items-center rounded-full border border-blue_munsell-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-blue_munsell-700 shadow-sm dark:border-blue_munsell-800 dark:bg-outer_space-500 dark:text-blue_munsell-200">
-						Organize work. Keep momentum.
+						Kanban structure. Canvas freedom.
 					</span>
 				</Reveal>
 				<Reveal delay={0.1}>
 					<h1 className="mx-auto mt-6 max-w-4xl text-balance text-5xl font-bold tracking-[-0.04em] text-outer_space-900 sm:text-6xl lg:text-7xl dark:text-platinum-50">
-						A colorful way to get{" "}
-						<span className="bg-gradient-to-r from-[#f29586] via-[#e9be65] to-[#72bada] bg-clip-text text-transparent">
-							work done.
+						Turn every plan into a{" "}
+						<span className="bg-gradient-to-r from-blue_munsell-500 via-[#b26fce] to-[#72bada] bg-clip-text text-transparent">
+							living Kanvas.
 						</span>
 					</h1>
 				</Reveal>
 				<Reveal delay={0.18}>
 					<p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-paynes_gray-500 dark:text-french_gray-400">
-						Flowora brings boards, tasks, collaborators, calendars, and
-						workspace analytics into one focused project management experience.
+						Kanvas combines the clarity of kanban with the flexibility of a
+						shared canvas—so teams can shape ideas, track work, and ship together.
 					</p>
 				</Reveal>
 				<Reveal
@@ -65,7 +65,7 @@ export function Hero() {
 				>
 					<Link href="/sign-up">
 						<Button className="h-11 px-6">
-							Get started — it’s free <ArrowRight size={16} />
+							Create your Kanvas <ArrowRight size={16} />
 						</Button>
 					</Link>
 					<Link href="/sign-in">
@@ -89,7 +89,7 @@ export function Hero() {
 							Product Team
 						</p>
 						<p className="text-sm font-semibold text-outer_space-900 dark:text-platinum-50">
-							Website redesign
+							Launch canvas
 						</p>
 					</div>
 					<div className="flex -space-x-2">

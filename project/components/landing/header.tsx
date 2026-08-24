@@ -4,7 +4,7 @@ import { useAuth, useClerk, useUser } from "@clerk/nextjs";
 import { ArrowRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { FloworaLogo } from "@/components/flowora-logo";
+import { KanvasLogo } from "@/components/kanvas-logo";
 import { SpectrumAura } from "@/components/landing/landing-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui/avatar";
@@ -27,7 +27,7 @@ export function Header() {
 		<header className="sticky top-0 z-40 border-b border-french_gray-300/70 bg-white/85 backdrop-blur-xl dark:border-paynes_gray-800 dark:bg-outer_space-800/85">
 			<SpectrumAura />
 			<div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-				<FloworaLogo />
+				<KanvasLogo />
 				<nav className="hidden items-center gap-7 text-sm font-medium text-paynes_gray-500 md:flex">
 					<Link
 						href="#features"
@@ -68,7 +68,7 @@ export function Header() {
 						<>
 							<Link href="/dashboard">
 								<Button size="sm">
-									Open Flowora <ArrowRight size={14} />
+									Open Kanvas <ArrowRight size={14} />
 								</Button>
 							</Link>
 							<div ref={accountRef} className="relative">

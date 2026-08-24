@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle2, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FloworaLogo } from "@/components/flowora-logo";
+import { KanvasLogo } from "@/components/kanvas-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AuthShell({
@@ -45,7 +45,7 @@ export function AuthShell({
 
 			<div className="relative z-10 mx-auto grid min-h-screen max-w-7xl lg:grid-cols-[1.05fr_0.95fr]">
 				<section className="relative hidden flex-col justify-between overflow-hidden border-r border-white/20 p-10 lg:flex xl:p-14 dark:border-white/5">
-					<FloworaLogo />
+					<KanvasLogo />
 					<div className="max-w-xl py-16">
 						<p className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue_munsell-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-blue_munsell-700 shadow-sm backdrop-blur dark:border-blue_munsell-800 dark:bg-outer_space-500/70 dark:text-blue_munsell-200">
 							<Sparkles size={14} /> Plan brightly. Ship together.
@@ -72,20 +72,20 @@ export function AuthShell({
 						</div>
 					</div>
 					<p className="text-xs text-paynes_gray-400">
-						Flowora · Work with momentum
+						Kanvas · Make work visible
 					</p>
 				</section>
 
 				<section className="flex min-h-screen flex-col px-4 py-5 sm:px-8 lg:px-12 xl:px-20">
 					<div className="flex items-center justify-between">
 						<div className="lg:hidden">
-							<FloworaLogo />
+							<KanvasLogo />
 						</div>
 						<Link
 							href="/"
 							className="hidden items-center gap-2 rounded-full border border-french_gray-300 bg-white/75 px-3 py-2 text-xs font-semibold text-paynes_gray-600 shadow-sm backdrop-blur transition hover:-translate-y-px hover:border-blue_munsell-300 hover:text-blue_munsell-600 lg:inline-flex dark:border-paynes_gray-700 dark:bg-outer_space-500/75 dark:text-french_gray-300"
 						>
-							<ArrowLeft size={14} /> Flowora home
+							<ArrowLeft size={14} /> Kanvas home
 						</Link>
 						<div className="ml-auto">
 							<ThemeToggle compact />
@@ -109,7 +109,7 @@ export function AuthShell({
 							href="/"
 							className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-paynes_gray-500 transition hover:bg-white/70 hover:text-blue_munsell-600 lg:hidden dark:hover:bg-outer_space-500/70 dark:hover:text-blue_munsell-300"
 						>
-							<ArrowLeft size={14} /> Back to Flowora home
+							<ArrowLeft size={14} /> Back to Kanvas home
 						</Link>
 					</div>
 				</section>

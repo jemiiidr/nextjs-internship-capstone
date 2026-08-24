@@ -58,7 +58,7 @@ export function AccentColorPicker() {
 				</label>
 			</div>
 			<p className="text-xs text-paynes_gray-500">
-				Applied to buttons, highlighted text, links, focus rings, and selected states throughout Flowora.
+				Applied to buttons, highlighted text, links, focus rings, and selected states throughout Kanvas.
 			</p>
 		</div>
 	);

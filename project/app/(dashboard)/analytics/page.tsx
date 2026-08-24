@@ -27,7 +27,7 @@ export default async function AnalyticsPage() {
 				</h1>
 				<p className="mt-2 text-paynes_gray-500 dark:text-french_gray-400">
 					See throughput, workload, completion, and project health without
-					leaving Flowora.
+					leaving Kanvas.
 				</p>
 			</header>
 			<AnalyticsOverview data={analytics} projects={projects} />

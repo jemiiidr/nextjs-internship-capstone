@@ -8,17 +8,19 @@ import "./globals.css";
 
 export const metadata: Metadata = {
 	title: {
-		default: "Flowora",
-		template: "%s · Flowora",
+		default: "Kanvas",
+		template: "%s · Kanvas",
 	},
 	description:
-		"A colorful, focused Kanban workspace for planning projects and shipping work together.",
+		"Kanvas is the collaborative canvas for planning projects, organizing tasks, and moving work forward.",
+	icons: { icon: "/logo.svg", apple: "/logo.svg" },
 };
 
 const themeScript = `
 (() => {
 	try {
 		const savedTheme =
+			localStorage.getItem("kanvas-theme") ||
 			localStorage.getItem("flowora-theme") ||
 			localStorage.getItem("projectflow-theme");
 
@@ -31,7 +33,7 @@ const themeScript = `
 			? "dark"
 			: "light";
 
-		const savedAccent = localStorage.getItem("flowora-accent-color");
+		const savedAccent = localStorage.getItem("kanvas-accent-color") || localStorage.getItem("flowora-accent-color");
 		if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
 			document.documentElement.style.setProperty("--brand-color", savedAccent);
 		}
@@ -48,7 +50,7 @@ export default function RootLayout({
 		<ClerkProvider>
 			<html lang="en" suppressHydrationWarning>
 				<head>
-					<Script id="flowora-theme-init" strategy="beforeInteractive">
+					<Script id="kanvas-theme-init" strategy="beforeInteractive">
 						{themeScript}
 					</Script>
 				</head>

@@ -8,7 +8,7 @@ export default function SignInPage() {
 	return (
 		<AuthShell
 			eyebrow="Welcome back"
-			title="Sign in to Flowora"
+			title="Sign in to Kanvas"
 			description="Pick up where your team left off and keep the work moving."
 		>
 			<ClerkAuth mode="sign-in" />

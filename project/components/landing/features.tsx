@@ -11,8 +11,8 @@ import { FeatureMotion, Reveal } from "@/components/landing/landing-motion";
 const features = [
 	{
 		icon: LayoutDashboard,
-		title: "Kanban that feels alive",
-		copy: "Move work through clear stages with a fast, keyboard-friendly board.",
+		title: "Your work, on one canvas",
+		copy: "Move ideas through clear stages on a fast, flexible kanban canvas.",
 		tone: "bg-blue_munsell-50 text-blue_munsell-600 dark:bg-blue_munsell-900/55 dark:text-blue_munsell-300",
 		accent: "from-[#9187f5] to-[#e989b8]",
 		layout: "md:col-span-2 lg:col-span-2",
@@ -119,14 +119,14 @@ export function Features() {
 			<div className="mx-auto max-w-7xl">
 				<Reveal className="max-w-2xl">
 					<p className="text-sm font-semibold text-blue_munsell-600 dark:text-blue_munsell-300">
-						Everything your team needs
+						Built for visual momentum
 					</p>
 					<h2 className="mt-2 text-3xl font-bold tracking-tight text-outer_space-900 sm:text-4xl dark:text-platinum-50">
-						A workspace with rhythm, not clutter.
+						Structure when you need it. Space when you don’t.
 					</h2>
 					<p className="mt-4 text-paynes_gray-500 dark:text-french_gray-400">
-						Color works as a signal while the interface stays calm, clear, and
-						easy to scan.
+						Kanvas keeps projects, people, deadlines, and decisions visible
+						without turning your workspace into noise.
 					</p>
 				</Reveal>
 				<div className="mt-12 grid auto-rows-[minmax(15rem,auto)] gap-4 md:grid-cols-2 lg:grid-cols-3">

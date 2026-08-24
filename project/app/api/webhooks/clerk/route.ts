@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 			[data.first_name, data.last_name].filter(Boolean).join(" ") ||
 			data.username ||
 			email.split("@")[0] ||
-			"ProjectFlow user";
+			"Kanvas user";
 
 		await upsertClerkUser({
 			clerkId: data.id,

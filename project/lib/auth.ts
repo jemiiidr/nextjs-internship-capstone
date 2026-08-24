@@ -25,7 +25,7 @@ export async function syncCurrentUser() {
 		[clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
 		clerkUser.username ||
 		email.split("@")[0] ||
-		"Flowora user";
+		"Kanvas user";
 
 	return upsertClerkUser({
 		clerkId: userId,
@@ -73,7 +73,7 @@ export async function requireProjectAccess(projectId: string) {
 	});
 	if (!project) return null;
 
-	// New Flowora projects are scoped to the active Clerk Organization.
+	// New Kanvas projects are scoped to the active Clerk Organization.
 	if (project.workspaceId) {
 		if (!context.workspaceId || project.workspaceId !== context.workspaceId) {
 			return null;

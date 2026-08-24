@@ -8,12 +8,12 @@ export function ClerkAuth({
 }: {
 	mode: "sign-in" | "sign-up" | "invitation";
 }) {
-	const { theme } = useTheme();
+	const { theme, accentColor } = useTheme();
 	const appearance = {
 		variables: {
-			colorPrimary: "#7467f0",
-			colorBackground: theme === "dark" ? "#22293a" : "#ffffff",
-			colorInputBackground: theme === "dark" ? "#273044" : "#ffffff",
+			colorPrimary: accentColor,
+			colorBackground: theme === "dark" ? "#151517" : "#ffffff",
+			colorInputBackground: theme === "dark" ? "#202023" : "#ffffff",
 			colorInputText: theme === "dark" ? "#f3f4f8" : "#172033",
 			colorText: theme === "dark" ? "#f3f4f8" : "#172033",
 			colorTextSecondary: theme === "dark" ? "#aeb5c4" : "#667085",
