@@ -45,10 +45,34 @@ export async function upsertClerkUser(input: {
 		return saved;
 	}
 
-	const [saved] = await db
+	// The Clerk webhook and the first authenticated page request can both try to
+	// create this user immediately after signup. Let either unique constraint
+	// (email or Clerk ID) win, then update the row created by the other request.
+	const [inserted] = await db
 		.insert(users)
 		.values(values)
-		.onConflictDoUpdate({ target: users.email, set: values })
+		.onConflictDoNothing()
+		.returning();
+	if (inserted) {
+		return inserted;
+	}
+
+	const concurrentlyCreated =
+		(await db.query.users.findFirst({
+			where: eq(users.clerkId, input.clerkId),
+		})) ??
+		(await db.query.users.findFirst({
+			where: ilike(users.email, email),
+		}));
+
+	if (!concurrentlyCreated) {
+		throw new Error("Unable to initialize the signed-in user");
+	}
+
+	const [saved] = await db
+		.update(users)
+		.set(values)
+		.where(eq(users.id, concurrentlyCreated.id))
 		.returning();
 	return saved;
 }
