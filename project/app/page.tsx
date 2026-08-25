@@ -62,7 +62,7 @@ export default function HomePage() {
 
 					<section
 						id="analytics"
-						className="relative overflow-hidden px-4 py-24 sm:px-6 lg:px-8"
+						className="relative overflow-hidden px-4 pb-4 pt-16 sm:px-6 sm:pt-20 lg:px-8"
 					>
 						<div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-2 lg:items-center">
 							<Reveal>
@@ -132,7 +132,7 @@ export default function HomePage() {
 
 					<section
 						id="workspaces"
-						className="bg-white px-4 py-24 sm:px-6 lg:px-8 dark:bg-outer_space-800"
+						className="bg-white px-4 pb-16 pt-0 sm:px-6 sm:pb-20 lg:px-8 dark:bg-outer_space-800"
 					>
 						<Reveal className="mx-auto max-w-7xl rounded-4xl bg-linear-to-r from-blue_munsell-500 via-[#b26fce] to-[#f29586] p-px shadow-[0_24px_80px_rgba(116,103,240,.14)]">
 							<div className="relative overflow-hidden rounded-[calc(2rem-1px)] bg-white px-7 py-12 text-center dark:bg-outer_space-500 sm:px-12">

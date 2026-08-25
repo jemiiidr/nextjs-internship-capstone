@@ -392,11 +392,11 @@ export function Features() {
 			className="relative overflow-hidden border-y border-french_gray-200 bg-platinum-50/60 px-4 py-24 sm:px-6 sm:py-28 lg:px-8 dark:border-paynes_gray-800 dark:bg-outer_space-800"
 		>
 			<div
-				className="pointer-events-none absolute -left-40 top-20 size-96 rounded-full bg-blue_munsell-100/40 blur-3xl dark:bg-blue_munsell-950/15"
+				className="pointer-events-none absolute -left-40 top-20 size-96 rounded-full bg-blue_munsell-300/30 blur-3xl sm:bg-blue_munsell-100/40 dark:bg-blue_munsell-700/20 dark:sm:bg-blue_munsell-950/15"
 				aria-hidden="true"
 			/>
 			<div
-				className="pointer-events-none absolute -right-32 bottom-10 size-80 rounded-full bg-[#e989b8]/10 blur-3xl"
+				className="pointer-events-none absolute -right-32 bottom-10 size-80 rounded-full bg-blue_munsell-200/25 blur-3xl sm:bg-[#e989b8]/10 dark:bg-blue_munsell-700/15 dark:sm:bg-[#e989b8]/10"
 				aria-hidden="true"
 			/>
 			<div className="relative mx-auto max-w-7xl">
