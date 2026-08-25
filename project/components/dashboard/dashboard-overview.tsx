@@ -1,3 +1,5 @@
+"use client";
+
 import {
 	AlertCircle,
 	CalendarDays,
@@ -8,8 +10,25 @@ import {
 	TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
+import {
+	Area,
+	AreaChart,
+	CartesianGrid,
+	Cell,
+	Label,
+	Pie,
+	PieChart,
+	XAxis,
+	YAxis,
+} from "recharts";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	type ChartConfig,
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "@/components/ui/chart";
 import { cn, formatActivityCopy, formatRelativeDate } from "@/lib/utils";
 import type {
 	AnalyticsData,
@@ -46,6 +65,20 @@ const statusColors = [
 	"#58a8ed",
 	"#db70b0",
 ];
+
+const completionChartConfig = {
+	total: { label: "Completed", color: "#7467f0" },
+} satisfies ChartConfig;
+
+const dashboardStatusConfig = {
+	count: { label: "Tasks" },
+} satisfies ChartConfig;
+
+const formatChartDate = (value: string) =>
+	new Date(`${value}T00:00:00`).toLocaleDateString("en", {
+		month: "short",
+		day: "numeric",
+	});
 
 function EmptyRecords({ label }: { label: string }) {
 	return (
@@ -100,14 +133,10 @@ function CompletionChart({
 	)
 		return <EmptyRecords label="completion" />;
 	let total = 0;
-	const values = points.map((point) => (total += point.completed));
-	const maximum = Math.max(...values, 1);
-	const polyline = values
-		.map(
-			(value, index) =>
-				`${(index / Math.max(values.length - 1, 1)) * 100},${92 - (value / maximum) * 72}`,
-		)
-		.join(" ");
+	const chartData = points.map((point) => {
+		total += point.completed;
+		return { ...point, total };
+	});
 	return (
 		<div>
 			<div className="mb-3 flex items-end gap-2">
@@ -118,37 +147,123 @@ function CompletionChart({
 					completed in 14 days
 				</span>
 			</div>
-			<svg
-				viewBox="0 0 100 100"
-				preserveAspectRatio="none"
-				className="h-40 w-full"
-				role="img"
-				aria-label={`${total} tasks completed over 14 days`}
+			<ChartContainer
+				config={completionChartConfig}
+				className="min-h-40 w-full"
 			>
-				<defs>
-					<linearGradient id="completion-fill" x1="0" y1="0" x2="0" y2="1">
-						<stop offset="0" stopColor="var(--brand-color)" stopOpacity=".28" />
-						<stop offset="1" stopColor="var(--brand-color)" stopOpacity="0" />
-					</linearGradient>
-				</defs>
-				<path
-					d={`M ${polyline} L 100,100 L 0,100 Z`}
-					fill="url(#completion-fill)"
-				/>
-				<polyline
-					points={polyline}
-					fill="none"
-					stroke="var(--brand-color)"
-					strokeWidth="2"
-					vectorEffect="non-scaling-stroke"
-				/>
-			</svg>
-			<div className="flex justify-between text-[10px] text-paynes_gray-400">
-				<span>{points[0]?.date.slice(5)}</span>
-				<span>{points[Math.floor(points.length / 2)]?.date.slice(5)}</span>
-				<span>{points.at(-1)?.date.slice(5)}</span>
-			</div>
+				<AreaChart
+					accessibilityLayer
+					data={chartData}
+					margin={{ left: 0, right: 8, top: 8 }}
+				>
+					<defs>
+						<linearGradient
+							id="dashboard-completion-fill"
+							x1="0"
+							y1="0"
+							x2="0"
+							y2="1"
+						>
+							<stop
+								offset="5%"
+								stopColor="var(--color-total)"
+								stopOpacity={0.3}
+							/>
+							<stop
+								offset="95%"
+								stopColor="var(--color-total)"
+								stopOpacity={0.02}
+							/>
+						</linearGradient>
+					</defs>
+					<CartesianGrid vertical={false} />
+					<XAxis
+						dataKey="date"
+						tickLine={false}
+						axisLine={false}
+						tickMargin={8}
+						minTickGap={24}
+						tickFormatter={formatChartDate}
+					/>
+					<YAxis hide domain={[0, "dataMax + 1"]} />
+					<ChartTooltip
+						content={
+							<ChartTooltipContent
+								labelFormatter={(value) => formatChartDate(String(value))}
+								indicator="line"
+							/>
+						}
+					/>
+					<Area
+						dataKey="total"
+						type="monotone"
+						fill="url(#dashboard-completion-fill)"
+						stroke="var(--color-total)"
+						strokeWidth={2.5}
+					/>
+				</AreaChart>
+			</ChartContainer>
 		</div>
+	);
+}
+
+function DashboardStatusDonut({ data }: { data: AnalyticsData["status"] }) {
+	const total = data.reduce((sum, item) => sum + item.count, 0);
+	const chartData = data.slice(0, 6).map((item, index) => ({
+		...item,
+		fill: statusColors[index % statusColors.length],
+	}));
+	return (
+		<ChartContainer
+			config={dashboardStatusConfig}
+			className="aspect-square size-40 shrink-0"
+		>
+			<PieChart accessibilityLayer>
+				<ChartTooltip
+					cursor={false}
+					content={<ChartTooltipContent hideLabel nameKey="label" />}
+				/>
+				<Pie
+					data={chartData}
+					dataKey="count"
+					nameKey="label"
+					innerRadius={48}
+					outerRadius={72}
+					strokeWidth={2}
+				>
+					{chartData.map((item) => (
+						<Cell key={item.label} fill={item.fill} />
+					))}
+					<Label
+						content={({ viewBox }) =>
+							viewBox && "cx" in viewBox && "cy" in viewBox ? (
+								<text
+									x={viewBox.cx}
+									y={viewBox.cy}
+									textAnchor="middle"
+									dominantBaseline="middle"
+								>
+									<tspan
+										x={viewBox.cx}
+										y={viewBox.cy}
+										className="fill-outer_space-900 text-2xl font-bold dark:fill-platinum-50"
+									>
+										{total}
+									</tspan>
+									<tspan
+										x={viewBox.cx}
+										y={(viewBox.cy ?? 0) + 18}
+										className="fill-paynes_gray-500 text-[10px]"
+									>
+										tasks
+									</tspan>
+								</text>
+							) : null
+						}
+					/>
+				</Pie>
+			</PieChart>
+		</ChartContainer>
 	);
 }
 
@@ -202,14 +317,6 @@ export function DashboardOverview({
 		(sum, item) => sum + item.count,
 		0,
 	);
-	let angle = 0;
-	const gradient = analytics.status
-		.map((item, index) => {
-			const start = angle;
-			angle += statusTotal ? (item.count / statusTotal) * 360 : 0;
-			return `${statusColors[index % statusColors.length]} ${start}deg ${angle}deg`;
-		})
-		.join(", ");
 
 	return (
 		<div className="space-y-5">
@@ -374,17 +481,7 @@ export function DashboardOverview({
 						<PanelHeader title="Tasks by Status" />
 						{analytics.status.length ? (
 							<div className="grid min-h-64 place-items-center gap-6 sm:grid-cols-2 xl:grid-cols-[11rem_1fr]">
-								<div
-									className="relative size-40 rounded-full"
-									style={{ background: `conic-gradient(${gradient})` }}
-								>
-									<span className="absolute inset-8 grid place-items-center rounded-full bg-white text-center dark:bg-outer_space-500">
-										<span>
-											<strong className="block text-2xl">{statusTotal}</strong>
-											<small className="text-paynes_gray-500">tasks</small>
-										</span>
-									</span>
-								</div>
+								<DashboardStatusDonut data={analytics.status} />
 								<div className="w-full space-y-3">
 									{analytics.status.slice(0, 6).map((item, index) => (
 										<div

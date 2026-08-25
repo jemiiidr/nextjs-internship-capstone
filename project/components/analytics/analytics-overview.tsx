@@ -1,3 +1,5 @@
+"use client";
+
 import {
 	AlertCircle,
 	CheckCircle2,
@@ -6,8 +8,25 @@ import {
 	TrendingUp,
 } from "lucide-react";
 import Image from "next/image";
+import {
+	CartesianGrid,
+	Cell,
+	Label,
+	Line,
+	LineChart,
+	Pie,
+	PieChart,
+	XAxis,
+	YAxis,
+} from "recharts";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+	type ChartConfig,
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "@/components/ui/chart";
 import type { AnalyticsData, ProjectSummary } from "@/types";
 
 const COLORS = [
@@ -19,28 +38,27 @@ const COLORS = [
 	"#e989b8",
 ];
 
+const flowChartConfig = {
+	completed: { label: "Completed", color: "#47c7a1" },
+	created: { label: "Created", color: "#7467f0" },
+	overdue: { label: "Overdue", color: "#ff654f" },
+} satisfies ChartConfig;
+
+const statusChartConfig = {
+	count: { label: "Tasks" },
+} satisfies ChartConfig;
+
+const formatChartDate = (value: string) =>
+	new Date(`${value}T00:00:00`).toLocaleDateString("en", {
+		month: "short",
+		day: "numeric",
+	});
+
 function FlowChart({ points }: { points: AnalyticsData["completedByDay"] }) {
-	const max = Math.max(
-		1,
-		...points.flatMap((point) => [
-			point.created,
-			point.completed,
-			point.overdue,
-		]),
-	);
-	const width = 1000;
-	const height = 190;
-	const x = (index: number) =>
-		points.length <= 1 ? 0 : (index / (points.length - 1)) * width;
-	const y = (value: number) => height - 20 - (value / max) * 145;
-	const path = (key: "created" | "completed" | "overdue") =>
-		points
-			.map((point, index) => `${index ? "L" : "M"}${x(index)},${y(point[key])}`)
-			.join(" ");
 	return (
 		<div className="overflow-x-auto">
 			<div className="min-w-190">
-				<div className="mb-3 flex gap-5 text-xs text-paynes_gray-500">
+				<div className="mb-3 flex flex-wrap gap-5 text-xs text-paynes_gray-500">
 					<span className="flex items-center gap-2">
 						<i className="size-2 rounded-full bg-[#47c7a1]" /> Completed
 					</span>
@@ -51,75 +69,63 @@ function FlowChart({ points }: { points: AnalyticsData["completedByDay"] }) {
 						<i className="size-2 rounded-full bg-[#ff654f]" /> Overdue
 					</span>
 				</div>
-				<svg
-					viewBox={`0 0 ${width} ${height}`}
-					className="h-52 w-full"
-					role="img"
-					aria-label="Fourteen-day task flow"
+				<ChartContainer
+					config={flowChartConfig}
+					className="h-64 min-h-0 w-full aspect-auto sm:h-72"
 				>
-					{[0.2, 0.4, 0.6, 0.8].map((level) => (
-						<line
-							key={level}
-							x1="0"
-							x2={width}
-							y1={height * level}
-							y2={height * level}
-							stroke="currentColor"
-							className="text-french_gray-200 dark:text-paynes_gray-800"
+					<LineChart
+						accessibilityLayer
+						data={points}
+						margin={{ left: 4, right: 10 }}
+					>
+						<CartesianGrid vertical={false} />
+						<XAxis
+							dataKey="date"
+							tickLine={false}
+							axisLine={false}
+							tickMargin={10}
+							tickFormatter={formatChartDate}
 						/>
-					))}
-					<path
-						d={path("created")}
-						fill="none"
-						stroke="#7467f0"
-						strokeWidth="3"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-					<path
-						d={path("completed")}
-						fill="none"
-						stroke="#47c7a1"
-						strokeWidth="3"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-					<path
-						d={path("overdue")}
-						fill="none"
-						stroke="#ff654f"
-						strokeWidth="3"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-					{points.map((point, index) => (
-						<g key={point.date}>
-							<circle
-								cx={x(index)}
-								cy={y(point.created)}
-								r="3"
-								fill="#7467f0"
-							/>
-							<circle
-								cx={x(index)}
-								cy={y(point.completed)}
-								r="3"
-								fill="#47c7a1"
-							/>
-							<text
-								x={x(index)}
-								y={height - 2}
-								textAnchor="middle"
-								className="fill-paynes_gray-400 text-[9px]"
-							>
-								{new Date(`${point.date}T00:00:00`).toLocaleDateString("en", {
-									month: "short",
-									day: "numeric",
-								})}
-							</text>
-						</g>
-					))}
-				</svg>
+						<YAxis
+							allowDecimals={false}
+							tickLine={false}
+							axisLine={false}
+							width={28}
+						/>
+						<ChartTooltip
+							content={
+								<ChartTooltipContent
+									labelFormatter={(value) => formatChartDate(String(value))}
+									indicator="line"
+								/>
+							}
+						/>
+						<Line
+							dataKey="completed"
+							type="monotone"
+							stroke="var(--color-completed)"
+							strokeWidth={2.5}
+							dot={{ r: 3, fill: "var(--color-completed)" }}
+							activeDot={{ r: 5 }}
+						/>
+						<Line
+							dataKey="created"
+							type="monotone"
+							stroke="var(--color-created)"
+							strokeWidth={2.5}
+							dot={{ r: 3, fill: "var(--color-created)" }}
+							activeDot={{ r: 5 }}
+						/>
+						<Line
+							dataKey="overdue"
+							type="monotone"
+							stroke="var(--color-overdue)"
+							strokeWidth={2.5}
+							dot={{ r: 3, fill: "var(--color-overdue)" }}
+							activeDot={{ r: 5 }}
+						/>
+					</LineChart>
+				</ChartContainer>
 			</div>
 		</div>
 	);
@@ -127,27 +133,62 @@ function FlowChart({ points }: { points: AnalyticsData["completedByDay"] }) {
 
 function StatusDonut({ data }: { data: AnalyticsData["status"] }) {
 	const total = data.reduce((sum, item) => sum + item.count, 0);
-	let cursor = 0;
-	const stops = data.map((item, index) => {
-		const start = cursor;
-		cursor += total ? (item.count / total) * 100 : 0;
-		return `${COLORS[index % COLORS.length]} ${start}% ${cursor}%`;
-	});
+	const chartData = data.map((item, index) => ({
+		...item,
+		fill: COLORS[index % COLORS.length],
+	}));
 	return (
 		<div className="mt-7 flex flex-col items-center gap-6 sm:flex-row">
-			<div
-				className="relative size-40 shrink-0 rounded-full"
-				style={{
-					background: total ? `conic-gradient(${stops.join(",")})` : "#e9e9ef",
-				}}
+			<ChartContainer
+				config={statusChartConfig}
+				className="aspect-square size-40 shrink-0"
 			>
-				<div className="absolute inset-9 grid place-items-center rounded-full bg-white text-center dark:bg-outer_space-500">
-					<span>
-						<strong className="block text-xl">{total}</strong>
-						<span className="text-[10px] text-paynes_gray-500">tasks</span>
-					</span>
-				</div>
-			</div>
+				<PieChart accessibilityLayer>
+					<ChartTooltip
+						cursor={false}
+						content={<ChartTooltipContent hideLabel nameKey="label" />}
+					/>
+					<Pie
+						data={chartData}
+						dataKey="count"
+						nameKey="label"
+						innerRadius={48}
+						outerRadius={72}
+						strokeWidth={2}
+					>
+						{chartData.map((item) => (
+							<Cell key={item.label} fill={item.fill} />
+						))}
+						<Label
+							content={({ viewBox }) =>
+								viewBox && "cx" in viewBox && "cy" in viewBox ? (
+									<text
+										x={viewBox.cx}
+										y={viewBox.cy}
+										textAnchor="middle"
+										dominantBaseline="middle"
+									>
+										<tspan
+											x={viewBox.cx}
+											y={viewBox.cy}
+											className="fill-outer_space-900 text-xl font-bold dark:fill-platinum-50"
+										>
+											{total}
+										</tspan>
+										<tspan
+											x={viewBox.cx}
+											y={(viewBox.cy ?? 0) + 17}
+											className="fill-paynes_gray-500 text-[10px]"
+										>
+											tasks
+										</tspan>
+									</text>
+								) : null
+							}
+						/>
+					</Pie>
+				</PieChart>
+			</ChartContainer>
 			<div className="w-full space-y-3">
 				{data.map((item, index) => {
 					const percent = total ? Math.round((item.count / total) * 100) : 0;
