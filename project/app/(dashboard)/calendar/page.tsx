@@ -21,12 +21,21 @@ function parseMonth(value?: string) {
 	if (!match) return { year: now.getFullYear(), month: now.getMonth() };
 	const year = Number(match[1]);
 	const month = Number(match[2]) - 1;
-	return month >= 0 && month <= 11 ? { year, month } : { year: now.getFullYear(), month: now.getMonth() };
+	return year >= 1 && year <= 9999 && month >= 0 && month <= 11 ? { year, month } : { year: now.getFullYear(), month: now.getMonth() };
 }
 function parseDate(value: string | undefined, fallback: Date) {
-	if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return fallback;
+	const match = value ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null;
+	if (!match) return fallback;
+	const year = Number(match[1]);
+	const month = Number(match[2]);
+	const day = Number(match[3]);
 	const date = new Date(`${value}T00:00:00`);
-	return Number.isNaN(date.getTime()) ? fallback : date;
+	return !Number.isNaN(date.getTime()) &&
+		date.getFullYear() === year &&
+		date.getMonth() === month - 1 &&
+		date.getDate() === day
+		? date
+		: fallback;
 }
 function adjacentMonth(year: number, month: number, offset: number) {
 	const date = new Date(year, month + offset, 1);

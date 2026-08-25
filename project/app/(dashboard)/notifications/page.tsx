@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { NotificationInbox } from "@/components/dashboard/notification-center";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getUserNotifications } from "@/lib/notifications";
+import { parsePositiveInteger } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -15,8 +16,7 @@ export default async function NotificationsPage({
 }) {
 	const context = await requireWorkspaceContext();
 	const query = await searchParams;
-	const requestedPage = Number.parseInt(query.page ?? "1", 10);
-	const page = Number.isFinite(requestedPage) ? Math.max(requestedPage, 1) : 1;
+	const page = parsePositiveInteger(query.page, 1, 10_000);
 	const notifications = await getUserNotifications({
 		userId: context.user.id,
 		workspaceId: context.workspaceId,

@@ -6,7 +6,7 @@ import { ProjectToolbar } from "@/components/projects/project-toolbar";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getProjectsForUser } from "@/lib/db";
 import { hasPermission } from "@/lib/rbac";
-import { cn } from "@/lib/utils";
+import { cn, parsePositiveInteger } from "@/lib/utils";
 import { getWorkspaceSummary } from "@/lib/workspaces";
 import type { ProjectSummary } from "@/types";
 
@@ -41,8 +41,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
 		return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction;
 	});
 	const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-	const requestedPage = Number.parseInt(params.page ?? "1", 10);
-	const page = Math.min(Math.max(Number.isNaN(requestedPage) ? 1 : requestedPage, 1), pages);
+	const page = parsePositiveInteger(params.page, 1, pages);
 	const visible = sorted.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 	const pageHref = (nextPage: number) => {
 		const query = new URLSearchParams({ sort, order, page: String(nextPage) });

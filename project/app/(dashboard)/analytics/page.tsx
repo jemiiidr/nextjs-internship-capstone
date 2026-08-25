@@ -4,13 +4,14 @@ import { AnalyticsOverview } from "@/components/analytics/analytics-overview";
 import { AnalyticsRange } from "@/components/analytics/analytics-range";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { getAnalyticsData, getProjectsForUser } from "@/lib/db";
+import { parsePositiveInteger } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Analytics" };
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
 	const context = await requireWorkspaceContext();
 	const params = await searchParams;
-	const requestedDays = Number.parseInt(params.days ?? "14", 10);
+	const requestedDays = parsePositiveInteger(params.days, 14, 90);
 	const days = [7, 14, 30, 90].includes(requestedDays) ? requestedDays : 14;
 	const input = {
 		userId: context.user.id,
