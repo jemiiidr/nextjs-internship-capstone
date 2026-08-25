@@ -58,6 +58,21 @@ export default function RootLayout({
 						subtitleCombined:
 							"Pick up where your team left off and keep the work moving.",
 					},
+					password: {
+						subtitle: "Enter your password to continue to Kanvas.",
+					},
+					passkey: {
+						subtitle: "Use your passkey to continue to Kanvas.",
+					},
+					emailCode: {
+						subtitle: "to continue to Kanvas",
+					},
+					emailLink: {
+						subtitle: "to continue to Kanvas",
+					},
+					phoneCode: {
+						subtitle: "to continue to Kanvas",
+					},
 				},
 				signUp: {
 					start: {
@@ -65,6 +80,23 @@ export default function RootLayout({
 						subtitle:
 							"Create your account and bring projects, tasks, and teammates into focus.",
 					},
+					emailCode: {
+						subtitle: "Verify your email to continue to Kanvas.",
+					},
+					emailLink: {
+						subtitle: "Verify your email to continue to Kanvas.",
+					},
+					phoneCode: {
+						subtitle: "Verify your phone number to continue to Kanvas.",
+					},
+					continue: {
+						subtitle: "Complete your details to continue to Kanvas.",
+					},
+				},
+				unstable__errors: {
+					form_identifier_exists: "That account identifier is already in use.",
+					form_identifier_exists__username:
+						"Username already taken. Choose a different username to continue.",
 				},
 			}}
 		>
