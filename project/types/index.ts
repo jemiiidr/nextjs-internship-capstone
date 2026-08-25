@@ -156,12 +156,21 @@ export interface MyTaskItem {
 }
 
 export interface AnalyticsData {
+	periodDays: number;
 	status: Array<{ label: string; count: number }>;
-	completedByDay: Array<{ date: string; completed: number; created: number }>;
+	completedByDay: Array<{ date: string; completed: number; created: number; overdue: number }>;
+	completedTasks: number;
 	overdueTasks: number;
 	inProgressTasks: number;
 	completionRate: number;
 	averageTasksPerProject: number;
+	throughput: number;
+	averageCycleTimeDays: number;
+	workload: Array<{
+		member: UserSummary;
+		activeTasks: number;
+		completedTasks: number;
+	}>;
 }
 
 export interface ActionResult<T = undefined> {

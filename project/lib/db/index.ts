@@ -464,35 +464,54 @@ export async function getAnalyticsData(input: {
 	userId: string;
 	workspaceId: string | null;
 	role: MemberRole;
+	days?: number;
 }): Promise<AnalyticsData> {
+	const periodDays = Math.min(90, Math.max(7, input.days ?? 14));
 	const accessibleProjects = await getProjectsForUser(input);
 	const projectIds = accessibleProjects.map((project) => project.id);
 	if (projectIds.length === 0) {
 		return {
+			periodDays,
 			status: [],
 			completedByDay: [],
+			completedTasks: 0,
 			overdueTasks: 0,
 			inProgressTasks: 0,
 			completionRate: 0,
 			averageTasksPerProject: 0,
+			throughput: 0,
+			averageCycleTimeDays: 0,
+			workload: [],
 		};
 	}
 
 	const taskRows = await db
-		.select({ task: tasks, listName: lists.name })
+		.select({ task: tasks, listName: lists.name, assignee: users })
 		.from(tasks)
 		.innerJoin(lists, eq(tasks.listId, lists.id))
+		.leftJoin(users, eq(tasks.assigneeId, users.id))
 		.where(inArray(lists.projectId, projectIds));
+	const memberRows = await db
+		.select({ user: users })
+		.from(projectMembers)
+		.innerJoin(users, eq(projectMembers.userId, users.id))
+		.where(inArray(projectMembers.projectId, projectIds));
 
 	const statusMap = new Map<string, number>();
 	let completed = 0;
 	let inProgress = 0;
 	let overdue = 0;
+	let totalCycleTime = 0;
+	const workloadMap = new Map<string, { member: UserSummary; activeTasks: number; completedTasks: number }>();
+	for (const row of memberRows) workloadMap.set(row.user.id, { member: serializeUser(row.user), activeTasks: 0, completedTasks: 0 });
 	const now = Date.now();
 	for (const row of taskRows) {
 		const label = row.listName;
 		statusMap.set(label, (statusMap.get(label) ?? 0) + 1);
-		if (isCompletedList(label)) completed += 1;
+		if (isCompletedList(label)) {
+			completed += 1;
+			totalCycleTime += Math.max(0, row.task.updatedAt.getTime() - row.task.createdAt.getTime());
+		}
 		if (isInProgressList(label)) inProgress += 1;
 		if (
 			row.task.dueDate &&
@@ -501,11 +520,17 @@ export async function getAnalyticsData(input: {
 		) {
 			overdue += 1;
 		}
+		if (row.assignee) {
+			const entry = workloadMap.get(row.assignee.id) ?? { member: serializeUser(row.assignee), activeTasks: 0, completedTasks: 0 };
+			if (isCompletedList(label)) entry.completedTasks += 1;
+			else entry.activeTasks += 1;
+			workloadMap.set(row.assignee.id, entry);
+		}
 	}
 
 	const start = new Date();
 	start.setHours(0, 0, 0, 0);
-	start.setDate(start.getDate() - 13);
+	start.setDate(start.getDate() - (periodDays - 1));
 	const recent = await db
 		.select({ task: tasks, listName: lists.name })
 		.from(tasks)
@@ -514,11 +539,12 @@ export async function getAnalyticsData(input: {
 			and(inArray(lists.projectId, projectIds), gte(tasks.updatedAt, start)),
 		);
 
-	const dayMap = new Map<string, { created: number; completed: number }>();
-	for (let index = 0; index < 14; index += 1) {
+	const dayMap = new Map<string, { created: number; completed: number; overdue: number }>();
+	let periodCompleted = 0;
+	for (let index = 0; index < periodDays; index += 1) {
 		const day = new Date(start);
 		day.setDate(start.getDate() + index);
-		dayMap.set(day.toISOString().slice(0, 10), { created: 0, completed: 0 });
+		dayMap.set(day.toISOString().slice(0, 10), { created: 0, completed: 0, overdue: 0 });
 	}
 	for (const row of recent) {
 		const createdKey = row.task.createdAt.toISOString().slice(0, 10);
@@ -532,6 +558,7 @@ export async function getAnalyticsData(input: {
 		}
 
 		if (isCompletedList(row.listName)) {
+			periodCompleted += 1;
 			const updatedDay = dayMap.get(updatedKey);
 
 			if (updatedDay) {
@@ -539,12 +566,19 @@ export async function getAnalyticsData(input: {
 			}
 		}
 	}
+	for (const row of taskRows) {
+		if (!row.task.dueDate || isCompletedList(row.listName)) continue;
+		const dueDay = dayMap.get(row.task.dueDate.toISOString().slice(0, 10));
+		if (dueDay) dueDay.overdue += 1;
+	}
 	return {
+		periodDays,
 		status: Array.from(statusMap, ([label, count]) => ({ label, count })),
 		completedByDay: Array.from(dayMap, ([date, values]) => ({
 			date,
 			...values,
 		})),
+		completedTasks: periodCompleted,
 		overdueTasks: overdue,
 		inProgressTasks: inProgress,
 		completionRate: taskRows.length
@@ -553,5 +587,10 @@ export async function getAnalyticsData(input: {
 		averageTasksPerProject: accessibleProjects.length
 			? Math.round((taskRows.length / accessibleProjects.length) * 10) / 10
 			: 0,
+		throughput: Math.round((periodCompleted / periodDays) * 10) / 10,
+		averageCycleTimeDays: completed
+			? Math.round((totalCycleTime / completed / 86_400_000) * 10) / 10
+			: 0,
+		workload: Array.from(workloadMap.values()).sort((a, b) => b.activeTasks - a.activeTasks),
 	};
 }

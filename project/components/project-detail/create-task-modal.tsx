@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageSquare, Trash2 } from "lucide-react";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import {
 	addCommentAction,
@@ -29,6 +29,8 @@ const initialTaskState: ActionResult<BoardTask> = {
 	success: false,
 	message: "",
 };
+
+const COMMENTS_PER_PAGE = 5;
 
 function TaskForm({
 	projectId,
@@ -92,7 +94,11 @@ function TaskForm({
 						id={`${task?.id ?? "new"}-priority`}
 						name="priority"
 						defaultValue={task?.priority ?? "medium"}
-						options={[{ value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }]}
+						options={[
+							{ value: "low", label: "Low" },
+							{ value: "medium", label: "Medium" },
+							{ value: "high", label: "High" },
+						]}
 					/>
 				</div>
 				<div className="space-y-1.5">
@@ -111,7 +117,13 @@ function TaskForm({
 					id={`${task?.id ?? "new"}-assignee`}
 					name="assigneeId"
 					defaultValue={task?.assigneeId ?? ""}
-					options={[{ value: "", label: "Unassigned" }, ...members.map((member) => ({ value: member.user.id, label: `${member.user.name} · ${member.role}` }))]}
+					options={[
+						{ value: "", label: "Unassigned" },
+						...members.map((member) => ({
+							value: member.user.id,
+							label: `${member.user.name} · ${member.role}`,
+						})),
+					]}
 				/>
 			</div>
 			<div className="space-y-1.5">
@@ -137,6 +149,7 @@ function TaskForm({
 
 function Comments({ projectId, task }: { projectId: string; task: BoardTask }) {
 	const [comments, setComments] = useState<TaskComment[]>([]);
+	const [page, setPage] = useState(1);
 	const [message, setMessage] = useState("");
 	const [isPending, startTransition] = useTransition();
 
@@ -144,7 +157,10 @@ function Comments({ projectId, task }: { projectId: string; task: BoardTask }) {
 		let active = true;
 		startTransition(async () => {
 			const result = await getTaskCommentsAction(projectId, task.id);
-			if (active && result.success) setComments(result.data ?? []);
+			if (active && result.success) {
+				setComments(result.data ?? []);
+				setPage(1);
+			}
 		});
 		return () => {
 			active = false;
@@ -155,23 +171,33 @@ function Comments({ projectId, task }: { projectId: string; task: BoardTask }) {
 		startTransition(async () => {
 			const result = await addCommentAction(formData);
 			setMessage(result.message);
-			if (result.success && result.data)
-				setComments((items) => [...items, result.data as TaskComment]);
+			if (result.success && result.data) {
+				setComments((items) => {
+					const nextComments = [...items, result.data as TaskComment];
+					setPage(Math.ceil(nextComments.length / COMMENTS_PER_PAGE));
+					return nextComments;
+				});
+			}
 		});
 	};
+	const pageCount = Math.max(1, Math.ceil(comments.length / COMMENTS_PER_PAGE));
+	const visibleComments = comments.slice(
+		(page - 1) * COMMENTS_PER_PAGE,
+		page * COMMENTS_PER_PAGE,
+	);
 
 	return (
-		<section className="mt-6 border-t border-french_gray-300 pt-5 dark:border-paynes_gray-400">
+		<section className="flex min-h-0 flex-col border-t border-french_gray-300 pt-5 dark:border-paynes_gray-400 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
 			<h3 className="mb-3 flex items-center gap-2 font-semibold text-outer_space-500 dark:text-platinum-500">
 				<MessageSquare size={17} /> Comments ({comments.length})
 			</h3>
-			<div className="max-h-52 space-y-3 overflow-y-auto pr-1">
+			<div className="min-h-48 flex-1 space-y-3 overflow-y-auto pr-1 lg:max-h-[45vh]">
 				{comments.length === 0 ? (
 					<p className="text-sm text-paynes_gray-500 dark:text-french_gray-400">
 						No comments yet.
 					</p>
 				) : (
-					comments.map((comment) => (
+					visibleComments.map((comment) => (
 						<div
 							key={comment.id}
 							className="flex gap-2 rounded-lg bg-platinum-700 p-3 dark:bg-outer_space-300"
@@ -197,6 +223,40 @@ function Comments({ projectId, task }: { projectId: string; task: BoardTask }) {
 					))
 				)}
 			</div>
+			{comments.length > COMMENTS_PER_PAGE ? (
+				<nav
+					aria-label="Comments pagination"
+					className="mt-3 flex items-center justify-between border-t border-french_gray-200 pt-3 text-xs dark:border-paynes_gray-700"
+				>
+					<span className="text-paynes_gray-500">
+						Page {page} of {pageCount}
+					</span>
+					<div className="flex items-center gap-1">
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							aria-label="Previous comments page"
+							disabled={page === 1}
+							onClick={() => setPage((current) => Math.max(1, current - 1))}
+						>
+							<ChevronLeft size={15} />
+						</Button>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							aria-label="Next comments page"
+							disabled={page === pageCount}
+							onClick={() =>
+								setPage((current) => Math.min(pageCount, current + 1))
+							}
+						>
+							<ChevronRight size={15} />
+						</Button>
+					</div>
+				</nav>
+			) : null}
 			<form action={submitComment} className="mt-4 space-y-2">
 				<input type="hidden" name="projectId" value={projectId} />
 				<input type="hidden" name="taskId" value={task.id} />
@@ -260,28 +320,32 @@ export function TaskDetailModal({ projectId }: { projectId: string }) {
 				open={open}
 				onClose={close}
 				title="Task details"
-				className="max-w-2xl"
+				className="max-w-5xl"
 			>
-				<TaskForm
-					projectId={projectId}
-					listId={task.listId}
-					task={task}
-					onClose={close}
-				/>
-				<Comments projectId={projectId} task={task} />
-				<div className="mt-5 border-t border-french_gray-300 pt-4 text-right dark:border-paynes_gray-400">
-					<Button
-						variant="danger"
-						size="sm"
-						disabled={isDeleting}
-						onClick={() => {
-							setDeleteError("");
-							setDeleteConfirmationOpen(true);
-						}}
-					>
-						<Trash2 size={14} />
-						{isDeleting ? "Deleting…" : "Delete task"}
-					</Button>
+				<div className="grid max-h-[75vh] gap-6 overflow-y-auto lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:overflow-hidden">
+					<section className="min-w-0 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1">
+						<TaskForm
+							projectId={projectId}
+							listId={task.listId}
+							task={task}
+							onClose={close}
+						/>
+						<div className="mt-5 border-t border-french_gray-300 pt-4 text-right dark:border-paynes_gray-400">
+							<Button
+								variant="danger"
+								size="sm"
+								disabled={isDeleting}
+								onClick={() => {
+									setDeleteError("");
+									setDeleteConfirmationOpen(true);
+								}}
+							>
+								<Trash2 size={14} />
+								{isDeleting ? "Deleting…" : "Delete task"}
+							</Button>
+						</div>
+					</section>
+					<Comments projectId={projectId} task={task} />
 				</div>
 			</Modal>
 			<ConfirmationModal

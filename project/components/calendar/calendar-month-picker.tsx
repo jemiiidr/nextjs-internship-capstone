@@ -47,12 +47,12 @@ export function CalendarMonthPicker({
 	};
 
 	return (
-		<div ref={rootRef} className="relative">
+		<div ref={rootRef} className="relative min-w-0 flex-1 sm:flex-none">
 			<button
 				type="button"
 				onClick={() => setOpen((value) => !value)}
 				aria-expanded={open}
-				className="flex h-10 w-48 items-center justify-between gap-3 rounded-xl border border-french_gray-300 bg-white px-3 text-sm font-medium text-outer_space-900 shadow-sm transition hover:border-blue_munsell-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue_munsell-400 dark:border-paynes_gray-700 dark:bg-outer_space-400 dark:text-platinum-50"
+				className="flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-french_gray-300 bg-white px-3 text-sm font-medium text-outer_space-900 shadow-sm transition hover:border-blue_munsell-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue_munsell-400 dark:border-paynes_gray-700 dark:bg-outer_space-400 dark:text-platinum-50 sm:w-48"
 			>
 				<span className="flex items-center gap-2">
 					<CalendarDays size={15} className="text-blue_munsell-500" />
@@ -70,7 +70,7 @@ export function CalendarMonthPicker({
 				/>
 			</button>
 			{open ? (
-				<div className="absolute left-0 top-[calc(100%+8px)] z-[80] w-72 rounded-2xl border border-french_gray-300 bg-white p-3 shadow-2xl dark:border-paynes_gray-700 dark:bg-outer_space-400">
+				<div className="absolute left-0 top-[calc(100%+8px)] z-[80] w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-french_gray-300 bg-white p-3 shadow-2xl dark:border-paynes_gray-700 dark:bg-outer_space-400">
 					<div className="mb-3 flex items-center justify-between">
 						<button
 							type="button"

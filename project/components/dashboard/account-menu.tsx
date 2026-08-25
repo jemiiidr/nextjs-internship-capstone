@@ -1,7 +1,7 @@
 "use client";
 
 import { useClerk } from "@clerk/nextjs";
-import { Check, LogOut, Plus, Settings, SwitchCamera } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,10 +15,9 @@ export function AccountMenu({
 	user: UserSummary;
 	collapsed?: boolean;
 }) {
-	const { client, session, setActive, signOut } = useClerk();
+	const { signOut } = useClerk();
 	const [open, setOpen] = useState(false);
 	const [isPending, startTransition] = useTransition();
-	const [switching, setSwitching] = useState(false);
 	const menuRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -26,11 +25,11 @@ export function AccountMenu({
 		const closeOnOutsideClick = (event: PointerEvent) => {
 			if (!menuRef.current?.contains(event.target as Node)) {
 				setOpen(false);
-				setSwitching(false);
 			}
 		};
 		document.addEventListener("pointerdown", closeOnOutsideClick);
-		return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+		return () =>
+			document.removeEventListener("pointerdown", closeOnOutsideClick);
 	}, [open]);
 
 	return (
@@ -61,30 +60,6 @@ export function AccountMenu({
 						collapsed && "lg:left-full lg:bottom-0 lg:ml-3",
 					)}
 				>
-					<button
-						type="button"
-						onClick={() => setSwitching((value) => !value)}
-						className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-paynes_gray-600 hover:bg-platinum-100 dark:text-french_gray-300 dark:hover:bg-outer_space-300"
-					>
-						<SwitchCamera size={15} /> Switch account
-					</button>
-					{switching ? (
-						<div className="my-1 space-y-1 border-y border-french_gray-200 py-1 dark:border-paynes_gray-700">
-							{client.sessions.map((item) => (
-								<button
-									type="button"
-									key={item.id}
-									onClick={() => startTransition(async () => { await setActive({ session: item.id }); setOpen(false); window.location.assign("/dashboard"); })}
-									className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left hover:bg-platinum-100 dark:hover:bg-outer_space-300"
-								>
-									<Avatar name={item.user?.fullName ?? item.publicUserData.identifier} src={item.user?.imageUrl} className="size-7" />
-									<span className="min-w-0 flex-1 truncate text-xs font-medium">{item.user?.primaryEmailAddress?.emailAddress ?? item.publicUserData.identifier}</span>
-									{item.id === session?.id ? <Check size={14} className="text-blue_munsell-500" /> : null}
-								</button>
-							))}
-							<Link href="/sign-in?add-account=1" className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-blue_munsell-600 hover:bg-blue_munsell-50 dark:text-blue_munsell-300 dark:hover:bg-blue_munsell-950/30"><Plus size={14} /> Add another account</Link>
-						</div>
-					) : null}
 					<Link
 						href="/settings"
 						onClick={() => setOpen(false)}

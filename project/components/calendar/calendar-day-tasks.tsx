@@ -44,10 +44,12 @@ export function CalendarDayTasks({
 	tasks,
 	date,
 	maxVisible = 2,
+	compactOnMobile = false,
 }: {
 	tasks: CalendarTask[];
 	date: string;
 	maxVisible?: number;
+	compactOnMobile?: boolean;
 }) {
 	const [allOpen, setAllOpen] = useState(false);
 	const [selectedTask, setSelectedTask] = useState<CalendarTask | null>(null);
@@ -59,7 +61,36 @@ export function CalendarDayTasks({
 
 	return (
 		<>
-			<div className="mt-1 space-y-1">
+			{compactOnMobile && tasks.length > 0 ? (
+				<button
+					type="button"
+					onClick={() =>
+						tasks.length === 1 ? showTask(tasks[0]) : setAllOpen(true)
+					}
+					aria-label={`${tasks.length} deadline${tasks.length === 1 ? "" : "s"} on ${readableDate(date)}`}
+					className="mt-1 flex w-full flex-col items-center gap-1 rounded-md py-1 text-[9px] font-semibold text-blue_munsell-600 transition-colors hover:bg-blue_munsell-50 dark:text-blue_munsell-300 dark:hover:bg-blue_munsell-950/30 sm:hidden"
+				>
+					<span>{tasks.length} due</span>
+					<span className="flex max-w-full gap-0.5" aria-hidden="true">
+						{tasks.slice(0, 3).map((task) => (
+							<i
+								key={task.id}
+								className={cn(
+									"size-1.5 rounded-full",
+									task.priority === "high"
+										? "bg-rose-500"
+										: task.priority === "medium"
+											? "bg-amber-500"
+											: "bg-emerald-500",
+								)}
+							/>
+						))}
+					</span>
+				</button>
+			) : null}
+			<div
+				className={cn("mt-1 space-y-1", compactOnMobile && "hidden sm:block")}
+			>
 				{tasks.slice(0, maxVisible).map((task) => (
 					<button
 						key={task.id}
