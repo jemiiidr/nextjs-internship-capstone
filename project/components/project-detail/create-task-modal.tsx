@@ -1,6 +1,15 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Clock3, MessageSquare } from "lucide-react";
+import {
+	CalendarDays,
+	ChevronLeft,
+	ChevronRight,
+	Clock3,
+	ListTodo,
+	MessageSquare,
+	Pencil,
+	UserRound,
+} from "lucide-react";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import {
 	addCommentAction,
@@ -13,6 +22,7 @@ import {
 } from "@/app/actions/tasks";
 import { LabelEditor } from "@/components/project-detail/label-editor";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { DeadlineInput } from "@/components/ui/deadline-input";
@@ -21,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatRelativeDate } from "@/lib/utils";
+import { cn, decodeLabel, formatDate, formatRelativeDate } from "@/lib/utils";
 import { useBoardStore } from "@/stores/board-store";
 import { useUIStore } from "@/stores/ui-store";
 import type { ActionResult, BoardTask, TaskComment } from "@/types";
@@ -32,6 +42,138 @@ const initialTaskState: ActionResult<BoardTask> = {
 };
 
 const COMMENTS_PER_PAGE = 5;
+
+const priorityClasses: Record<BoardTask["priority"], string> = {
+	low: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
+	medium:
+		"border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+	high: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300",
+};
+
+function TaskDetailsView({
+	task,
+	canEdit,
+	onEdit,
+}: {
+	task: BoardTask;
+	canEdit: boolean;
+	onEdit: () => void;
+}) {
+	const lists = useBoardStore((state) => state.lists);
+	const status =
+		lists.find((list) => list.id === task.listId)?.name ?? "Unknown";
+	const deadlineTime = task.dueDate
+		? new Intl.DateTimeFormat("en-US", {
+				hour: "numeric",
+				minute: "2-digit",
+				timeZone: "UTC",
+			}).format(new Date(task.dueDate))
+		: null;
+
+	return (
+		<div className="space-y-6">
+			<div>
+				<div className="min-w-0">
+					<p className="mb-1.5 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
+						Title
+					</p>
+					<h3 className="mt-1 break-words text-xl font-semibold text-outer_space-500 dark:text-platinum-500">
+						{task.title}
+					</h3>
+				</div>
+			</div>
+
+			<div>
+				<p className="mb-1.5 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
+					Description
+				</p>
+				<p className="whitespace-pre-wrap break-words text-sm leading-6 text-paynes_gray-600 dark:text-french_gray-300">
+					{task.description?.trim() || "No description provided."}
+				</p>
+			</div>
+
+			<dl className="grid gap-3 sm:grid-cols-2">
+				<div className="rounded-xl border border-french_gray-200 p-3 dark:border-paynes_gray-700">
+					<dt className="flex items-center gap-2 text-xs text-paynes_gray-500 dark:text-french_gray-400">
+						<ListTodo size={14} /> Status
+					</dt>
+					<dd className="mt-2 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
+						{status}
+					</dd>
+				</div>
+				<div className="rounded-xl border border-french_gray-200 p-3 dark:border-paynes_gray-700">
+					<dt className="text-xs text-paynes_gray-500 dark:text-french_gray-400">
+						Priority
+					</dt>
+					<dd className="mt-2">
+						<Badge className={cn("capitalize", priorityClasses[task.priority])}>
+							{task.priority}
+						</Badge>
+					</dd>
+				</div>
+				<div className="rounded-xl border border-french_gray-200 p-3 dark:border-paynes_gray-700">
+					<dt className="flex items-center gap-2 text-xs text-paynes_gray-500 dark:text-french_gray-400">
+						<CalendarDays size={14} /> Deadline
+					</dt>
+					<dd className="mt-2 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
+						{task.dueDate
+							? `${formatDate(task.dueDate, { timeZone: "UTC" })} at ${deadlineTime}`
+							: "No deadline"}
+					</dd>
+				</div>
+				<div className="rounded-xl border border-french_gray-200 p-3 dark:border-paynes_gray-700">
+					<dt className="flex items-center gap-2 text-xs text-paynes_gray-500 dark:text-french_gray-400">
+						<UserRound size={14} /> Assignee
+					</dt>
+					<dd className="mt-2 flex items-center gap-2 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
+						{task.assignee ? (
+							<Avatar
+								name={task.assignee.name}
+								src={task.assignee.avatarUrl}
+								className="size-6"
+							/>
+						) : null}
+						{task.assignee?.name ?? "Unassigned"}
+					</dd>
+				</div>
+			</dl>
+
+			<div>
+				<p className="mb-2 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
+					Labels
+				</p>
+				<div className="flex flex-wrap gap-2">
+					{task.labels.length ? (
+						task.labels.map((value) => {
+							const label = decodeLabel(value);
+							return (
+								<Badge key={value}>
+									<span
+										className="size-2 rounded-full"
+										style={{ backgroundColor: label.color }}
+									/>
+									{label.name}
+								</Badge>
+							);
+						})
+					) : (
+						<span className="text-sm text-paynes_gray-500 dark:text-french_gray-400">
+							No labels
+						</span>
+					)}
+				</div>
+			</div>
+
+			{canEdit ? (
+				<div className="flex justify-end border-t border-french_gray-200 pt-4 dark:border-paynes_gray-700">
+					<Button type="button" size="sm" onClick={onEdit}>
+						<Pencil size={15} /> Edit task details
+					</Button>
+				</div>
+			) : null}
+		</div>
+	);
+}
 
 function TaskForm({
 	projectId,
@@ -340,10 +482,18 @@ export function CreateTaskModal({ projectId }: { projectId: string }) {
 	);
 }
 
-export function TaskDetailModal({ projectId }: { projectId: string }) {
+export function TaskDetailModal({
+	projectId,
+	canEdit,
+}: {
+	projectId: string;
+	canEdit: boolean;
+}) {
 	const open = useUIStore((state) => state.isTaskDetailOpen);
+	const editing = useUIStore((state) => state.isTaskDetailEditing);
 	const taskId = useUIStore((state) => state.activeTaskId);
 	const close = useUIStore((state) => state.closeTaskDetail);
+	const setEditing = useUIStore((state) => state.setTaskDetailEditing);
 	const task = useBoardStore((state) =>
 		state.tasks.find((candidate) => candidate.id === taskId),
 	);
@@ -374,16 +524,24 @@ export function TaskDetailModal({ projectId }: { projectId: string }) {
 			>
 				<div className="grid max-h-[75vh] gap-6 overflow-y-auto lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:overflow-hidden">
 					<section className="min-w-0 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1">
-						<TaskForm
-							projectId={projectId}
-							listId={task.listId}
-							task={task}
-							onClose={close}
-							onDelete={() => {
-								setDeleteError("");
-								setDeleteConfirmationOpen(true);
-							}}
-						/>
+						{editing && canEdit ? (
+							<TaskForm
+								projectId={projectId}
+								listId={task.listId}
+								task={task}
+								onClose={() => setEditing(false)}
+								onDelete={() => {
+									setDeleteError("");
+									setDeleteConfirmationOpen(true);
+								}}
+							/>
+						) : (
+							<TaskDetailsView
+								task={task}
+								canEdit={canEdit}
+								onEdit={() => setEditing(true)}
+							/>
+						)}
 					</section>
 					<Comments projectId={projectId} task={task} />
 				</div>

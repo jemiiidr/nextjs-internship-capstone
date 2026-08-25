@@ -8,6 +8,7 @@ interface UIState {
 	isCreateProjectOpen: boolean;
 	isCreateTaskOpen: boolean;
 	isTaskDetailOpen: boolean;
+	isTaskDetailEditing: boolean;
 	activeListId: string | null;
 	activeTaskId: string | null;
 	selectedTaskIds: string[];
@@ -18,7 +19,8 @@ interface UIState {
 	closeCreateProject: () => void;
 	openCreateTask: (listId: string) => void;
 	closeCreateTask: () => void;
-	openTaskDetail: (taskId: string) => void;
+	openTaskDetail: (taskId: string, editing?: boolean) => void;
+	setTaskDetailEditing: (editing: boolean) => void;
 	closeTaskDetail: () => void;
 	toggleTaskSelection: (taskId: string) => void;
 	clearTaskSelection: () => void;
@@ -30,6 +32,7 @@ export const useUIStore = create<UIState>((set) => ({
 	isCreateProjectOpen: false,
 	isCreateTaskOpen: false,
 	isTaskDetailOpen: false,
+	isTaskDetailEditing: false,
 	activeListId: null,
 	activeTaskId: null,
 	selectedTaskIds: [],
@@ -43,9 +46,19 @@ export const useUIStore = create<UIState>((set) => ({
 	openCreateTask: (listId) =>
 		set({ isCreateTaskOpen: true, activeListId: listId }),
 	closeCreateTask: () => set({ isCreateTaskOpen: false, activeListId: null }),
-	openTaskDetail: (taskId) =>
-		set({ isTaskDetailOpen: true, activeTaskId: taskId }),
-	closeTaskDetail: () => set({ isTaskDetailOpen: false, activeTaskId: null }),
+	openTaskDetail: (taskId, editing = false) =>
+		set({
+			isTaskDetailOpen: true,
+			isTaskDetailEditing: editing,
+			activeTaskId: taskId,
+		}),
+	setTaskDetailEditing: (editing) => set({ isTaskDetailEditing: editing }),
+	closeTaskDetail: () =>
+		set({
+			isTaskDetailOpen: false,
+			isTaskDetailEditing: false,
+			activeTaskId: null,
+		}),
 	toggleTaskSelection: (taskId) =>
 		set((state) => ({
 			selectedTaskIds: state.selectedTaskIds.includes(taskId)

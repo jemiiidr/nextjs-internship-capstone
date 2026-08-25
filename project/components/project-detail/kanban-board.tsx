@@ -29,6 +29,7 @@ import {
 	LayoutGrid,
 	List,
 	MessageSquare,
+	Pencil,
 	Plus,
 	Search,
 	Trash2,
@@ -427,6 +428,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const removeTasks = useBoardStore((state) => state.removeTasks);
 
 	const openCreateTask = useUIStore((state) => state.openCreateTask);
+	const openTaskDetail = useUIStore((state) => state.openTaskDetail);
 	const selectedTaskIds = useUIStore((state) => state.selectedTaskIds);
 	const clearTaskSelection = useUIStore((state) => state.clearTaskSelection);
 
@@ -1044,6 +1046,18 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					<button
 						type="button"
 						role="menuitem"
+						onClick={() => {
+							openTaskDetail(contextTask.id, true);
+							setContextMenu(null);
+						}}
+						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 dark:hover:bg-outer_space-300"
+					>
+						<Pencil size={15} /> Edit task details
+					</button>
+					<div className="my-1 border-t border-french_gray-200 dark:border-paynes_gray-700" />
+					<button
+						type="button"
+						role="menuitem"
 						onClick={() =>
 							moveTaskFromMenu(contextTask.id, contextTask.listId, 0)
 						}
@@ -1140,7 +1154,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 			) : null}
 
 			<CreateTaskModal projectId={data.project.id} />
-			<TaskDetailModal projectId={data.project.id} />
+			<TaskDetailModal projectId={data.project.id} canEdit={canEdit} />
 			<Modal
 				open={listToRename !== null}
 				onClose={closeRenameModal}
