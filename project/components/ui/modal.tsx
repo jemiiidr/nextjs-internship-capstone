@@ -53,12 +53,12 @@ export function Modal({
 	}
 
 	return createPortal(
-		<div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto p-4">
+		<div className="fixed inset-0 z-[9999] grid h-dvh w-screen place-items-center overflow-hidden bg-outer_space-500/70 p-4">
 			{/* Backdrop */}
 			<button
 				type="button"
 				aria-label="Close dialog"
-				className="absolute inset-0 bg-outer_space-500/70"
+				className="fixed inset-0"
 				onClick={onClose}
 			/>
 
@@ -69,7 +69,7 @@ export function Modal({
 				aria-labelledby={titleId}
 				aria-describedby={description ? descriptionId : undefined}
 				className={cn(
-					"relative z-10 my-8 w-full max-w-lg rounded-2xl border border-french_gray-300 bg-white p-6 shadow-2xl dark:border-paynes_gray-400 dark:bg-outer_space-500",
+					"relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-french_gray-300 bg-white p-6 shadow-2xl dark:border-paynes_gray-400 dark:bg-outer_space-500",
 					className,
 				)}
 			>

@@ -9,9 +9,9 @@ export default async function SettingsPage() {
 	return (
 		<div className="space-y-7">
 			<header className="mx-auto w-full max-w-4xl">
-				<p className="text-sm font-semibold text-blue_munsell-600 dark:text-blue_munsell-300">
+				{/* <p className="text-sm font-semibold text-blue_munsell-600 dark:text-blue_munsell-300">
 					Account & workspace
-				</p>
+				</p> */}
 				<h1 className="mt-1 text-3xl font-bold tracking-tight text-outer_space-900 dark:text-platinum-50">
 					Settings
 				</h1>

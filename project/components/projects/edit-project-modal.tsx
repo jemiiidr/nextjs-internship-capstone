@@ -118,46 +118,54 @@ export function EditProjectModal({
 						defaultValue={project.dueDate?.slice(0, 10) ?? ""}
 					/>
 				</div>
-				{state.message ? (
-					<p
-						role="status"
-						className={
-							state.success
-								? "text-sm text-emerald-600"
-								: "text-sm text-red-600 dark:text-red-300"
-						}
-					>
-						{state.message}
-					</p>
+				{members.length ? (
+					<div className="mt-6 border-t border-french_gray-200 pt-5 dark:border-paynes_gray-800">
+						<h3 className="mb-1 font-semibold text-outer_space-900 dark:text-platinum-50">
+							Project members and role labels
+						</h3>
+						<p className="mb-3 text-xs text-paynes_gray-500 dark:text-french_gray-400">
+							Click a role to edit it. All changes are saved together.
+						</p>
+						<ProjectMembers
+							projectId={project.id}
+							role={role}
+							members={members}
+							workspaceUsers={workspaceUsers}
+							variant="manager"
+							embeddedForm
+						/>
+					</div>
 				) : null}
-				<div className="flex justify-end gap-2 pt-2">
-					<Button
-						type="button"
-						variant="secondary"
-						onClick={onClose}
-						disabled={pending}
-					>
-						Cancel
-					</Button>
-					<Button type="submit" disabled={pending}>
-						{pending ? "Saving…" : "Save changes"}
-					</Button>
+				<div className="flex min-h-14 flex-wrap items-center justify-between gap-3 border-t border-french_gray-200 pt-4 dark:border-paynes_gray-800">
+					<div className="min-w-0 flex-1">
+						{state.message ? (
+							<p
+								role="status"
+								className={
+									state.success
+										? "text-sm text-emerald-600"
+										: "text-sm text-red-600 dark:text-red-300"
+								}
+							>
+								{state.message}
+							</p>
+						) : null}
+					</div>
+					<div className="flex shrink-0 gap-2">
+						<Button
+							type="button"
+							variant="secondary"
+							onClick={onClose}
+							disabled={pending}
+						>
+							Cancel
+						</Button>
+						<Button type="submit" disabled={pending}>
+							{pending ? "Saving…" : "Save changes"}
+						</Button>
+					</div>
 				</div>
 			</form>
-			{members.length ? (
-				<div className="mt-6 border-t border-french_gray-200 pt-5 dark:border-paynes_gray-800">
-					<h3 className="mb-3 font-semibold text-outer_space-900 dark:text-platinum-50">
-						Project members and role labels
-					</h3>
-					<ProjectMembers
-						projectId={project.id}
-						role={role}
-						members={members}
-						workspaceUsers={workspaceUsers}
-						variant="manager"
-					/>
-				</div>
-			) : null}
 		</Modal>
 	);
 }

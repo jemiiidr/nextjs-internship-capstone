@@ -181,6 +181,54 @@ export async function updateProjectAction(
 			updatedAt: new Date(),
 		})
 		.where(eq(projects.id, parsed.data.projectId));
+
+	const memberships = await db
+		.select({ userId: projectMembers.userId })
+		.from(projectMembers)
+		.where(eq(projectMembers.projectId, parsed.data.projectId));
+	await Promise.all(
+		memberships.map(async (membership) => {
+			const submittedLabel = formData.get(
+				`memberRoleLabel:${membership.userId}`,
+			);
+			if (typeof submittedLabel !== "string") return;
+			const roleLabel = submittedLabel.trim().slice(0, 40);
+			if (!roleLabel) return;
+			await db
+				.update(projectMembers)
+				.set({ roleLabel })
+				.where(
+					and(
+						eq(projectMembers.projectId, parsed.data.projectId),
+						eq(projectMembers.userId, membership.userId),
+					),
+				);
+		}),
+	);
+
+	const newMemberId = String(formData.get("newMemberId") ?? "").trim();
+	if (newMemberId && access.workspaceId) {
+		const workspaceMembers = await getWorkspaceMembers(access.workspaceId);
+		const target = workspaceMembers.find((member) => member.id === newMemberId);
+		if (target) {
+			const roleLabel =
+				String(formData.get("newMemberRoleLabel") ?? "Contributor")
+					.trim()
+					.slice(0, 40) || "Contributor";
+			await db
+				.insert(projectMembers)
+				.values({
+					projectId: parsed.data.projectId,
+					userId: target.id,
+					role: target.role,
+					roleLabel,
+				})
+				.onConflictDoUpdate({
+					target: [projectMembers.projectId, projectMembers.userId],
+					set: { role: target.role, roleLabel },
+				});
+		}
+	}
 	await db.insert(activities).values({
 		projectId: parsed.data.projectId,
 		actorId: access.user.id,
