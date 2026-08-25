@@ -162,7 +162,10 @@ export async function updateProjectAction(
 	let iconDataUrl: string | undefined;
 	if (icon instanceof File && icon.size > 0) {
 		if (!icon.type.startsWith("image/") || icon.size > 512 * 1024) {
-			return { success: false, message: "Project icons must be image files no larger than 512KB." };
+			return {
+				success: false,
+				message: "Project icons must be image files no larger than 512KB.",
+			};
 		}
 		iconDataUrl = `data:${icon.type};base64,${Buffer.from(await icon.arrayBuffer()).toString("base64")}`;
 	}
@@ -226,7 +229,10 @@ export async function addProjectMemberAction(
 			message: "Only workspace admins can manage project collaborators.",
 		};
 	}
-	const roleLabel = String(formData.get("roleLabel") ?? "Contributor").trim().slice(0, 40) || "Contributor";
+	const roleLabel =
+		String(formData.get("roleLabel") ?? "Contributor")
+			.trim()
+			.slice(0, 40) || "Contributor";
 
 	const workspaceMembers = await getWorkspaceMembers(access.workspaceId);
 	const target = workspaceMembers.find(
@@ -265,14 +271,31 @@ export async function addProjectMemberAction(
 	};
 }
 
-export async function updateProjectMemberLabelAction(formData: FormData): Promise<ActionResult> {
+export async function updateProjectMemberLabelAction(
+	formData: FormData,
+): Promise<ActionResult> {
 	const projectId = String(formData.get("projectId") ?? "");
 	const userId = String(formData.get("userId") ?? "");
-	const roleLabel = String(formData.get("roleLabel") ?? "").trim().slice(0, 40);
+	const roleLabel = String(formData.get("roleLabel") ?? "")
+		.trim()
+		.slice(0, 40);
 	const access = await requireProjectAccess(projectId);
-	if (!access || !canManageProject(access.role)) return { success: false, message: "Only project admins can change role labels." };
-	if (!roleLabel) return { success: false, message: "Choose or enter a role label." };
-	await db.update(projectMembers).set({ roleLabel }).where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)));
+	if (!access || !canManageProject(access.role))
+		return {
+			success: false,
+			message: "Only project admins can change role labels.",
+		};
+	if (!roleLabel)
+		return { success: false, message: "Choose or enter a role label." };
+	await db
+		.update(projectMembers)
+		.set({ roleLabel })
+		.where(
+			and(
+				eq(projectMembers.projectId, projectId),
+				eq(projectMembers.userId, userId),
+			),
+		);
 	revalidateProjectSurfaces(projectId);
 	return { success: true, message: "Project role updated." };
 }

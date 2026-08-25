@@ -428,7 +428,10 @@ export async function bulkMoveTasksAction(input: {
 
 	const access = await requireProjectAccess(parsed.data.projectId);
 	if (!access || !canEditProject(access.role)) {
-		return { success: false, message: "You cannot move tasks in this project." };
+		return {
+			success: false,
+			message: "You cannot move tasks in this project.",
+		};
 	}
 
 	const targetList = await db.query.lists.findFirst({

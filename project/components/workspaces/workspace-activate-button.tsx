@@ -1,7 +1,6 @@
 "use client";
 
 import { useOrganizationList } from "@clerk/nextjs";
-import { ArrowRight, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,8 +17,9 @@ export function WorkspaceActivateButton({
 	const { setActive } = useOrganizationList();
 	return (
 		<Button
-			variant={active ? "secondary" : "default"}
+			variant="ghost"
 			size="sm"
+			className="h-auto px-0 py-1 text-blue_munsell-600 hover:translate-y-0 hover:bg-transparent hover:text-blue_munsell-700 dark:text-blue_munsell-300"
 			disabled={active || isPending || !setActive}
 			onClick={(event) => {
 				event.stopPropagation();
@@ -31,15 +31,7 @@ export function WorkspaceActivateButton({
 				});
 			}}
 		>
-			{active ? (
-				<>
-					<Check size={14} /> Active
-				</>
-			) : (
-				<>
-					{isPending ? "Switching…" : "Open"} <ArrowRight size={14} />
-				</>
-			)}
+			{isPending ? "Switching…" : "Open workspace"}
 		</Button>
 	);
 }

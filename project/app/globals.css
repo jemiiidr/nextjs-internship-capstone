@@ -192,7 +192,7 @@
 	background:
 		radial-gradient(
 			circle at 10% 10%,
-			 color-mix(in srgb, var(--brand-color) 14%, transparent),
+			color-mix(in srgb, var(--brand-color) 14%, transparent),
 			transparent 32%
 		),
 		radial-gradient(
@@ -210,7 +210,11 @@
 
 .flowora-auth-background {
 	background:
-		linear-gradient(135deg, color-mix(in srgb, var(--brand-color) 6%, transparent), transparent 44%),
+		linear-gradient(
+			135deg,
+			color-mix(in srgb, var(--brand-color) 6%, transparent),
+			transparent 44%
+		),
 		radial-gradient(
 			circle at 12% 20%,
 			color-mix(in srgb, var(--brand-color) 20%, transparent),

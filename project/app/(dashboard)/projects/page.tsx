@@ -50,7 +50,9 @@ export default async function ProjectsPage({
 					</p>
 				</div>
 
-				{hasPermission(context.role, "project:create") ? <CreateProjectButton /> : null}
+				{hasPermission(context.role, "project:create") ? (
+					<CreateProjectButton />
+				) : null}
 			</header>
 
 			<form className="relative max-w-xl">
@@ -71,7 +73,10 @@ export default async function ProjectsPage({
 				</button>
 			</form>
 
-			<ProjectGrid projects={projects} canCreate={hasPermission(context.role, "project:create")} />
+			<ProjectGrid
+				projects={projects}
+				canCreate={hasPermission(context.role, "project:create")}
+			/>
 		</div>
 	);
 }

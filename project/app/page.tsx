@@ -5,7 +5,11 @@ import { Footer } from "@/components/landing/footer";
 import { Header } from "@/components/landing/header";
 import { Hero } from "@/components/landing/hero";
 import { LandingExperience } from "@/components/landing/landing-experience";
-import { FloatingOrb, Parallax, Reveal } from "@/components/landing/landing-motion";
+import {
+	FloatingOrb,
+	Parallax,
+	Reveal,
+} from "@/components/landing/landing-motion";
 import { Button } from "@/components/ui/button";
 
 const taskFlowBars = [
@@ -71,8 +75,9 @@ export default function HomePage() {
 								</h2>
 
 								<p className="mt-4 max-w-xl leading-7 text-paynes_gray-500">
-									Kanvas turns activity into a clear view of progress, overdue work,
-									status distribution, and team flow—without another reporting tool.
+									Kanvas turns activity into a clear view of progress, overdue
+									work, status distribution, and team flow—without another
+									reporting tool.
 								</p>
 
 								<div className="mt-6 space-y-3 text-sm text-paynes_gray-600 dark:text-french_gray-300">
@@ -141,8 +146,9 @@ export default function HomePage() {
 								</h2>
 
 								<p className="relative mx-auto mt-3 max-w-2xl text-paynes_gray-500 dark:text-french_gray-400">
-									Move between teams without mixing projects, members, or permissions.
-									Each workspace stays focused, secure, and ready for its own way of working.
+									Move between teams without mixing projects, members, or
+									permissions. Each workspace stays focused, secure, and ready
+									for its own way of working.
 								</p>
 
 								<Link href="/sign-up" className="mt-7 inline-block">
