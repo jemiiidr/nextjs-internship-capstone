@@ -229,6 +229,19 @@ export async function updateTaskAction(
 			};
 	}
 
+	let nextPosition = existing.position;
+	if (existing.listId !== parsed.data.listId) {
+		const destinationTasks = await db
+			.select({ position: tasks.position })
+			.from(tasks)
+			.where(eq(tasks.listId, parsed.data.listId))
+			.orderBy(asc(tasks.position));
+		nextPosition =
+			destinationTasks.length === 0
+				? 0
+				: Math.max(...destinationTasks.map((task) => task.position)) + 1;
+	}
+
 	const [updated] = await db
 		.update(tasks)
 		.set({
@@ -239,6 +252,7 @@ export async function updateTaskAction(
 			dueDate: toTaskDeadlineOrNull(parsed.data.dueDate, parsed.data.dueTime),
 			assigneeId: parsed.data.assigneeId,
 			labels: parseLabels(parsed.data.labels),
+			position: nextPosition,
 			updatedAt: new Date(),
 		})
 		.where(eq(tasks.id, parsed.data.taskId))
