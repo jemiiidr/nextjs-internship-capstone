@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { InviteMemberButton, TeamTabs } from "@/components/team/team-management";
+import { TeamManagement } from "@/components/team/team-management";
 import { requireWorkspaceContext } from "@/lib/auth";
 import { hasPermission } from "@/lib/rbac";
 import {
@@ -21,23 +21,12 @@ export default async function TeamPage() {
 			: Promise.resolve([]),
 	]);
 	return (
-		<div className="space-y-7">
-			<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-				<div>
-					<p className="text-sm font-semibold text-blue_munsell-600 dark:text-blue_munsell-300">
-						{workspace.name}
-					</p>
-					<h1 className="mt-1 text-3xl font-bold tracking-tight text-outer_space-900 dark:text-platinum-50">
-						Team
-					</h1>
-					<p className="mt-2 max-w-2xl text-paynes_gray-500">
-						Workspace membership and access roles come directly from your Clerk
-						Organization.
-					</p>
-				</div>
-				{canManageMembers ? <InviteMemberButton /> : null}
-			</header>
-			<TeamTabs members={members} invitations={invitations} />
-		</div>
+		<TeamManagement
+			workspaceName={workspace.name}
+			members={members}
+			invitations={invitations}
+			currentUserId={context.user.id}
+			canManageMembers={canManageMembers}
+		/>
 	);
 }

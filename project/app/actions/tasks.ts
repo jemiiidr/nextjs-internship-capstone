@@ -8,6 +8,7 @@ import { activities, lists, tasks, users } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications";
 import { parseLabels, toDateOrNull } from "@/lib/utils";
 import {
+	bulkMoveTasksSchema,
 	moveTaskSchema,
 	taskSchema,
 	taskUpdateSchema,
@@ -414,6 +415,83 @@ export async function moveTaskAction(input: {
 
 	revalidateTaskSurfaces(parsed.data.projectId);
 	return { success: true, message: "Task moved." };
+}
+
+export async function bulkMoveTasksAction(input: {
+	projectId: string;
+	taskIds: string[];
+	toListId: string;
+}): Promise<ActionResult> {
+	const parsed = bulkMoveTasksSchema.safeParse(input);
+	if (!parsed.success)
+		return { success: false, message: "Invalid bulk status change." };
+
+	const access = await requireProjectAccess(parsed.data.projectId);
+	if (!access || !canEditProject(access.role)) {
+		return { success: false, message: "You cannot move tasks in this project." };
+	}
+
+	const targetList = await db.query.lists.findFirst({
+		where: and(
+			eq(lists.id, parsed.data.toListId),
+			eq(lists.projectId, parsed.data.projectId),
+		),
+	});
+	if (!targetList)
+		return { success: false, message: "The destination list does not exist." };
+
+	const selectedIds = Array.from(new Set(parsed.data.taskIds));
+	const selectedRows = await db
+		.select({ id: tasks.id, listId: tasks.listId, position: tasks.position })
+		.from(tasks)
+		.innerJoin(lists, eq(tasks.listId, lists.id))
+		.where(
+			and(
+				eq(lists.projectId, parsed.data.projectId),
+				inArray(tasks.id, selectedIds),
+			),
+		);
+	if (selectedRows.length !== selectedIds.length) {
+		return { success: false, message: "One or more tasks could not be moved." };
+	}
+
+	const affectedListIds = Array.from(
+		new Set([...selectedRows.map((task) => task.listId), targetList.id]),
+	);
+	const affectedRows = await db
+		.select({ id: tasks.id, listId: tasks.listId, position: tasks.position })
+		.from(tasks)
+		.where(inArray(tasks.listId, affectedListIds))
+		.orderBy(asc(tasks.position));
+	const selectedSet = new Set(selectedIds);
+	const selectedOrder = selectedIds;
+
+	await Promise.all(
+		affectedListIds.map((listId) => {
+			const ordered = affectedRows
+				.filter((task) => task.listId === listId && !selectedSet.has(task.id))
+				.map((task) => task.id);
+			if (listId === targetList.id) ordered.push(...selectedOrder);
+			return persistPositions(listId, ordered);
+		}),
+	);
+
+	await db.insert(activities).values({
+		projectId: parsed.data.projectId,
+		actorId: access.user.id,
+		action: "task_moved",
+		metadata: {
+			taskTitle: `${selectedIds.length} tasks`,
+			toList: targetList.name,
+			bulk: true,
+		},
+	});
+
+	revalidateTaskSurfaces(parsed.data.projectId);
+	return {
+		success: true,
+		message: `${selectedIds.length} task${selectedIds.length === 1 ? "" : "s"} moved to ${targetList.name}.`,
+	};
 }
 
 export async function deleteTaskAction(

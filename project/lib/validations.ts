@@ -69,6 +69,12 @@ export const moveTaskSchema = z.object({
 	position: z.number().int().min(0),
 });
 
+export const bulkMoveTasksSchema = z.object({
+	projectId: z.string().uuid(),
+	taskIds: z.array(z.string().uuid()).min(1).max(100),
+	toListId: z.string().uuid(),
+});
+
 export const commentSchema = z.object({
 	projectId: z.string().uuid(),
 	taskId: z.string().uuid(),

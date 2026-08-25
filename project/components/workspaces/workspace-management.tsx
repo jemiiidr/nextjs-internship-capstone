@@ -4,7 +4,7 @@ import { useOrganization } from "@clerk/nextjs";
 import { Building2, FolderKanban, Loader2, Plus, ShieldCheck, Upload, Users } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { updateWorkspaceAction } from "@/app/actions/workspaces";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Avatar } from "@/components/ui/avatar";
@@ -43,6 +43,15 @@ export function WorkspaceManagement({
 		updateWorkspaceAction,
 		initialState,
 	);
+
+	useEffect(() => {
+		if (initialCreateOpen) setCreateOpen(true);
+	}, [initialCreateOpen]);
+
+	const closeCreateWorkspace = () => {
+		setCreateOpen(false);
+		router.replace("/workspaces", { scroll: false });
+	};
 
 	const updateLogo = async (file: File | undefined) => {
 		if (!file || !selected || !organization) return;
@@ -148,7 +157,7 @@ export function WorkspaceManagement({
 
 			<Modal
 				open={createOpen}
-				onClose={() => setCreateOpen(false)}
+				onClose={closeCreateWorkspace}
 				title="Create a workspace"
 				description="Create a separate space for a team, its projects, and its permissions."
 			>
@@ -225,13 +234,7 @@ export function WorkspaceManagement({
 								</Button>
 							</form>
 							</div>
-						) : (
-							<p className="rounded-xl bg-platinum-100 p-3 text-sm text-paynes_gray-500 dark:bg-outer_space-400">
-								{!hasPermission(selected.role, "workspace:update")
-									? "Only workspace administrators can change workspace settings."
-									: "Activate this workspace to edit its settings."}
-							</p>
-						)}
+						) : null}
 						</div>
 						<aside className="border-t border-french_gray-200 pt-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0 dark:border-paynes_gray-800">
 							<div className="flex items-center justify-between"><h3 className="font-semibold text-outer_space-900 dark:text-platinum-50">Members</h3><span className="text-xs text-paynes_gray-500">{selected.memberCount} total</span></div>

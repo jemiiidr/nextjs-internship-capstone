@@ -1,46 +1,88 @@
 "use client";
 
 import { useOrganizationList } from "@clerk/nextjs";
-import { Building2, MailPlus, ShieldCheck, Trash2, Users } from "lucide-react";
+import {
+	Building2,
+	ChevronLeft,
+	ChevronRight,
+	Info,
+	MailPlus,
+	MoreHorizontal,
+	Search,
+	ShieldCheck,
+	UserRound,
+	Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, useTransition } from "react";
+import {
+	useActionState,
+	useEffect,
+	useMemo,
+	useState,
+	useTransition,
+} from "react";
 import {
 	inviteWorkspaceMemberAction,
 	notifyWorkspaceJoinedAction,
 	revokeWorkspaceInvitationAction,
 } from "@/app/actions/team";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type {
 	ActionResult,
 	WorkspaceInvitation,
 	WorkspaceMember,
 } from "@/types";
 
+const PAGE_SIZE = 6;
 const initialState: ActionResult = { success: false, message: "" };
 
-export function InviteMemberButton() {
+function roleClasses(
+	role: WorkspaceMember["role"] | WorkspaceInvitation["role"],
+) {
+	if (role === "admin")
+		return "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200";
+	if (role === "viewer")
+		return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200";
+	return "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200";
+}
+
+function RolePill({
+	role,
+}: {
+	role: WorkspaceMember["role"] | WorkspaceInvitation["role"];
+}) {
+	return (
+		<span
+			className={cn(
+				"inline-flex rounded-md px-2.5 py-1 text-xs font-medium capitalize",
+				roleClasses(role),
+			)}
+		>
+			{role}
+		</span>
+	);
+}
+
+function InviteMemberButton({ workspaceName }: { workspaceName: string }) {
 	const [open, setOpen] = useState(false);
 	const [state, formAction, pending] = useActionState(
 		inviteWorkspaceMemberAction,
 		initialState,
 	);
-
 	useEffect(() => {
 		if (state.success) setOpen(false);
 	}, [state.success]);
 
 	return (
 		<>
-			<Button onClick={() => setOpen(true)}>
+			<Button onClick={() => setOpen(true)} className="shrink-0 px-5">
 				<MailPlus size={16} /> Invite member
 			</Button>
 			<Modal
@@ -48,8 +90,8 @@ export function InviteMemberButton() {
 				onClose={() => {
 					if (!pending) setOpen(false);
 				}}
-				title="Invite team member"
-				description="Clerk will email an invitation that expires in 7 days."
+				title="Invite member"
+				description={`Add a new member to ${workspaceName}.`}
 				className="max-w-md"
 			>
 				<form action={formAction} className="space-y-5">
@@ -62,34 +104,58 @@ export function InviteMemberButton() {
 							autoComplete="email"
 							required
 							maxLength={254}
-							placeholder="teammate@example.com"
+							placeholder="Enter email address"
 							autoFocus
 						/>
+						<p className="text-xs text-paynes_gray-500">
+							We’ll send an invitation to this email address.
+						</p>
 						{state.fieldErrors?.email?.[0] ? (
 							<p className="text-xs text-red-600">
 								{state.fieldErrors.email[0]}
 							</p>
 						) : null}
 					</div>
-					<div className="space-y-1.5">
-						<Label htmlFor="invite-role">Workspace role</Label>
+					<div className="space-y-2">
+						<Label htmlFor="invite-role">Role</Label>
 						<Select
 							id="invite-role"
 							name="role"
 							defaultValue="org:member"
-							options={[{ value: "org:member", label: "Member" }, { value: "org:admin", label: "Admin" }]}
+							options={[
+								{ value: "org:member", label: "Member" },
+								{ value: "org:admin", label: "Admin" },
+							]}
 						/>
-						<p className="text-xs text-paynes_gray-500">
-							Admins can manage members and workspace projects.
-						</p>
+						<div className="space-y-1 rounded-xl border border-french_gray-200 bg-platinum-50/60 p-2 dark:border-paynes_gray-700 dark:bg-outer_space-400">
+							<div className="flex gap-2 rounded-lg p-2">
+								<ShieldCheck size={16} className="mt-0.5 text-violet-600" />
+								<div>
+									<p className="text-xs font-semibold">Admin</p>
+									<p className="text-[11px] text-paynes_gray-500">
+										Can manage workspace settings, members, and projects.
+									</p>
+								</div>
+							</div>
+							<div className="flex gap-2 rounded-lg p-2">
+								<UserRound size={16} className="mt-0.5 text-blue-600" />
+								<div>
+									<p className="text-xs font-semibold">Member</p>
+									<p className="text-[11px] text-paynes_gray-500">
+										Can create and collaborate on projects and tasks.
+									</p>
+								</div>
+							</div>
+						</div>
 					</div>
 					{state.message && !state.success ? (
 						<p role="alert" className="text-sm text-red-600 dark:text-red-400">
 							{state.message}
 						</p>
 					) : null}
-					<div className="flex justify-end gap-2">
+					<div className="grid grid-cols-2 gap-2">
 						<Button
+							type="button"
 							variant="secondary"
 							onClick={() => setOpen(false)}
 							disabled={pending}
@@ -106,7 +172,56 @@ export function InviteMemberButton() {
 	);
 }
 
-function PendingInvitations({
+function Pagination({
+	page,
+	pages,
+	onChange,
+}: {
+	page: number;
+	pages: number;
+	onChange: (page: number) => void;
+}) {
+	if (pages <= 1) return null;
+	return (
+		<div className="flex items-center gap-1">
+			<button
+				type="button"
+				aria-label="Previous page"
+				disabled={page === 1}
+				onClick={() => onChange(page - 1)}
+				className="grid size-8 place-items-center rounded-md text-paynes_gray-500 hover:bg-platinum-100 disabled:opacity-30 dark:hover:bg-outer_space-300"
+			>
+				<ChevronLeft size={15} />
+			</button>
+			{Array.from({ length: pages }, (_, index) => index + 1).map((number) => (
+				<button
+					key={number}
+					type="button"
+					onClick={() => onChange(number)}
+					className={cn(
+						"size-8 rounded-md text-sm",
+						number === page
+							? "bg-violet-50 font-semibold text-violet-700 dark:bg-violet-950/40 dark:text-violet-200"
+							: "text-paynes_gray-500 hover:bg-platinum-100 dark:hover:bg-outer_space-300",
+					)}
+				>
+					{number}
+				</button>
+			))}
+			<button
+				type="button"
+				aria-label="Next page"
+				disabled={page === pages}
+				onClick={() => onChange(page + 1)}
+				className="grid size-8 place-items-center rounded-md text-paynes_gray-500 hover:bg-platinum-100 disabled:opacity-30 dark:hover:bg-outer_space-300"
+			>
+				<ChevronRight size={15} />
+			</button>
+		</div>
+	);
+}
+
+function SentInvitations({
 	invitations,
 }: {
 	invitations: WorkspaceInvitation[];
@@ -115,7 +230,6 @@ function PendingInvitations({
 	const [selected, setSelected] = useState<WorkspaceInvitation | null>(null);
 	const [error, setError] = useState("");
 	const [pending, startTransition] = useTransition();
-
 	const revoke = () => {
 		if (!selected) return;
 		startTransition(async () => {
@@ -126,37 +240,61 @@ function PendingInvitations({
 			} else setError(result.message);
 		});
 	};
-
-	if (invitations.length === 0) return null;
 	return (
 		<>
-			<div className="overflow-hidden rounded-2xl border border-french_gray-300 dark:border-paynes_gray-800">
-				{invitations.map((invitation) => (
-					<div
-						key={invitation.id}
-						className="flex flex-col gap-3 border-b border-french_gray-200 p-4 last:border-b-0 sm:flex-row sm:items-center dark:border-paynes_gray-800"
-					>
-						<div className="min-w-0 flex-1">
-							<p className="truncate font-medium">{invitation.email}</p>
-							<p className="text-xs text-paynes_gray-500">
-								Expires {formatDate(invitation.expiresAt)}
-							</p>
+			<section className="overflow-hidden rounded-2xl border border-french_gray-300 bg-white shadow-sm dark:border-paynes_gray-800 dark:bg-outer_space-500">
+				<div className="flex items-center gap-2 px-6 py-5">
+					<h2 className="text-lg font-semibold">Pending invitations</h2>
+					<span className="rounded-md bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950/40 dark:text-violet-200">
+						{invitations.length}
+					</span>
+				</div>
+				<div className="overflow-x-auto px-6">
+					<div className="min-w-[650px]">
+						<div className="grid grid-cols-[1.7fr_.7fr_1fr_.7fr] border-b border-french_gray-200 px-2 pb-3 text-xs text-paynes_gray-500 dark:border-paynes_gray-800">
+							<span>Email</span>
+							<span>Role</span>
+							<span>Sent</span>
+							<span className="text-right">Actions</span>
 						</div>
-						<Badge className="capitalize">{invitation.role}</Badge>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="text-red-600"
-							onClick={() => {
-								setError("");
-								setSelected(invitation);
-							}}
-						>
-							<Trash2 size={14} /> Revoke
-						</Button>
+						{invitations.map((invitation) => (
+							<div
+								key={invitation.id}
+								className="grid grid-cols-[1.7fr_.7fr_1fr_.7fr] items-center border-b border-french_gray-200 px-2 py-3 text-sm last:border-b-0 dark:border-paynes_gray-800"
+							>
+								<span className="truncate text-paynes_gray-600 dark:text-french_gray-300">
+									{invitation.email}
+								</span>
+								<span>
+									<RolePill role={invitation.role} />
+								</span>
+								<span className="text-paynes_gray-500">
+									{formatDate(invitation.createdAt)}
+								</span>
+								<button
+									type="button"
+									onClick={() => {
+										setError("");
+										setSelected(invitation);
+									}}
+									className="justify-self-end text-xs font-medium text-red-600 hover:underline dark:text-red-300"
+								>
+									Revoke
+								</button>
+							</div>
+						))}
+						{invitations.length === 0 ? (
+							<p className="py-8 text-center text-sm text-paynes_gray-500">
+								No pending invitations.
+							</p>
+						) : null}
 					</div>
-				))}
-			</div>
+				</div>
+				<div className="border-t border-french_gray-200 px-6 py-4 text-xs text-paynes_gray-500 dark:border-paynes_gray-800">
+					Showing {invitations.length} invitation
+					{invitations.length === 1 ? "" : "s"}
+				</div>
+			</section>
 			<ConfirmationModal
 				open={selected !== null}
 				onClose={() => {
@@ -169,24 +307,30 @@ function PendingInvitations({
 				error={error}
 			>
 				<p>
-					<strong>{selected?.email}</strong> will no longer be able to use this
-					invitation to join the workspace.
+					<strong>{selected?.email}</strong> will no longer be able to join with
+					this invitation.
 				</p>
 			</ConfirmationModal>
 		</>
 	);
 }
 
-export function TeamTabs({
+export function TeamManagement({
+	workspaceName,
 	members,
 	invitations,
+	currentUserId,
+	canManageMembers,
 }: {
+	workspaceName: string;
 	members: WorkspaceMember[];
 	invitations: WorkspaceInvitation[];
+	currentUserId: string;
+	canManageMembers: boolean;
 }) {
-	const [activeTab, setActiveTab] = useState<"members" | "invitations">(
-		"members",
-	);
+	const [query, setQuery] = useState("");
+	const [role, setRole] = useState("all");
+	const [page, setPage] = useState(1);
 	const router = useRouter();
 	const [acceptError, setAcceptError] = useState("");
 	const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -194,12 +338,26 @@ export function TeamTabs({
 	const { isLoaded, setActive, userInvitations } = useOrganizationList({
 		userInvitations: { status: "pending", infinite: true, pageSize: 20 },
 	});
-	const incomingInvitations = userInvitations.data ?? [];
-	const pendingCount = invitations.length + incomingInvitations.length;
+	const incoming = userInvitations.data ?? [];
+	const filtered = useMemo(
+		() =>
+			members.filter(
+				(member) =>
+					(role === "all" || member.role === role) &&
+					`${member.name} ${member.email}`
+						.toLowerCase()
+						.includes(query.trim().toLowerCase()),
+			),
+		[members, query, role],
+	);
+	const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+	const safePage = Math.min(page, pages);
+	const visible = filtered.slice(
+		(safePage - 1) * PAGE_SIZE,
+		safePage * PAGE_SIZE,
+	);
 
-	const acceptInvitation = (
-		invitation: (typeof incomingInvitations)[number],
-	) => {
+	const acceptInvitation = (invitation: (typeof incoming)[number]) => {
 		if (!setActive) return;
 		setAcceptError("");
 		setAcceptingId(invitation.id);
@@ -207,16 +365,13 @@ export function TeamTabs({
 			try {
 				await invitation.accept();
 				await userInvitations.revalidate();
-				await setActive({
-					organization: invitation.publicOrganizationData.id,
-				});
+				await setActive({ organization: invitation.publicOrganizationData.id });
 				await notifyWorkspaceJoinedAction(invitation.publicOrganizationData.id);
 				router.push("/team");
 				router.refresh();
-			} catch (error) {
-				console.error("Unable to accept Clerk organization invitation", error);
+			} catch {
 				setAcceptError(
-					"Clerk could not accept this invitation. Please try again.",
+					"Kanvas could not accept this invitation. Please try again.",
 				);
 			} finally {
 				setAcceptingId(null);
@@ -225,171 +380,178 @@ export function TeamTabs({
 	};
 
 	return (
-		<section className="space-y-5">
-			<div
-				role="tablist"
-				aria-label="Team directory"
-				className="flex gap-1 border-b border-french_gray-300 dark:border-paynes_gray-800"
-			>
-				<button
-					type="button"
-					role="tab"
-					aria-selected={activeTab === "members"}
-					onClick={() => setActiveTab("members")}
-					className={`relative px-4 py-3 text-sm font-semibold transition ${
-						activeTab === "members"
-							? "text-blue_munsell-600 dark:text-blue_munsell-300"
-							: "text-paynes_gray-500 hover:text-outer_space-900 dark:hover:text-platinum-50"
-					}`}
-				>
-					Members
-					{activeTab === "members" ? (
-						<span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-blue_munsell-500" />
-					) : null}
-				</button>
-				<button
-					type="button"
-					role="tab"
-					aria-selected={activeTab === "invitations"}
-					onClick={() => setActiveTab("invitations")}
-					className={`relative flex items-center gap-2 px-4 py-3 text-sm font-semibold transition ${
-						activeTab === "invitations"
-							? "text-blue_munsell-600 dark:text-blue_munsell-300"
-							: "text-paynes_gray-500 hover:text-outer_space-900 dark:hover:text-platinum-50"
-					}`}
-				>
-					Pending Invites
-					{pendingCount > 0 ? (
-						<span className="inline-flex items-center justify-center rounded-full bg-blue_munsell-100 px-1.5 py-0.5 text-[11px] font-bold text-blue_munsell-700 dark:bg-blue_munsell-900/50 dark:text-blue_munsell-200">
-							({pendingCount})
+		<div className="space-y-4">
+			<header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+				<div>
+					<h1 className="text-3xl font-bold tracking-tight text-outer_space-900 dark:text-platinum-50">
+						Team
+					</h1>
+					<p className="mt-1 text-paynes_gray-500">
+						Manage your team members, roles, and invitations.
+					</p>
+				</div>
+				{canManageMembers ? (
+					<InviteMemberButton workspaceName={workspaceName} />
+				) : null}
+			</header>
+			<section className="overflow-hidden rounded-2xl border border-french_gray-300 bg-white shadow-sm dark:border-paynes_gray-800 dark:bg-outer_space-500">
+				<div className="flex flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+					<div className="flex items-center gap-2">
+						<h2 className="text-lg font-semibold">Members</h2>
+						<span className="rounded-md bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-950/40 dark:text-violet-200">
+							{members.length}
 						</span>
-					) : null}
-					{activeTab === "invitations" ? (
-						<span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-blue_munsell-500" />
-					) : null}
-				</button>
-			</div>
-
-			{activeTab === "members" ? (
-				members.length > 0 ? (
-					<div
-						role="tabpanel"
-						className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-					>
-						{members.map((member) => (
-							<Card key={member.id}>
-								<CardContent className="flex items-center gap-3 p-5">
+					</div>
+					<div className="flex flex-col gap-2 sm:flex-row">
+						<div className="relative sm:w-64">
+							<Search
+								size={15}
+								className="absolute left-3 top-1/2 -translate-y-1/2 text-paynes_gray-400"
+							/>
+							<Input
+								value={query}
+								onChange={(event) => {
+									setQuery(event.target.value);
+									setPage(1);
+								}}
+								placeholder="Search members…"
+								className="pl-9"
+							/>
+						</div>
+						<Select
+							value={role}
+							onValueChange={(value) => {
+								setRole(value);
+								setPage(1);
+							}}
+							className="sm:w-36"
+							options={[
+								{ value: "all", label: "All roles" },
+								{ value: "admin", label: "Admin" },
+								{ value: "member", label: "Member" },
+								{ value: "viewer", label: "Viewer" },
+							]}
+						/>
+					</div>
+				</div>
+				<div className="overflow-x-auto px-6">
+					<div className="min-w-[720px]">
+						<div
+							className={cn(
+								"grid border-b border-french_gray-200 px-2 pb-3 text-xs text-paynes_gray-500 dark:border-paynes_gray-800",
+								canManageMembers
+									? "grid-cols-[1.15fr_1.6fr_.55fr_.35fr]"
+									: "grid-cols-[1.15fr_1.6fr_.55fr]",
+							)}
+						>
+							<span>Name</span>
+							<span>Email</span>
+							<span className="flex items-center gap-1">
+								Role <Info size={12} />
+							</span>
+							{canManageMembers ? (
+								<span className="text-right">Actions</span>
+							) : null}
+						</div>
+						{visible.map((member) => (
+							<div
+								key={member.id}
+								className={cn(
+									"grid items-center border-b border-french_gray-200 px-2 py-3 last:border-b-0 dark:border-paynes_gray-800",
+									canManageMembers
+										? "grid-cols-[1.15fr_1.6fr_.55fr_.35fr]"
+										: "grid-cols-[1.15fr_1.6fr_.55fr]",
+								)}
+							>
+								<div className="flex min-w-0 items-center gap-3">
 									<Avatar
 										name={member.name}
 										src={member.avatarUrl}
-										className="size-11"
+										className="size-9"
 									/>
-									<div className="min-w-0 flex-1">
-										<p className="truncate font-semibold text-outer_space-900 dark:text-platinum-50">
-											{member.name}
-										</p>
-										<p className="truncate text-sm text-paynes_gray-500">
-											{member.email}
-										</p>
-									</div>
-									<Badge className="capitalize">
-										<ShieldCheck size={12} /> {member.role}
-									</Badge>
-								</CardContent>
-							</Card>
+									<span className="truncate text-sm font-medium">
+										{member.name}
+									</span>
+									{member.id === currentUserId ? (
+										<span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:bg-violet-950/40 dark:text-violet-200">
+											You
+										</span>
+									) : null}
+								</div>
+								<span className="truncate text-sm text-paynes_gray-500">
+									{member.email}
+								</span>
+								<span>
+									<RolePill role={member.role} />
+								</span>
+								{canManageMembers ? (
+									<button
+										type="button"
+										aria-label={`Actions for ${member.name}`}
+										className="grid size-8 justify-self-end place-items-center rounded-md text-paynes_gray-500 hover:bg-platinum-100 dark:hover:bg-outer_space-300"
+									>
+										<MoreHorizontal size={17} />
+									</button>
+								) : null}
+							</div>
+						))}
+						{visible.length === 0 ? (
+							<div className="py-12 text-center">
+								<Users className="mx-auto text-paynes_gray-400" />
+								<p className="mt-2 text-sm text-paynes_gray-500">
+									No members match your filters.
+								</p>
+							</div>
+						) : null}
+					</div>
+				</div>
+				<div className="flex items-center justify-between border-t border-french_gray-200 px-6 py-4 text-xs text-paynes_gray-500 dark:border-paynes_gray-800">
+					<span>
+						{filtered.length
+							? `Showing ${(safePage - 1) * PAGE_SIZE + 1} to ${Math.min(safePage * PAGE_SIZE, filtered.length)} of ${filtered.length} members`
+							: "Showing 0 members"}
+					</span>
+					<Pagination page={safePage} pages={pages} onChange={setPage} />
+				</div>
+			</section>
+			{canManageMembers ? <SentInvitations invitations={invitations} /> : null}
+			{isLoaded && incoming.length > 0 ? (
+				<section className="rounded-2xl border border-blue_munsell-200 bg-blue_munsell-50/30 p-5 dark:border-blue_munsell-800 dark:bg-blue_munsell-950/20">
+					<div className="mb-4 flex items-center gap-2">
+						<Building2 size={18} className="text-blue_munsell-600" />
+						<h2 className="font-semibold">Invitations for you</h2>
+					</div>
+					{acceptError ? (
+						<p className="mb-3 text-sm text-red-600">{acceptError}</p>
+					) : null}
+					<div className="space-y-2">
+						{incoming.map((invitation) => (
+							<div
+								key={invitation.id}
+								className="flex items-center gap-3 rounded-xl bg-white p-3 dark:bg-outer_space-400"
+							>
+								<div className="min-w-0 flex-1">
+									<p className="truncate font-medium">
+										{invitation.publicOrganizationData.name}
+									</p>
+									<p className="text-xs text-paynes_gray-500">
+										Invited as {invitation.role.replace("org:", "")}
+									</p>
+								</div>
+								<Button
+									size="sm"
+									onClick={() => acceptInvitation(invitation)}
+									disabled={isAccepting}
+								>
+									{acceptingId === invitation.id
+										? "Accepting…"
+										: "Accept invitation"}
+								</Button>
+							</div>
 						))}
 					</div>
-				) : (
-					<div
-						role="tabpanel"
-						className="rounded-2xl border border-dashed border-french_gray-300 p-10 text-center"
-					>
-						<Users className="mx-auto text-paynes_gray-400" />
-						<p className="mt-3 text-sm text-paynes_gray-500">
-							No workspace members returned by Clerk.
-						</p>
-					</div>
-				)
-			) : pendingCount > 0 || !isLoaded ? (
-				<div role="tabpanel" className="space-y-6">
-					{!isLoaded ? (
-						<div className="rounded-2xl border border-french_gray-300 bg-white p-5 text-sm text-paynes_gray-500 dark:border-paynes_gray-800 dark:bg-outer_space-500">
-							Loading invitations…
-						</div>
-					) : null}
-					{incomingInvitations.length > 0 ? (
-						<section className="space-y-3">
-							<div>
-								<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
-									Invitations for you
-								</h2>
-								<p className="text-sm text-paynes_gray-500">
-									Accept an invitation to join and open its workspace.
-								</p>
-							</div>
-							{acceptError ? (
-								<p
-									role="alert"
-									className="text-sm text-red-600 dark:text-red-400"
-								>
-									{acceptError}
-								</p>
-							) : null}
-							<div className="overflow-hidden rounded-2xl border border-blue_munsell-200 bg-blue_munsell-50/30 dark:border-blue_munsell-800 dark:bg-blue_munsell-950/20">
-								{incomingInvitations.map((invitation) => (
-									<div
-										key={invitation.id}
-										className="flex flex-col gap-3 border-b border-blue_munsell-100 p-4 last:border-b-0 sm:flex-row sm:items-center dark:border-blue_munsell-900"
-									>
-										<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-blue_munsell-600 shadow-sm dark:bg-outer_space-400 dark:text-blue_munsell-300">
-											<Building2 size={19} />
-										</span>
-										<div className="min-w-0 flex-1">
-											<p className="truncate font-semibold text-outer_space-900 dark:text-platinum-50">
-												{invitation.publicOrganizationData.name}
-											</p>
-											<p className="truncate text-sm text-paynes_gray-500">
-												Invited as {invitation.role.replace("org:", "")}
-											</p>
-										</div>
-										<Button
-											onClick={() => acceptInvitation(invitation)}
-											disabled={isAccepting}
-										>
-											{acceptingId === invitation.id
-												? "Accepting…"
-												: "Accept invitation"}
-										</Button>
-									</div>
-								))}
-							</div>
-						</section>
-					) : null}
-					{invitations.length > 0 ? (
-						<section className="space-y-3">
-							<div>
-								<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
-									Sent invitations
-								</h2>
-								<p className="text-sm text-paynes_gray-500">
-									Waiting for these people to join this workspace.
-								</p>
-							</div>
-							<PendingInvitations invitations={invitations} />
-						</section>
-					) : null}
-				</div>
-			) : (
-				<div
-					role="tabpanel"
-					className="rounded-2xl border border-dashed border-french_gray-300 p-10 text-center"
-				>
-					<MailPlus className="mx-auto text-paynes_gray-400" />
-					<p className="mt-3 text-sm text-paynes_gray-500">
-						There are no pending invitations.
-					</p>
-				</div>
-			)}
-		</section>
+				</section>
+			) : null}
+		</div>
 	);
 }

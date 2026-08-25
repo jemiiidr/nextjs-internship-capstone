@@ -48,11 +48,16 @@ export function WorkspaceSwitcher({
 		});
 	};
 
+	const toggleWorkspaceMenu = () => {
+		if (!open) void userMemberships.revalidate?.();
+		setOpen((value) => !value);
+	};
+
 	return (
 		<div ref={switcherRef} className="relative">
 			<button
 				type="button"
-				onClick={() => setOpen((value) => !value)}
+				onClick={toggleWorkspaceMenu}
 				className={cn(
 					"flex w-full items-center gap-3 rounded-xl border border-french_gray-300 bg-white px-3 py-2.5 text-left shadow-sm transition hover:border-blue_munsell-200 dark:border-paynes_gray-800 dark:bg-outer_space-400",
 					collapsed && "lg:justify-center lg:border-0 lg:bg-transparent lg:p-1 lg:shadow-none dark:lg:bg-transparent",

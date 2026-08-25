@@ -21,7 +21,18 @@ import {
 	sortableKeyboardCoordinates,
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CalendarDays, Filter, LayoutGrid, List, MessageSquare, Plus, Search, Trash2 } from "lucide-react";
+import {
+	ArrowDownToLine,
+	ArrowUpToLine,
+	CalendarDays,
+	Filter,
+	LayoutGrid,
+	List,
+	MessageSquare,
+	Plus,
+	Search,
+	Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
 	useCallback,
@@ -36,7 +47,12 @@ import {
 	deleteListAction,
 	updateListAction,
 } from "@/app/actions/lists";
-import { bulkDeleteTasksAction, moveTaskAction } from "@/app/actions/tasks";
+import {
+	bulkDeleteTasksAction,
+	bulkMoveTasksAction,
+	deleteTaskAction,
+	moveTaskAction,
+} from "@/app/actions/tasks";
 import {
 	CreateTaskModal,
 	TaskDetailModal,
@@ -141,7 +157,7 @@ function TaskListView({ tasks, lists }: { tasks: BoardTask[]; lists: BoardList[]
 	const listNames = new Map(lists.map((list) => [list.id, list.name]));
 
 	return (
-		<div className="min-h-[34rem] overflow-hidden rounded-xl border border-french_gray-300 bg-white dark:border-paynes_gray-400 dark:bg-outer_space-500">
+		<div className="min-h-136 overflow-hidden rounded-xl border border-french_gray-300 bg-white dark:border-paynes_gray-400 dark:bg-outer_space-500">
 			<div className="hidden grid-cols-[minmax(16rem,2fr)_1fr_0.8fr_1fr_0.8fr] gap-4 border-b border-french_gray-300 bg-platinum-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-paynes_gray-500 dark:border-paynes_gray-400 dark:bg-outer_space-400 dark:text-french_gray-400 md:grid">
 				<span>Task</span><span>Status</span><span>Priority</span><span>Assignee</span><span>Due date</span>
 			</div>
@@ -156,7 +172,7 @@ function TaskListView({ tasks, lists }: { tasks: BoardTask[]; lists: BoardList[]
 					<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">{task.assignee ? <><Avatar name={task.assignee.name} src={task.assignee.avatarUrl} className="size-7" /><span className="truncate">{task.assignee.name}</span></> : <span>Unassigned</span>}</div>
 					<div className="flex items-center gap-1.5 text-sm text-paynes_gray-500 dark:text-french_gray-400">{task.dueDate ? <><CalendarDays size={14} />{formatDate(task.dueDate, { year: undefined })}</> : "No deadline"}{task.commentsCount > 0 ? <span className="ml-auto flex items-center gap-1"><MessageSquare size={13} />{task.commentsCount}</span> : null}</div>
 				</button>
-			)) : <div className="flex min-h-[28rem] items-center justify-center text-sm text-paynes_gray-500 dark:text-french_gray-400">No tasks match the current filters.</div>}
+			)) : <div className="flex min-h-112 items-center justify-center text-sm text-paynes_gray-500 dark:text-french_gray-400">No tasks match the current filters.</div>}
 		</div>
 	);
 }
@@ -169,6 +185,7 @@ function KanbanColumn({
 	onCreateTask,
 	onRename,
 	onDelete,
+	onTaskContextMenu,
 }: {
 	list: BoardList;
 	tasks: BoardTask[];
@@ -177,6 +194,7 @@ function KanbanColumn({
 	onCreateTask: () => void;
 	onRename: () => void;
 	onDelete: () => void;
+	onTaskContextMenu: (event: React.MouseEvent, task: BoardTask) => void;
 }) {
 	const { setNodeRef, isOver } = useDroppable({
 		id: list.id,
@@ -187,7 +205,7 @@ function KanbanColumn({
 		<section
 			ref={setNodeRef}
 			className={cn(
-				"flex min-h-[34rem] w-[min(86vw,19rem)] shrink-0 flex-col rounded-xl border border-french_gray-300 bg-platinum-50/60 transition-[box-shadow,background-color] duration-150 dark:border-paynes_gray-400 dark:bg-outer_space-500",
+				"flex min-h-136 w-[min(86vw,19rem)] shrink-0 flex-col rounded-xl border border-french_gray-300 bg-platinum-50/60 transition-[box-shadow,background-color] duration-150 dark:border-paynes_gray-400 dark:bg-outer_space-500",
 				isOver && "bg-blue_munsell-500/5 ring-2 ring-blue_munsell-500",
 			)}
 		>
@@ -242,7 +260,13 @@ function KanbanColumn({
 								activeTaskId === task.id && "opacity-25",
 							)}
 						>
-							<TaskCard task={task} disabled={!canEdit} accentClass={columnAccent(list.name)} />
+							<TaskCard
+								task={task}
+								disabled={!canEdit}
+								accentClass={columnAccent(list.name)}
+								dragActive={activeTaskId !== null}
+								onContextMenu={onTaskContextMenu}
+							/>
 						</div>
 					))}
 
@@ -276,7 +300,14 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 	const [listToDelete, setListToDelete] = useState<BoardList | null>(null);
 	const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+	const [bulkStatus, setBulkStatus] = useState("");
 	const [deleteError, setDeleteError] = useState("");
+	const [taskToDelete, setTaskToDelete] = useState<BoardTask | null>(null);
+	const [contextMenu, setContextMenu] = useState<{
+		taskId: string;
+		x: number;
+		y: number;
+	} | null>(null);
 	const [listToRename, setListToRename] = useState<BoardList | null>(null);
 	const [listName, setListName] = useState("");
 	const [renameError, setRenameError] = useState("");
@@ -293,6 +324,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	const updateListName = useBoardStore((state) => state.updateListName);
 	const removeList = useBoardStore((state) => state.removeList);
 	const replaceTasks = useBoardStore((state) => state.replaceTasks);
+	const removeTask = useBoardStore((state) => state.removeTask);
 	const removeTasks = useBoardStore((state) => state.removeTasks);
 
 	const openCreateTask = useUIStore((state) => state.openCreateTask);
@@ -307,6 +339,25 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 	useEffect(() => {
 		tasksRef.current = tasks;
 	}, [tasks]);
+
+	useEffect(() => {
+		if (!contextMenu) return;
+
+		const close = () => setContextMenu(null);
+		const closeOnKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape") close();
+		};
+		document.addEventListener("pointerdown", close);
+		window.addEventListener("blur", close);
+		window.addEventListener("scroll", close, true);
+		window.addEventListener("keydown", closeOnKey);
+		return () => {
+			document.removeEventListener("pointerdown", close);
+			window.removeEventListener("blur", close);
+			window.removeEventListener("scroll", close, true);
+			window.removeEventListener("keydown", closeOnKey);
+		};
+	}, [contextMenu]);
 
 	const sensors = useSensors(
 		useSensor(MouseSensor, {
@@ -387,6 +438,9 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		? (tasks.find((task) => task.id === activeTaskId) ??
 			dragSnapshotRef.current?.find((task) => task.id === activeTaskId) ??
 			null)
+		: null;
+	const contextTask = contextMenu
+		? tasks.find((task) => task.id === contextMenu.taskId) ?? null
 		: null;
 
 	const onDragStart = (event: DragStartEvent) => {
@@ -536,6 +590,97 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		setActiveTaskId(null);
 	};
 
+	const moveTaskFromMenu = (
+		taskId: string,
+		toListId: string,
+		position: number,
+	) => {
+		if (isSaving) return;
+		const snapshot = tasksRef.current.map((task) => ({ ...task }));
+		const originalTask = snapshot.find((task) => task.id === taskId);
+		if (!originalTask) return;
+
+		const nextTasks = moveInArray(snapshot, { taskId, toListId, position });
+		const movedTask = nextTasks.find((task) => task.id === taskId);
+		setContextMenu(null);
+		if (
+			!movedTask ||
+			(movedTask.listId === originalTask.listId &&
+				movedTask.position === originalTask.position)
+		)
+			return;
+
+		tasksRef.current = nextTasks;
+		replaceTasks(nextTasks);
+		startTransition(async () => {
+			const result = await moveTaskAction({
+				projectId: data.project.id,
+				taskId,
+				fromListId: originalTask.listId,
+				toListId: movedTask.listId,
+				position: movedTask.position,
+			});
+			setMessage(result.message);
+			if (!result.success) {
+				tasksRef.current = snapshot;
+				replaceTasks(snapshot);
+			}
+		});
+	};
+
+	const changeBulkStatus = (toListId: string) => {
+		setBulkStatus(toListId);
+		if (!toListId || isSaving) return;
+
+		const selectedSet = new Set(selectedTaskIds);
+		const snapshot = tasksRef.current.map((task) => ({ ...task }));
+		let nextTasks = snapshot;
+		const selectedTasks = selectedTaskIds
+			.map((taskId) => snapshot.find((candidate) => candidate.id === taskId))
+			.filter((task): task is BoardTask => Boolean(task));
+		const destinationBase = snapshot.filter(
+			(candidate) =>
+				candidate.listId === toListId && !selectedSet.has(candidate.id),
+		).length;
+		for (const [index, task] of selectedTasks.entries()) {
+			nextTasks = moveInArray(nextTasks, {
+				taskId: task.id,
+				toListId,
+				position: destinationBase + index,
+			});
+		}
+
+		tasksRef.current = nextTasks;
+		replaceTasks(nextTasks);
+		startTransition(async () => {
+			const result = await bulkMoveTasksAction({
+				projectId: data.project.id,
+				taskIds: selectedTaskIds,
+				toListId,
+			});
+			setMessage(result.message);
+			setBulkStatus("");
+			if (result.success) clearTaskSelection();
+			else {
+				tasksRef.current = snapshot;
+				replaceTasks(snapshot);
+			}
+		});
+	};
+
+	const deleteSingleTask = () => {
+		if (!taskToDelete) return;
+		const taskId = taskToDelete.id;
+		startTransition(async () => {
+			const result = await deleteTaskAction(data.project.id, taskId);
+			setMessage(result.message);
+			if (result.success) {
+				removeTask(taskId);
+				setTaskToDelete(null);
+			} else setDeleteError(result.message);
+		});
+	};
+
 	const createList = (formData: FormData) => {
 		startTransition(async () => {
 			const result = await createListAction(formData);
@@ -651,16 +796,31 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				</fieldset>
 
 				{selectedTaskIds.length > 0 && canEdit ? (
-					<Button
-						variant="danger"
-						onClick={() => {
-							setDeleteError("");
-							setBulkDeleteOpen(true);
-						}}
-						disabled={isSaving}
-					>
-						<Trash2 size={16} /> Delete {selectedTaskIds.length}
-					</Button>
+					<div className="flex items-center gap-2">
+						<Select
+							value={bulkStatus}
+							onValueChange={changeBulkStatus}
+							className="w-44"
+							options={[
+								{ value: "", label: "Change status…", disabled: isSaving },
+								...lists.map((list) => ({
+									value: list.id,
+									label: list.name,
+									disabled: isSaving,
+								})),
+							]}
+						/>
+						<Button
+							variant="danger"
+							onClick={() => {
+								setDeleteError("");
+								setBulkDeleteOpen(true);
+							}}
+							disabled={isSaving}
+						>
+							<Trash2 size={16} /> Delete {selectedTaskIds.length}
+						</Button>
+					</div>
 				) : null}
 			</div>
 
@@ -706,6 +866,15 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 								setDeleteError("");
 								setListToDelete(list);
 							}}
+							onTaskContextMenu={(event, task) => {
+								const menuWidth = 224;
+								const menuHeight = 330;
+								setContextMenu({
+									taskId: task.id,
+									x: Math.min(event.clientX, window.innerWidth - menuWidth - 8),
+									y: Math.min(event.clientY, window.innerHeight - menuHeight - 8),
+								});
+							}}
 						/>
 					))}
 
@@ -743,6 +912,84 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					{activeTask ? <TaskDragPreview task={activeTask} /> : null}
 				</DragOverlay>
 			</DndContext> : <TaskListView tasks={filteredTasks} lists={lists} />}
+
+			{contextMenu && contextTask ? (
+				<div
+					role="menu"
+					aria-label={`Actions for ${contextTask.title}`}
+					onPointerDown={(event) => event.stopPropagation()}
+					className="fixed z-100 w-56 rounded-xl border border-french_gray-300 bg-white p-1.5 shadow-2xl dark:border-paynes_gray-700 dark:bg-outer_space-400"
+					style={{ left: contextMenu.x, top: contextMenu.y }}
+				>
+					<button
+						type="button"
+						role="menuitem"
+						onClick={() => moveTaskFromMenu(contextTask.id, contextTask.listId, 0)}
+						disabled={contextTask.position === 0 || isSaving}
+						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
+					>
+						<ArrowUpToLine size={15} /> Move to top
+					</button>
+					<button
+						type="button"
+						role="menuitem"
+						onClick={() =>
+							moveTaskFromMenu(
+								contextTask.id,
+								contextTask.listId,
+								tasks.filter((task) => task.listId === contextTask.listId).length,
+							)
+						}
+						disabled={
+							contextTask.position ===
+								tasks.filter((task) => task.listId === contextTask.listId).length - 1 ||
+							isSaving
+						}
+						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
+					>
+						<ArrowDownToLine size={15} /> Move to bottom
+					</button>
+					<div className="my-1 border-t border-french_gray-200 dark:border-paynes_gray-700" />
+					<p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-paynes_gray-500">
+						Change status
+					</p>
+					<div className="max-h-36 overflow-y-auto scrollbar-thin">
+						{lists.map((list) => (
+							<button
+								key={list.id}
+								type="button"
+								role="menuitem"
+								onClick={() =>
+									moveTaskFromMenu(
+										contextTask.id,
+										list.id,
+										tasks.filter((task) => task.listId === list.id).length,
+									)
+								}
+								disabled={list.id === contextTask.listId || isSaving}
+								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
+							>
+								<span className={cn("size-2.5 rounded-full", columnAccent(list.name))} />
+								<span className="truncate">{list.name}</span>
+							</button>
+						))}
+					</div>
+					<div className="my-1 border-t border-french_gray-200 dark:border-paynes_gray-700" />
+					<button
+						type="button"
+						role="menuitem"
+						onClick={() => {
+							setDeleteError("");
+							setTaskToDelete(contextTask);
+							setContextMenu(null);
+						}}
+						disabled={isSaving}
+						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-40 dark:text-red-300 dark:hover:bg-red-950/30"
+					>
+						<Trash2 size={15} /> Delete
+					</button>
+				</div>
+			) : null}
 
 			<CreateTaskModal projectId={data.project.id} />
 			<TaskDetailModal projectId={data.project.id} />
@@ -812,6 +1059,21 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				<p>
 					Deleting <strong>{listToDelete?.name}</strong> will permanently remove
 					the list and every task in it.
+				</p>
+			</ConfirmationModal>
+			<ConfirmationModal
+				open={taskToDelete !== null}
+				onClose={() => {
+					if (!isSaving) setTaskToDelete(null);
+				}}
+				onConfirm={deleteSingleTask}
+				title="Delete task?"
+				confirmLabel="Delete task"
+				pending={isSaving}
+				error={deleteError}
+			>
+				<p>
+					<strong>{taskToDelete?.title}</strong> will be permanently removed.
 				</p>
 			</ConfirmationModal>
 			<ConfirmationModal

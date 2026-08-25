@@ -4,8 +4,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
 	CalendarDays,
-	CheckSquare,
 	MessageSquare,
+	UserRound,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
@@ -153,9 +153,7 @@ export function TaskCardContent({
 
 							{task.commentsCount}
 						</span>
-					) : (
-						<CheckSquare size={14} className="text-french_gray-500" />
-					)}
+					) : null}
 
 					{task.assignee ? (
 						<Avatar
@@ -163,7 +161,14 @@ export function TaskCardContent({
 							src={task.assignee.avatarUrl}
 							className="size-7"
 						/>
-					) : null}
+					) : (
+						<span
+							title="Unassigned"
+							className="flex size-7 items-center justify-center rounded-full bg-platinum-200 text-paynes_gray-500 dark:bg-outer_space-300 dark:text-french_gray-400"
+						>
+							<UserRound size={15} aria-hidden="true" />
+						</span>
+					)}
 				</div>
 			</div>
 		</article>
@@ -178,10 +183,14 @@ export function TaskCard({
 	task,
 	disabled = false,
 	accentClass,
+	dragActive = false,
+	onContextMenu,
 }: {
 	task: BoardTask;
 	disabled?: boolean;
 	accentClass?: string;
+	dragActive?: boolean;
+	onContextMenu?: (event: React.MouseEvent, task: BoardTask) => void;
 }) {
 	const openTaskDetail = useUIStore((state) => state.openTaskDetail);
 
@@ -221,7 +230,7 @@ export function TaskCard({
 
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
-		transition,
+		transition: dragActive ? transition : undefined,
 
 		/*
 		 * Browser can prepare the transform layer
@@ -245,6 +254,11 @@ export function TaskCard({
 			tabIndex={0}
 			onClick={() => {
 				if (!isDragging && !didDragRef.current) openTaskDetail(task.id);
+			}}
+			onContextMenu={(event) => {
+				if (disabled || !onContextMenu) return;
+				event.preventDefault();
+				onContextMenu(event, task);
 			}}
 			onKeyDown={(event) => {
 				if ((event.key === "Enter" || event.key === " ") && !isDragging) {
