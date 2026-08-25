@@ -77,7 +77,7 @@ function TaskDetailsView({
 					<p className="mb-1.5 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
 						Title
 					</p>
-					<h3 className="mt-1 break-words text-xl font-semibold text-outer_space-500 dark:text-platinum-500">
+					<h3 className="mt-1 wrap-break-word text-xl font-semibold text-outer_space-500 dark:text-platinum-500">
 						{task.title}
 					</h3>
 				</div>
