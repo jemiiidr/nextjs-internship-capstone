@@ -33,6 +33,7 @@ export function useProjects(initialProjects: ProjectSummary[]) {
 				members: [],
 				taskCount: 0,
 				completedTaskCount: 0,
+				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 			};
 

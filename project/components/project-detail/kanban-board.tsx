@@ -33,7 +33,6 @@ import {
 	Search,
 	Trash2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import {
 	useCallback,
 	useEffect,
@@ -294,9 +293,8 @@ function KanbanColumn({
 }
 
 export function KanbanBoard({ data }: { data: ProjectBoardData }) {
-	const router = useRouter();
 	const [isSaving, startTransition] = useTransition();
-	const [message, setMessage] = useState("");
+	const [, setMessage] = useState("");
 	const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
 	const [listToDelete, setListToDelete] = useState<BoardList | null>(null);
 	const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -822,24 +820,6 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 						</Button>
 					</div>
 				) : null}
-			</div>
-
-			<div className="flex items-center justify-between text-xs text-paynes_gray-500 dark:text-french_gray-400">
-				<span>
-					{message ||
-						(isSaving
-							? "Saving changes…"
-							: activeTaskId
-								? "Release to drop task."
-								: "Click a task to open it, or drag it to reorder. Press N to create a task.")}
-				</span>
-				<button
-					type="button"
-					className="hover:text-blue_munsell-500"
-					onClick={() => router.refresh()}
-				>
-					Refresh board
-				</button>
 			</div>
 
 			{viewMode === "board" ? <DndContext

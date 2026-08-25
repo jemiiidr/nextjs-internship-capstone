@@ -57,8 +57,8 @@ export default async function ProjectPage({
 			</Link>
 			<div className="grid min-w-0 items-start gap-5 2xl:grid-cols-[minmax(0,1fr)_19rem]">
 				<div className="min-w-0">
-					<header className="sticky top-4 z-0 min-h-52 rounded-2xl border border-french_gray-300 bg-white p-6 dark:border-paynes_gray-800 dark:bg-outer_space-500">
-						<div className="flex items-start gap-5">
+					<header className="min-h-52 rounded-2xl border border-french_gray-300 bg-white p-6 dark:border-paynes_gray-800 dark:bg-outer_space-500">
+						<div className="flex min-h-40 items-stretch gap-5">
 							<div className="relative grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-linear-to-br from-blue_munsell-500 to-blue_munsell-400 text-3xl font-bold text-white">
 								{board.project.iconDataUrl ? (
 									<Image
@@ -73,7 +73,7 @@ export default async function ProjectPage({
 									board.project.name.slice(0, 1).toUpperCase()
 								)}
 							</div>
-							<div className="min-w-0 flex-1">
+							<div className="flex min-w-0 flex-1 flex-col">
 								<div className="flex items-start justify-between gap-4">
 									<div>
 										<h1 className="wrap-break-word text-3xl font-bold tracking-tight text-outer_space-900 dark:text-platinum-50">
@@ -93,7 +93,7 @@ export default async function ProjectPage({
 										/>
 									) : null}
 								</div>
-								<div className="mt-5 flex flex-wrap items-center gap-3">
+								<div className="mt-auto flex flex-wrap items-center gap-3 pt-5">
 									<span className="inline-flex items-center gap-2 rounded-xl border border-french_gray-200 px-3 py-2 text-xs text-paynes_gray-500 dark:border-paynes_gray-800">
 										<Building2 size={14} />
 										{workspace?.name ?? "Workspace"}
@@ -114,7 +114,7 @@ export default async function ProjectPage({
 							</div>
 						</div>
 					</header>
-					<main className="relative z-10 bg-background pt-5">
+					<main className="pt-5">
 						<KanbanBoard data={board} />
 					</main>
 				</div>

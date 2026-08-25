@@ -63,6 +63,7 @@ export interface ProjectSummary {
 	members: UserSummary[];
 	taskCount: number;
 	completedTaskCount: number;
+	createdAt: string;
 	updatedAt: string;
 }
 

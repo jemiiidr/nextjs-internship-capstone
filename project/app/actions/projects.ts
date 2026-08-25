@@ -121,6 +121,7 @@ export async function createProjectAction(
 				],
 				taskCount: 0,
 				completedTaskCount: 0,
+				createdAt: project.createdAt.toISOString(),
 				updatedAt: project.updatedAt.toISOString(),
 			},
 		};

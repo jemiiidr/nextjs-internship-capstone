@@ -193,6 +193,7 @@ export async function getProjectsForUser(input: {
 			members: projectMemberList.slice(0, 4),
 			taskCount: counts.total,
 			completedTaskCount: counts.completed,
+			createdAt: project.createdAt.toISOString(),
 			updatedAt: project.updatedAt.toISOString(),
 		};
 	});
@@ -421,6 +422,7 @@ export async function getCalendarTasks(input: {
 	return rows.map(({ task, project, list }) => ({
 		id: task.id,
 		title: task.title,
+		description: task.description,
 		priority: task.priority,
 		dueDate: task.dueDate?.toISOString() ?? null,
 		projectId: project.id,
