@@ -566,11 +566,15 @@ export function TeamManagement({
 												)}
 											>
 												{member.role === "owner" ||
-												member.id === currentUserId ? (
+												member.id === currentUserId ||
+												(member.role === "admin" &&
+													currentUserRole !== "owner") ? (
 													<p className="px-2 py-1.5 text-xs text-paynes_gray-500">
 														{member.role === "owner"
 															? "Owner cannot be removed"
-															: "You cannot remove yourself"}
+															: member.id === currentUserId
+																? "You cannot manage yourself"
+																: "Only the owner can manage admins"}
 													</p>
 												) : (
 													<>

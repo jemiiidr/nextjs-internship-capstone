@@ -163,6 +163,12 @@ export async function removeWorkspaceMemberAction(
 				message: "That member is no longer in the team.",
 			};
 		}
+		if (membership.role === "org:admin" && context.role !== "owner") {
+			return {
+				success: false,
+				message: "Only the workspace owner can remove an admin.",
+			};
+		}
 
 		await client.organizations.deleteOrganizationMembership({
 			organizationId: context.workspaceId,
