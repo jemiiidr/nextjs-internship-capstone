@@ -65,6 +65,10 @@ export function ProjectMembers({
 	const memberRow = (member: ProjectMember, editable = false) => {
 		const roleLabel =
 			member.roleLabel ?? (member.role === "owner" ? "Owner" : "Contributor");
+		const accessRole =
+			member.role === "viewer"
+				? "Viewer"
+				: member.role.charAt(0).toUpperCase() + member.role.slice(1);
 		const isEditingRole = editingRoles.has(member.user.id);
 
 		return (
@@ -81,7 +85,7 @@ export function ProjectMembers({
 					<p className="truncate text-sm font-medium text-outer_space-900 dark:text-platinum-50">
 						{member.user.name}
 					</p>
-					<p className="truncate text-xs text-paynes_gray-500">{roleLabel}</p>
+					<p className="truncate text-xs text-paynes_gray-500">{accessRole}</p>
 				</div>
 				{editable && canManage && embeddedForm ? (
 					isEditingRole ? (

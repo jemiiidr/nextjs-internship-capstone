@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	decodeLabel,
 	encodeLabel,
+	formatActivityCopy,
 	formatDate,
 	formatRelativeDate,
 	initials,
@@ -49,6 +50,30 @@ describe("date formatting", () => {
 });
 
 describe("display helpers", () => {
+	it("describes activity subjects and destinations", () => {
+		expect(
+			formatActivityCopy("task_created", {
+				taskTitle: "Write release notes",
+				listName: "To Do",
+			}),
+		).toBe('added task "Write release notes" to "To Do"');
+		expect(
+			formatActivityCopy("task_moved", {
+				taskTitle: "Review PR",
+				toList: "Done",
+			}),
+		).toBe('moved task "Review PR" to "Done"');
+		expect(
+			formatActivityCopy("project_member_added", {
+				memberName: "Alex Cruz",
+				role: "Designer",
+			}),
+		).toBe('added "Alex Cruz" as Designer');
+		expect(formatActivityCopy("list_deleted", { listName: "Archived" })).toBe(
+			'deleted list "Archived"',
+		);
+	});
+
 	it("strictly parses positive query integers and caps large values", () => {
 		expect(parsePositiveInteger("2", 1)).toBe(2);
 		expect(parsePositiveInteger("2abc", 1)).toBe(1);

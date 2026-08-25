@@ -55,6 +55,51 @@ export function formatRelativeDate(value: Date | string) {
 	return "just now";
 }
 
+export function formatActivityCopy(
+	action: string,
+	metadata: Record<string, string | number | boolean | null>,
+) {
+	const quoted = (value: unknown, fallback: string) =>
+		`"${String(value ?? fallback)}"`;
+	const project = quoted(metadata.projectName, "Untitled project");
+	const list = quoted(metadata.listName, "Untitled list");
+	const task = quoted(metadata.taskTitle, "Untitled task");
+	const member = quoted(metadata.memberName, "Project member");
+
+	switch (action) {
+		case "project_created":
+			return `created project ${project}`;
+		case "project_updated":
+			return `updated project ${project}`;
+		case "project_member_added":
+			return `added ${member} as ${String(metadata.role ?? "a collaborator")}`;
+		case "project_member_removed":
+			return `removed ${member} from the project`;
+		case "list_created":
+			return `created list ${list}`;
+		case "list_updated":
+			return `renamed a list to ${list}`;
+		case "list_deleted":
+			return `deleted list ${list}`;
+		case "task_created":
+			return `added task ${task} to ${quoted(metadata.listName, "a list")}`;
+		case "task_updated":
+			return `updated task ${task}`;
+		case "task_moved":
+			return metadata.bulk
+				? `moved ${String(metadata.taskTitle ?? "multiple tasks")} to ${quoted(metadata.toList, "another list")}`
+				: `moved task ${task} to ${quoted(metadata.toList, "another list")}`;
+		case "task_deleted":
+			return metadata.bulk
+				? `deleted ${String(metadata.taskTitle ?? "multiple tasks")}`
+				: `deleted task ${task} from ${quoted(metadata.listName, "a list")}`;
+		case "comment_created":
+			return `commented on task ${task}`;
+		default:
+			return "updated the project";
+	}
+}
+
 export function initials(name: string) {
 	return name
 		.split(/\s+/)
