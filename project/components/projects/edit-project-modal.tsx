@@ -54,7 +54,7 @@ export function EditProjectModal({
 			description="Update project identity, deadline, and project-local member roles."
 			className="max-w-3xl"
 		>
-			<form action={action} className="space-y-4" encType="multipart/form-data">
+			<form action={action} className="space-y-4">
 				<input type="hidden" name="projectId" value={project.id} />
 				<div className="grid gap-4 sm:grid-cols-[5rem_1fr] sm:items-end">
 					<div className="relative grid size-20 place-items-center overflow-hidden rounded-2xl bg-blue_munsell-500 text-2xl font-bold text-white">
