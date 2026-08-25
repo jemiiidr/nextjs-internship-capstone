@@ -25,7 +25,6 @@ import {
 	ArrowDownToLine,
 	ArrowUpToLine,
 	CalendarDays,
-	Filter,
 	LayoutGrid,
 	List,
 	MessageSquare,
@@ -768,8 +767,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					/>
 				</div>
 
-				<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
-					<Filter size={16} />
+				<div className="flex w-full items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400 md:w-auto">
 					<span className="sr-only">Filter priority</span>
 					<Select
 						value={priorityFilter}
@@ -778,17 +776,17 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 								value as "all" | BoardTask["priority"],
 							)
 						}
-						className="w-40"
+						className="min-w-0 flex-1 md:w-40 md:flex-none"
 						options={[{ value: "all", label: "All priorities" }, { value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }]}
 					/>
 				</div>
 
-				<fieldset className="flex rounded-lg border border-french_gray-300 bg-platinum-50 p-1 dark:border-paynes_gray-400 dark:bg-outer_space-400">
+				<fieldset className="flex w-full rounded-lg border border-french_gray-300 bg-platinum-50 p-1 dark:border-paynes_gray-400 dark:bg-outer_space-400 md:w-auto">
 					<legend className="sr-only">Task view</legend>
-					<Button type="button" size="sm" variant={viewMode === "board" ? "default" : "ghost"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("board")} aria-pressed={viewMode === "board"}>
+					<Button type="button" size="sm" variant={viewMode === "board" ? "default" : "ghost"} className="h-8 flex-1 gap-1.5 px-2.5 md:flex-none" onClick={() => setViewMode("board")} aria-pressed={viewMode === "board"}>
 						<LayoutGrid size={15} /> Board
 					</Button>
-					<Button type="button" size="sm" variant={viewMode === "list" ? "default" : "ghost"} className="h-8 gap-1.5 px-2.5" onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+					<Button type="button" size="sm" variant={viewMode === "list" ? "default" : "ghost"} className="h-8 flex-1 gap-1.5 px-2.5 md:flex-none" onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
 						<List size={15} /> List
 					</Button>
 				</fieldset>
