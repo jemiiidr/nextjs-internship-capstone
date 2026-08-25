@@ -15,6 +15,7 @@ import { LabelEditor } from "@/components/project-detail/label-editor";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { DeadlineInput } from "@/components/ui/deadline-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
@@ -105,10 +106,9 @@ function TaskForm({
 				</div>
 				<div className="space-y-1.5">
 					<Label htmlFor={`${task?.id ?? "new"}-due`}>Due date</Label>
-					<Input
+					<DeadlineInput
 						id={`${task?.id ?? "new"}-due`}
 						name="dueDate"
-						type="date"
 						defaultValue={task?.dueDate?.slice(0, 10)}
 					/>
 				</div>
