@@ -10,6 +10,7 @@ import {
 	MoreHorizontal,
 	Search,
 	ShieldCheck,
+	Trash2,
 	UserRound,
 	Users,
 } from "lucide-react";
@@ -24,7 +25,9 @@ import {
 import {
 	inviteWorkspaceMemberAction,
 	notifyWorkspaceJoinedAction,
+	removeWorkspaceMemberAction,
 	revokeWorkspaceInvitationAction,
+	updateWorkspaceMemberRoleAction,
 } from "@/app/actions/team";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,7 @@ import { Select } from "@/components/ui/select";
 import { cn, formatDate } from "@/lib/utils";
 import type {
 	ActionResult,
+	MemberRole,
 	WorkspaceInvitation,
 	WorkspaceMember,
 } from "@/types";
@@ -48,6 +52,8 @@ function roleClasses(
 ) {
 	if (role === "admin")
 		return "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-200";
+	if (role === "owner")
+		return "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200";
 	if (role === "viewer")
 		return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200";
 	return "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200";
@@ -320,17 +326,27 @@ export function TeamManagement({
 	members,
 	invitations,
 	currentUserId,
+	currentUserRole,
 	canManageMembers,
 }: {
 	workspaceName: string;
 	members: WorkspaceMember[];
 	invitations: WorkspaceInvitation[];
 	currentUserId: string;
+	currentUserRole: MemberRole;
 	canManageMembers: boolean;
 }) {
 	const [query, setQuery] = useState("");
 	const [role, setRole] = useState("all");
 	const [page, setPage] = useState(1);
+	const [openActionsId, setOpenActionsId] = useState<string | null>(null);
+	const [memberToRemove, setMemberToRemove] = useState<WorkspaceMember | null>(
+		null,
+	);
+	const [removeError, setRemoveError] = useState("");
+	const [isRemoving, startRemoving] = useTransition();
+	const [roleActionError, setRoleActionError] = useState("");
+	const [isChangingRole, startChangingRole] = useTransition();
 	const router = useRouter();
 	const [acceptError, setAcceptError] = useState("");
 	const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -356,6 +372,38 @@ export function TeamManagement({
 		(safePage - 1) * PAGE_SIZE,
 		safePage * PAGE_SIZE,
 	);
+	const removeMember = () => {
+		if (!memberToRemove) return;
+		setRemoveError("");
+		startRemoving(async () => {
+			const result = await removeWorkspaceMemberAction(memberToRemove.clerkId);
+			if (result.success) {
+				setMemberToRemove(null);
+				setOpenActionsId(null);
+				router.refresh();
+			} else {
+				setRemoveError(result.message);
+			}
+		});
+	};
+	const changeRole = (
+		member: WorkspaceMember,
+		role: "org:admin" | "org:member",
+	) => {
+		setRoleActionError("");
+		startChangingRole(async () => {
+			const result = await updateWorkspaceMemberRoleAction(
+				member.clerkId,
+				role,
+			);
+			if (result.success) {
+				setOpenActionsId(null);
+				router.refresh();
+			} else {
+				setRoleActionError(result.message);
+			}
+		});
+	};
 
 	const acceptInvitation = (invitation: (typeof incoming)[number]) => {
 		if (!setActive) return;
@@ -427,6 +475,7 @@ export function TeamManagement({
 							className="sm:w-36"
 							options={[
 								{ value: "all", label: "All roles" },
+								{ value: "owner", label: "Owner" },
 								{ value: "admin", label: "Admin" },
 								{ value: "member", label: "Member" },
 								{ value: "viewer", label: "Viewer" },
@@ -434,6 +483,14 @@ export function TeamManagement({
 						/>
 					</div>
 				</div>
+				{roleActionError ? (
+					<p
+						role="alert"
+						className="mx-6 mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
+					>
+						{roleActionError}
+					</p>
+				) : null}
 				<div className="overflow-x-auto px-6">
 					<div className="min-w-[720px]">
 						<div
@@ -453,11 +510,11 @@ export function TeamManagement({
 								<span className="text-right">Actions</span>
 							) : null}
 						</div>
-						{visible.map((member) => (
+						{visible.map((member, memberIndex) => (
 							<div
 								key={member.id}
 								className={cn(
-									"grid items-center border-b border-french_gray-200 px-2 py-3 last:border-b-0 dark:border-paynes_gray-800",
+									"relative grid items-center border-b border-french_gray-200 px-2 py-3 last:border-b-0 dark:border-paynes_gray-800",
 									canManageMembers
 										? "grid-cols-[1.15fr_1.6fr_.55fr_.35fr]"
 										: "grid-cols-[1.15fr_1.6fr_.55fr]",
@@ -485,13 +542,73 @@ export function TeamManagement({
 									<RolePill role={member.role} />
 								</span>
 								{canManageMembers ? (
-									<button
-										type="button"
-										aria-label={`Actions for ${member.name}`}
-										className="grid size-8 justify-self-end place-items-center rounded-md text-paynes_gray-500 hover:bg-platinum-100 dark:hover:bg-outer_space-300"
-									>
-										<MoreHorizontal size={17} />
-									</button>
+									<div className="relative justify-self-end">
+										<button
+											type="button"
+											aria-label={`Actions for ${member.name}`}
+											aria-expanded={openActionsId === member.id}
+											onClick={() =>
+												setOpenActionsId((current) =>
+													current === member.id ? null : member.id,
+												)
+											}
+											className="grid size-8 place-items-center rounded-md text-paynes_gray-500 hover:bg-platinum-100 dark:hover:bg-outer_space-300"
+										>
+											<MoreHorizontal size={17} />
+										</button>
+										{openActionsId === member.id ? (
+											<div
+												className={cn(
+													"absolute right-0 z-30 w-44 rounded-lg border border-french_gray-200 bg-white p-1.5 shadow-lg dark:border-paynes_gray-700 dark:bg-outer_space-400",
+													memberIndex >= visible.length - 2
+														? "bottom-9"
+														: "top-9",
+												)}
+											>
+												{member.role === "owner" ||
+												member.id === currentUserId ? (
+													<p className="px-2 py-1.5 text-xs text-paynes_gray-500">
+														{member.role === "owner"
+															? "Owner cannot be removed"
+															: "You cannot remove yourself"}
+													</p>
+												) : (
+													<>
+														{member.role !== "admin" ? (
+															<button
+																type="button"
+																disabled={isChangingRole}
+																onClick={() => changeRole(member, "org:admin")}
+																className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-platinum-100 disabled:opacity-50 dark:hover:bg-outer_space-300"
+															>
+																<ShieldCheck size={14} /> Promote to admin
+															</button>
+														) : currentUserRole === "owner" ? (
+															<button
+																type="button"
+																disabled={isChangingRole}
+																onClick={() => changeRole(member, "org:member")}
+																className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-platinum-100 disabled:opacity-50 dark:hover:bg-outer_space-300"
+															>
+																<UserRound size={14} /> Change to member
+															</button>
+														) : null}
+														<div className="my-1 border-t border-french_gray-200 dark:border-paynes_gray-700" />
+														<button
+															type="button"
+															onClick={() => {
+																setRemoveError("");
+																setMemberToRemove(member);
+															}}
+															className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/30"
+														>
+															<Trash2 size={14} /> Remove member
+														</button>
+													</>
+												)}
+											</div>
+										) : null}
+									</div>
 								) : null}
 							</div>
 						))}
@@ -552,6 +669,22 @@ export function TeamManagement({
 					</div>
 				</section>
 			) : null}
+			<ConfirmationModal
+				open={memberToRemove !== null}
+				onClose={() => {
+					if (!isRemoving) setMemberToRemove(null);
+				}}
+				onConfirm={removeMember}
+				title="Remove member?"
+				confirmLabel="Remove member"
+				pending={isRemoving}
+				error={removeError}
+			>
+				<p>
+					<strong>{memberToRemove?.name}</strong> will lose access to this
+					workspace and its projects.
+				</p>
+			</ConfirmationModal>
 		</div>
 	);
 }

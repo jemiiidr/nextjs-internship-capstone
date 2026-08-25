@@ -33,7 +33,8 @@ export async function getPendingWorkspaceInvitations(
 
 export function normalizeWorkspaceRole(
 	role: string | null | undefined,
-): Exclude<MemberRole, "owner"> {
+): MemberRole {
+	if (role === "org:owner") return "owner";
 	if (role === "org:admin") return "admin";
 	if (role === "org:viewer") return "viewer";
 	return "member";
@@ -82,7 +83,9 @@ export async function getUserWorkspaces(
 			name: organization.name,
 			slug: organization.slug ?? null,
 			imageUrl: organization.imageUrl ?? null,
-			role: normalizeWorkspaceRole(membership.role),
+			role: normalizeWorkspaceRole(
+				organization.createdBy === clerkUserId ? "org:owner" : membership.role,
+			),
 			roleKey: membership.role,
 			memberCount: organization.membersCount ?? 0,
 		};
@@ -142,11 +145,14 @@ export async function getWorkspaceMembers(
 	workspaceId: string,
 ): Promise<WorkspaceMember[]> {
 	const client = await clerkClient();
-	const { data } = await client.organizations.getOrganizationMembershipList({
-		organizationId: workspaceId,
-		limit: 100,
-		orderBy: "+first_name",
-	});
+	const [organization, { data }] = await Promise.all([
+		client.organizations.getOrganization({ organizationId: workspaceId }),
+		client.organizations.getOrganizationMembershipList({
+			organizationId: workspaceId,
+			limit: 100,
+			orderBy: "+first_name",
+		}),
+	]);
 
 	const members = await Promise.all(
 		data.map(async (membership) => {
@@ -169,7 +175,11 @@ export async function getWorkspaceMembers(
 				name: dbUser.name,
 				email: dbUser.email,
 				avatarUrl: dbUser.avatarUrl,
-				role: normalizeWorkspaceRole(membership.role),
+				role: normalizeWorkspaceRole(
+					organization.createdBy === publicData.userId
+						? "org:owner"
+						: membership.role,
+				),
 				roleKey: membership.role,
 			} satisfies WorkspaceMember;
 		}),

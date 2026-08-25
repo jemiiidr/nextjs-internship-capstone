@@ -17,7 +17,7 @@ export interface UserSummary {
 
 export interface WorkspaceMember extends UserSummary {
 	clerkId: string;
-	role: Exclude<MemberRole, "owner">;
+	role: MemberRole;
 	roleKey: string;
 }
 
@@ -26,7 +26,7 @@ export interface WorkspaceSummary {
 	name: string;
 	slug: string | null;
 	imageUrl: string | null;
-	role: Exclude<MemberRole, "owner">;
+	role: MemberRole;
 	roleKey: string;
 	memberCount: number;
 }
@@ -158,7 +158,12 @@ export interface MyTaskItem {
 export interface AnalyticsData {
 	periodDays: number;
 	status: Array<{ label: string; count: number }>;
-	completedByDay: Array<{ date: string; completed: number; created: number; overdue: number }>;
+	completedByDay: Array<{
+		date: string;
+		completed: number;
+		created: number;
+		overdue: number;
+	}>;
 	completedTasks: number;
 	overdueTasks: number;
 	inProgressTasks: number;

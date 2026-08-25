@@ -124,8 +124,142 @@ export async function revokeWorkspaceInvitationAction(
 	}
 }
 
+export async function removeWorkspaceMemberAction(
+	memberClerkId: string,
+): Promise<ActionResult> {
+	const context = await requireWorkspaceContext();
+	if (!hasPermission(context.role, "team:manage")) {
+		return {
+			success: false,
+			message: "Only workspace owners and admins can remove members.",
+		};
+	}
+	if (!/^user_[A-Za-z0-9]+$/.test(memberClerkId)) {
+		return { success: false, message: "Invalid team member." };
+	}
+	if (memberClerkId === context.clerkUserId) {
+		return { success: false, message: "You cannot remove yourself." };
+	}
+
+	try {
+		const client = await clerkClient();
+		const organization = await client.organizations.getOrganization({
+			organizationId: context.workspaceId,
+		});
+		if (organization.createdBy === memberClerkId) {
+			return {
+				success: false,
+				message: "The workspace owner cannot be removed.",
+			};
+		}
+
+		const membership = await userBelongsToWorkspace(
+			context.workspaceId,
+			memberClerkId,
+		);
+		if (!membership) {
+			return {
+				success: false,
+				message: "That member is no longer in the team.",
+			};
+		}
+
+		await client.organizations.deleteOrganizationMembership({
+			organizationId: context.workspaceId,
+			userId: memberClerkId,
+		});
+		revalidatePath("/", "layout");
+		revalidatePath("/team");
+		return { success: true, message: "Member removed." };
+	} catch (error) {
+		console.error("Unable to remove Clerk organization member", error);
+		return {
+			success: false,
+			message: "Kanvas could not remove this member. Please try again.",
+		};
+	}
+}
+
+export async function updateWorkspaceMemberRoleAction(
+	memberClerkId: string,
+	role: "org:admin" | "org:member",
+): Promise<ActionResult> {
+	const context = await requireWorkspaceContext();
+	if (!hasPermission(context.role, "team:manage")) {
+		return {
+			success: false,
+			message: "Only workspace owners and admins can change member roles.",
+		};
+	}
+	if (!/^user_[A-Za-z0-9]+$/.test(memberClerkId)) {
+		return { success: false, message: "Invalid team member." };
+	}
+	if (memberClerkId === context.clerkUserId) {
+		return { success: false, message: "You cannot change your own role." };
+	}
+	if (role !== "org:admin" && role !== "org:member") {
+		return { success: false, message: "Invalid workspace role." };
+	}
+
+	try {
+		const client = await clerkClient();
+		const organization = await client.organizations.getOrganization({
+			organizationId: context.workspaceId,
+		});
+		if (organization.createdBy === memberClerkId) {
+			return {
+				success: false,
+				message: "The workspace owner's role cannot be changed.",
+			};
+		}
+
+		const membership = await userBelongsToWorkspace(
+			context.workspaceId,
+			memberClerkId,
+		);
+		if (!membership) {
+			return {
+				success: false,
+				message: "That member is no longer in the team.",
+			};
+		}
+		if (
+			membership.role === "org:admin" &&
+			role === "org:member" &&
+			context.role !== "owner"
+		) {
+			return {
+				success: false,
+				message: "Only the workspace owner can demote an admin.",
+			};
+		}
+
+		await client.organizations.updateOrganizationMembership({
+			organizationId: context.workspaceId,
+			userId: memberClerkId,
+			role,
+		});
+		revalidatePath("/", "layout");
+		revalidatePath("/team");
+		return {
+			success: true,
+			message:
+				role === "org:admin"
+					? "Member promoted to admin."
+					: "Admin changed to member.",
+		};
+	} catch (error) {
+		console.error("Unable to update Clerk organization member role", error);
+		return {
+			success: false,
+			message: "Kanvas could not update this member's role. Please try again.",
+		};
+	}
+}
+
 export async function notifyWorkspaceJoinedAction(
 	workspaceId: string,
+	revalidate = true,
 ): Promise<ActionResult> {
 	const context = await getWorkspaceContext();
 	if (!/^org_[A-Za-z0-9]+$/.test(workspaceId)) {
@@ -158,7 +292,9 @@ export async function notifyWorkspaceJoinedAction(
 				}),
 			),
 	);
-	revalidatePath("/", "layout");
-	revalidatePath("/team");
+	if (revalidate) {
+		revalidatePath("/", "layout");
+		revalidatePath("/team");
+	}
 	return { success: true, message: "Workspace joined." };
 }

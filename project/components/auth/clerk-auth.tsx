@@ -41,6 +41,10 @@ export function ClerkAuth({
 				"border-french_gray-300 dark:border-paynes_gray-700 dark:bg-outer_space-500",
 			socialButtonsBlockButton:
 				"border-french_gray-300 dark:border-paynes_gray-700 dark:bg-outer_space-500 dark:text-platinum-50",
+			socialButtonsProviderIcon__github: "dark:brightness-0 dark:invert",
+			socialButtonsProviderInitialIcon__github: "dark:brightness-0 dark:invert",
+			providerIcon__github: "dark:brightness-0 dark:invert",
+			providerInitialIcon__github: "dark:brightness-0 dark:invert",
 			dividerLine: "bg-french_gray-300 dark:bg-paynes_gray-700",
 			dividerText: "text-paynes_gray-500 dark:text-french_gray-400",
 		},

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db, findUserByClerkId } from "@/lib/db";
@@ -51,12 +51,20 @@ export async function getWorkspaceContext() {
 	const authState = await auth();
 	if (!authState.userId) redirect("/sign-in");
 	const user = await requireDbUser();
+	let role = normalizeWorkspaceRole(authState.orgRole);
+	if (authState.orgId) {
+		const client = await clerkClient();
+		const organization = await client.organizations.getOrganization({
+			organizationId: authState.orgId,
+		});
+		if (organization.createdBy === authState.userId) role = "owner";
+	}
 	return {
 		user,
 		clerkUserId: authState.userId,
 		workspaceId: authState.orgId ?? null,
-		workspaceRoleKey: authState.orgRole ?? null,
-		role: normalizeWorkspaceRole(authState.orgRole),
+		workspaceRoleKey: role === "owner" ? "org:owner" : authState.orgRole,
+		role,
 	};
 }
 
