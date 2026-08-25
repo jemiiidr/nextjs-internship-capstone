@@ -14,6 +14,7 @@ interface ConfirmationModalProps {
 	confirmLabel?: string;
 	pending?: boolean;
 	error?: string;
+	minimal?: boolean;
 }
 
 export function ConfirmationModal({
@@ -25,6 +26,7 @@ export function ConfirmationModal({
 	confirmLabel = "Delete",
 	pending = false,
 	error,
+	minimal = false,
 }: ConfirmationModalProps) {
 	return (
 		<Modal
@@ -35,14 +37,20 @@ export function ConfirmationModal({
 			className="max-w-md"
 		>
 			<div className="space-y-5">
-				<div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-100">
-					<AlertTriangle
-						className="mt-0.5 shrink-0"
-						size={20}
-						aria-hidden="true"
-					/>
-					<div className="text-sm">{children}</div>
-				</div>
+				{minimal ? (
+					<div className="text-sm text-paynes_gray-600 dark:text-french_gray-300">
+						{children}
+					</div>
+				) : (
+					<div className="flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-900 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-100">
+						<AlertTriangle
+							className="mt-0.5 shrink-0"
+							size={20}
+							aria-hidden="true"
+						/>
+						<div className="text-sm">{children}</div>
+					</div>
+				)}
 				{error ? (
 					<p role="alert" className="text-sm text-red-600 dark:text-red-400">
 						{error}
@@ -52,8 +60,18 @@ export function ConfirmationModal({
 					<Button variant="secondary" onClick={onClose} disabled={pending}>
 						Cancel
 					</Button>
-					<Button variant="danger" onClick={onConfirm} disabled={pending}>
-						<Trash2 size={16} /> {pending ? "Deleting…" : confirmLabel}
+					<Button
+						variant="danger"
+						onClick={onConfirm}
+						disabled={pending}
+						className={
+							minimal
+								? "bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
+								: undefined
+						}
+					>
+						{minimal ? null : <Trash2 size={16} />}
+						{pending ? "Deleting…" : confirmLabel}
 					</Button>
 				</div>
 			</div>

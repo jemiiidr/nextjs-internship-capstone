@@ -1217,6 +1217,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				confirmLabel="Delete list"
 				pending={isSaving}
 				error={deleteError}
+				minimal
 			>
 				<p>
 					Deleting <strong>{listToDelete?.name}</strong> will permanently remove
