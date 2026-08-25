@@ -87,7 +87,7 @@ function TaskDetailsView({
 				<p className="mb-1.5 text-sm font-medium text-outer_space-500 dark:text-platinum-500">
 					Description
 				</p>
-				<p className="whitespace-pre-wrap break-words text-sm leading-6 text-paynes_gray-600 dark:text-french_gray-300">
+				<p className="whitespace-pre-wrap wrap-break-word text-sm leading-6 text-paynes_gray-600 dark:text-french_gray-300">
 					{task.description?.trim() || "No description provided."}
 				</p>
 			</div>
@@ -407,7 +407,7 @@ function Comments({ projectId, task }: { projectId: string; task: BoardTask }) {
 										{formatRelativeDate(comment.createdAt)}
 									</span>
 								</div>
-								<p className="mt-1 whitespace-pre-wrap break-words text-sm text-paynes_gray-500 dark:text-french_gray-400">
+								<p className="mt-1 whitespace-pre-wrap wrap-break-word text-sm text-paynes_gray-500 dark:text-french_gray-400">
 									{comment.content}
 								</p>
 							</div>

@@ -147,7 +147,7 @@ export default async function CalendarPage({
 		: `/calendar?month=${monthKey(today.getFullYear(), today.getMonth())}`;
 	const selectedDayKey = weekDateKey(weekAnchor);
 	const selectedDayTasks = taskGroups.get(selectedDayKey) ?? [];
-	const dayHours = Array.from({ length: 17 }, (_, index) => index + 7);
+	const dayHours = Array.from({ length: 24 }, (_, index) => index);
 	const upcoming = tasks
 		.filter((task) => (task.dueDate?.slice(0, 10) ?? "") >= todayKey)
 		.slice(0, 5);
@@ -266,7 +266,7 @@ export default async function CalendarPage({
 											);
 										})}
 									</div>
-									<div className="border-b border-french_gray-200 px-5 py-4 dark:border-paynes_gray-700">
+									<div className="px-5 py-4 text-center">
 										<h2 className="font-semibold text-outer_space-900 dark:text-platinum-50">
 											{weekAnchor.toLocaleDateString("en-US", {
 												weekday: "long",
@@ -275,9 +275,6 @@ export default async function CalendarPage({
 												year: "numeric",
 											})}
 										</h2>
-										<p className="mt-1 text-xs text-paynes_gray-500">
-											Daily schedule and task deadlines
-										</p>
 									</div>
 									<div>
 										{dayHours.map((hour) => {
@@ -290,13 +287,19 @@ export default async function CalendarPage({
 													className="grid grid-cols-[3.5rem_1fr] sm:grid-cols-[5rem_1fr]"
 												>
 													<div className="-translate-y-2 px-2 text-right text-[10px] text-paynes_gray-400 sm:px-3 sm:text-xs">
-														{hour === 12
-															? "12 PM"
-															: hour > 12
-																? `${hour - 12} PM`
-																: `${hour} AM`}
+														{hour === 0
+															? "12 AM"
+															: hour === 12
+																? "12 PM"
+																: hour > 12
+																	? `${hour - 12} PM`
+																	: `${hour} AM`}
 													</div>
-													<div className="min-h-14 border-l border-t border-french_gray-200 p-1.5 dark:border-paynes_gray-700 sm:min-h-16 sm:p-2">
+													<div
+														className={cn(
+															"min-h-14 border-l border-t border-french_gray-200 p-1.5 dark:border-paynes_gray-700 sm:min-h-16 sm:p-2",
+														)}
+													>
 														{hourTasks.length ? (
 															<CalendarDayTasks
 																tasks={hourTasks}
