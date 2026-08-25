@@ -277,7 +277,7 @@ function SentInvitations({
 										setError("");
 										setSelected(invitation);
 									}}
-									className="justify-self-end text-xs font-medium text-red-600 hover:underline dark:text-red-300"
+									className="justify-self-end text-xs font-medium text-rose-600 hover:underline dark:text-rose-300"
 								>
 									Revoke
 								</button>

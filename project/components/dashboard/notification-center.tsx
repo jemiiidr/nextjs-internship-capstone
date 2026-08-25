@@ -25,7 +25,7 @@ function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
 	if (type === "deadline_today")
 		return <CalendarClock className={className} size={18} />;
 	if (type === "task_overdue")
-		return <CircleAlert className="mt-0.5 shrink-0 text-red-500" size={18} />;
+		return <CircleAlert className={className} size={18} />;
 	if (type === "member_joined")
 		return <Users className={className} size={18} />;
 	return <UserPlus className={className} size={18} />;
@@ -34,7 +34,7 @@ function NotificationIcon({ type }: { type: NotificationItem["type"] }) {
 function UnreadBadge({ count }: { count: number }) {
 	if (count === 0) return null;
 	return (
-		<span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold leading-4 text-white dark:border-outer_space-500">
+		<span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full border-2 border-white bg-blue_munsell-500 px-1 text-[10px] font-bold leading-4 text-white dark:border-outer_space-500">
 			{count > 99 ? "99+" : count}
 		</span>
 	);
@@ -72,15 +72,14 @@ export function NotificationCenter({
 			title={collapsed ? "Notifications" : undefined}
 			aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
 		>
-			<span className="relative shrink-0">
+			<span className="shrink-0">
 				<Bell size={17} />
-				<UnreadBadge count={unreadCount} />
 			</span>
 			<span className={cn(collapsed && "lg:hidden")}>Notifications</span>
 			{unreadCount > 0 ? (
 				<span
 					className={cn(
-						"ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white",
+						"ml-auto rounded-full bg-blue_munsell-500 px-2 py-0.5 text-[10px] font-bold text-white",
 						collapsed && "lg:hidden",
 					)}
 				>
@@ -115,7 +114,7 @@ export function NotificationInbox({
 
 	return (
 		<div className="space-y-4">
-			<div className="flex min-h-10 items-center justify-between gap-3">
+			<div className="flex min-h-10 flex-wrap items-center justify-between gap-3">
 				<p className="text-sm text-paynes_gray-500">
 					{unreadCount
 						? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
@@ -149,10 +148,10 @@ export function NotificationInbox({
 									openNotification(notification);
 								}}
 								className={cn(
-									"flex gap-3 rounded-2xl border bg-white p-4 transition hover:-translate-y-px hover:border-blue_munsell-300 hover:shadow-sm dark:bg-outer_space-500 dark:hover:border-blue_munsell-700",
+									"flex gap-3 rounded-2xl border bg-white p-4 transition-colors hover:border-blue_munsell-300 dark:bg-outer_space-500 dark:hover:border-blue_munsell-700",
 									notification.read
 										? "border-french_gray-300 dark:border-paynes_gray-800"
-										: "border-blue_munsell-200 bg-blue_munsell-50/40 dark:border-blue_munsell-800 dark:bg-blue_munsell-950/20",
+										: "border-blue_munsell-200 bg-blue_munsell-50/40 dark:border-blue_munsell-800 dark:bg-outer_space-600",
 								)}
 							>
 								<NotificationIcon type={notification.type} />
@@ -165,10 +164,10 @@ export function NotificationInbox({
 											<span className="mt-1.5 size-2 rounded-full bg-blue_munsell-500" />
 										) : null}
 									</div>
-									<p className="mt-0.5 text-sm text-paynes_gray-500">
+									<p className="mt-0.5 text-sm text-paynes_gray-500 dark:text-french_gray-300">
 										{notification.message}
 									</p>
-									<p className="mt-1.5 text-xs text-paynes_gray-400">
+									<p className="mt-1.5 text-xs text-paynes_gray-400 dark:text-french_gray-400">
 										{formatRelativeDate(notification.createdAt)}
 									</p>
 								</div>

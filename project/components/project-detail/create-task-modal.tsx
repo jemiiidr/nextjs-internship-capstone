@@ -37,11 +37,13 @@ function TaskForm({
 	listId,
 	task,
 	onClose,
+	onDelete,
 }: {
 	projectId: string;
 	listId: string;
 	task?: BoardTask;
 	onClose: () => void;
+	onDelete?: () => void;
 }) {
 	const members = useBoardStore((state) => state.members);
 	const addTask = useBoardStore((state) => state.addTask);
@@ -139,6 +141,11 @@ function TaskForm({
 				<Button variant="secondary" onClick={onClose}>
 					Cancel
 				</Button>
+				{task && onDelete ? (
+					<Button variant="danger" onClick={onDelete}>
+						<Trash2 size={14} /> Delete task
+					</Button>
+				) : null}
 				<Button type="submit" disabled={pending}>
 					{pending ? "Saving…" : task ? "Save task" : "Create task"}
 				</Button>
@@ -329,21 +336,11 @@ export function TaskDetailModal({ projectId }: { projectId: string }) {
 							listId={task.listId}
 							task={task}
 							onClose={close}
+							onDelete={() => {
+								setDeleteError("");
+								setDeleteConfirmationOpen(true);
+							}}
 						/>
-						<div className="mt-5 border-t border-french_gray-300 pt-4 text-right dark:border-paynes_gray-400">
-							<Button
-								variant="danger"
-								size="sm"
-								disabled={isDeleting}
-								onClick={() => {
-									setDeleteError("");
-									setDeleteConfirmationOpen(true);
-								}}
-							>
-								<Trash2 size={14} />
-								{isDeleting ? "Deleting…" : "Delete task"}
-							</Button>
-						</div>
 					</section>
 					<Comments projectId={projectId} task={task} />
 				</div>

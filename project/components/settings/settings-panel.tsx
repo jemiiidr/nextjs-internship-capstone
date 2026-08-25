@@ -344,8 +344,8 @@ export function SettingsPanel({ user: initialUser }: { user: UserSummary }) {
 					</div>
 				</CardContent>
 			</Card>
-			<Card className="border-red-200 dark:border-red-950">
-				<CardContent className="space-y-4 p-6"><div><h2 className="font-semibold text-red-700 dark:text-red-300">Delete account</h2><p className="mt-1 text-sm text-paynes_gray-500">Permanently remove your Clerk account and revoke all login sessions. This cannot be undone.</p></div><Button variant="danger" onClick={() => setDeleteOpen(true)} disabled={!user?.deleteSelfEnabled}><Trash2 size={16} /> Delete account</Button>{user && !user.deleteSelfEnabled ? <p className="text-xs text-paynes_gray-500">Self-service account deletion is disabled by the administrator.</p> : null}</CardContent>
+			<Card className="border-rose-200/80 dark:border-rose-950">
+				<CardContent className="space-y-4 p-6"><div><h2 className="font-semibold text-rose-700 dark:text-rose-300">Delete account</h2><p className="mt-1 text-sm text-paynes_gray-500">Permanently remove your Clerk account and revoke all login sessions. This cannot be undone.</p></div><Button variant="danger" onClick={() => setDeleteOpen(true)} disabled={!user?.deleteSelfEnabled}><Trash2 size={16} /> Delete account</Button>{user && !user.deleteSelfEnabled ? <p className="text-xs text-paynes_gray-500">Self-service account deletion is disabled by the administrator.</p> : null}</CardContent>
 			</Card>
 		</div>
 		<Modal open={totpOpen} onClose={() => !totpPending && setTotpOpen(false)} title="Set up an authenticator" description="Add this key to your authenticator app, then enter the generated six-digit code.">

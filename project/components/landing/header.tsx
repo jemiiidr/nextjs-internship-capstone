@@ -95,7 +95,7 @@ export function Header() {
 										<button
 											type="button"
 											onClick={() => void signOut({ redirectUrl: "/sign-in" })}
-											className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+											className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/25"
 										>
 											<LogOut size={15} /> Sign out
 										</button>
