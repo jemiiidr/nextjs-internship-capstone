@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	decodeLabel,
 	encodeLabel,
@@ -10,10 +9,10 @@ import {
 	parsePositiveInteger,
 	toDateOrNull,
 	toTaskDeadlineOrNull,
-} from "./utils";
+} from "@/lib/utils";
 
 describe("date formatting", () => {
-	afterEach(() => vi.useRealTimers());
+	afterEach(() => jest.useRealTimers());
 
 	it("handles absent and invalid dates without throwing", () => {
 		expect(formatDate(null)).toBe("No due date");
@@ -41,8 +40,8 @@ describe("date formatting", () => {
 	});
 
 	it("formats relative boundaries predictably", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-08-25T12:00:00Z"));
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date("2026-08-25T12:00:00Z"));
 		expect(formatRelativeDate("2026-08-25T11:59:31Z")).toBe("just now");
 		expect(formatRelativeDate("2026-08-25T11:00:00Z")).toBe("1 hour ago");
 		expect(formatRelativeDate("2026-08-26T12:00:00Z")).toBe("tomorrow");

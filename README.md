@@ -14,7 +14,7 @@ The application is in [`project/`](project/). Detailed setup, architecture, envi
 - Dashboard and analytics visualizations built with shadcn Chart and Recharts
 - Search, sorting, notifications, activity history, responsive layouts, and dark mode
 - PostgreSQL persistence through Neon and Drizzle ORM
-- Unit tests with Vitest and browser testing support with Playwright
+- Unit and component tests with Jest and React Testing Library, plus browser testing support with Playwright
 
 ## Technology
 
@@ -26,7 +26,7 @@ The application is in [`project/`](project/). Detailed setup, architecture, envi
 | Authentication | Clerk Organizations |
 | Database | PostgreSQL/Neon, Drizzle ORM |
 | Interaction | dnd-kit, Zustand, Zod |
-| Quality | Biome, Vitest, Testing Library, Playwright |
+| Quality | Biome, Jest, React Testing Library, Playwright |
 | Hosting | Vercel |
 
 ## Quick start

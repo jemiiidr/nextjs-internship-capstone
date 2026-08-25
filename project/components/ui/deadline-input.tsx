@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, CalendarDays } from "lucide-react";
-import { type InputHTMLAttributes, useEffect, useState } from "react";
+import { type InputHTMLAttributes, useEffect, useId, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +21,9 @@ export function DeadlineInput({
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
 	const initialValue = typeof defaultValue === "string" ? defaultValue : "";
 	const [value, setValue] = useState(initialValue);
-	const warningId = id ? `${id}-past-warning` : undefined;
+	const generatedId = useId();
+	const inputId = id ?? generatedId;
+	const warningId = `${inputId}-past-warning`;
 	const isPastDue = /^\d{4}-\d{2}-\d{2}$/.test(value) && value < localDateKey();
 
 	useEffect(() => {
@@ -33,7 +35,7 @@ export function DeadlineInput({
 			<div className="relative">
 				<Input
 					{...props}
-					id={id}
+					id={inputId}
 					type="date"
 					value={value}
 					className={cn(

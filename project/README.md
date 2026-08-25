@@ -122,6 +122,10 @@ lib/
 ├── validations.ts          # Zod input validation
 └── notifications.ts        # Notification persistence
 drizzle/                    # SQL migrations and metadata
+tests/
+├── unit/                   # Jest tests for utilities, validation, and RBAC
+├── components/             # React Testing Library component tests
+└── e2e/                    # Playwright desktop and mobile browser tests
 ```
 
 Server Components load data by default. Interactive surfaces are Client Components. Mutations use Server Actions, validate untrusted input with Zod, re-check authorization on the server, and revalidate affected routes.
@@ -147,8 +151,8 @@ Server Components load data by default. Interactive surfaces are Client Componen
 | `pnpm lint` | Run Biome lint only |
 | `pnpm format` | Format the repository |
 | `pnpm type-check` | Run TypeScript without emitting files |
-| `pnpm test` | Run Vitest once |
-| `pnpm test:watch` | Run Vitest in watch mode |
+| `pnpm test` | Run Jest once |
+| `pnpm test:watch` | Run Jest in watch mode |
 | `pnpm test:coverage` | Generate unit-test coverage |
 | `pnpm test:e2e` | Run Playwright tests |
 | `pnpm test:e2e:ui` | Open Playwright's test UI |
@@ -162,7 +166,7 @@ pnpm test
 pnpm build
 ```
 
-The current unit suite covers RBAC, validation, and shared utility behavior. Add focused tests for new server logic and validation edge cases; use Playwright for critical browser workflows.
+All tests live under `tests/`. The Jest suite covers RBAC, validation, shared utilities, and reusable UI behavior through React Testing Library. Playwright covers public navigation and responsive browser flows. Add focused tests for new server logic and validation edge cases; use Playwright for critical browser workflows.
 
 ## Deployment to Vercel
 
@@ -190,7 +194,7 @@ The optional workflow at `.github/workflows/deploy.yml` is manually triggerable 
 - **Invitations work but join notifications do not:** verify `organizationMembership.created` is enabled and the production webhook secret matches.
 - **Database commands fail:** verify `DATABASE_URL`, SSL requirements, and database network access.
 - **Generated database types look stale:** generate and inspect a new migration, migrate, then run `pnpm type-check`.
-- **Vitest reports `spawn EPERM` in a restricted Windows shell:** allow Node/Vitest to create worker processes or run from a standard local terminal.
+- **Jest reports `spawn EPERM` in a restricted Windows shell:** allow Node/Jest to create worker processes or run from a standard local terminal.
 - **Port 3000 is busy:** start with `pnpm dev -- --port 3001` or stop the existing process with operating-system process tools.
 
 ## Security checklist

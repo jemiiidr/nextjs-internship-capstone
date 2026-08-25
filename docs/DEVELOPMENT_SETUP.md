@@ -104,6 +104,14 @@ Use `pnpm check:fix` for safe Biome fixes. Review the resulting diff before comm
 - Model nullable database values explicitly.
 - Prefer shared types and validation schemas over duplicate shapes.
 
+### Tests
+
+- Put pure logic tests in `tests/unit/`.
+- Put React Testing Library tests in `tests/components/`.
+- Put Playwright browser flows in `tests/e2e/`.
+- Keep unit/component tests independent of live Clerk and database services.
+- Use dedicated test accounts and isolated data before adding authenticated E2E mutations.
+
 ## Available commands
 
 | Command | Description |
@@ -116,8 +124,8 @@ Use `pnpm check:fix` for safe Biome fixes. Review the resulting diff before comm
 | `pnpm lint` | Biome lint |
 | `pnpm format` | Format files |
 | `pnpm type-check` | TypeScript validation |
-| `pnpm test` | Unit tests |
-| `pnpm test:watch` | Unit-test watch mode |
+| `pnpm test` | Jest unit and component tests |
+| `pnpm test:watch` | Jest watch mode |
 | `pnpm test:coverage` | Coverage report |
 | `pnpm test:e2e` | Playwright tests |
 | `pnpm test:e2e:ui` | Playwright UI |
@@ -133,7 +141,7 @@ Use `pnpm check:fix` for safe Biome fixes. Review the resulting diff before comm
 - **Workspace missing:** select or create a Clerk Organization and confirm membership.
 - **No membership notification:** check the Clerk webhook subscription and signing secret.
 - **Stale Next.js output:** stop the dev server, remove only `project/.next`, and restart. Do not delete the repository or user data.
-- **Vitest `spawn EPERM`:** the shell is blocking worker processes; run from a normal terminal or grant Node permission to spawn test workers.
+- **Jest `spawn EPERM`:** the shell is blocking worker processes; run from a normal terminal or grant Node permission to spawn test workers.
 - **Type errors hidden during deployment:** always run `pnpm type-check`; do not rely solely on Next.js build behavior.
 
 See [the application README](../project/README.md) for routes, RBAC, architecture, deployment, and security details.
