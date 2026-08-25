@@ -1,5 +1,7 @@
 # 12-Week Individual Development Timeline & Milestones
 
+> Historical planning document: the Kanvas implementation has progressed beyond the placeholder stages described below. Use [`project/README.md`](../project/README.md) for the current architecture, feature set, setup, and operational guidance. This timeline remains as a record of the original internship plan.
+
 ## Overview
 
 This document outlines the detailed timeline, milestones, and deliverables for the 12-week Next.js internship capstone project. Each intern works on their own fork independently, building a complete project management tool from start to finish. The timeline is designed to be flexible, accommodating interns who may have 10-12 weeks available.

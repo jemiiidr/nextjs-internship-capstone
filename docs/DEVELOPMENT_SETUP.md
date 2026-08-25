@@ -1,248 +1,139 @@
-# Development Setup Guide
+# Development setup
+
+This guide describes the current Kanvas development environment. Run application commands from the `project/` directory.
 
 ## Prerequisites
 
-- **Node.js**: Version 18+ LTS
-- **pnpm**: Latest version (`npm install -g pnpm`)
-- **Git**: Latest version
-- **VS Code**: Recommended IDE
-- **PostgreSQL**: Database (we'll set up cloud version)
+- Node.js 22+
+- pnpm 10.10+
+- Git
+- PostgreSQL or a Neon database
+- A Clerk application with Organizations enabled
 
-## Required VS Code Extensions
+VS Code is optional. Useful extensions include Biome, Tailwind CSS IntelliSense, and GitLens. The repository uses Biome—not ESLint or Prettier—as its primary formatter and linter.
 
-Install these extensions for the best development experience:
-
-- **ESLint** (`ms-vscode.vscode-eslint`)
-- **Prettier** (`esbenp.prettier-vscode`)
-- **Tailwind CSS IntelliSense** (`bradlc.vscode-tailwindcss`)
-- **TypeScript Importer** (`pmneo.tsimporter`)
-- **Auto Rename Tag** (`formulahendry.auto-rename-tag`)
-- **GitLens** (`eamodio.gitlens`)
-
-## Project Setup
-
-### 1. Fork and Clone Your Repository
-
-**Each intern should fork the repository individually:**
+## Install and configure
 
 ```bash
-# 1. Go to https://github.com/stratpoint-engineering/nextjs-internship-capstone
-# 2. Click "Fork" to create your own copy
-# 3. Clone YOUR fork locally
-git clone https://github.com/YOUR-USERNAME/nextjs-internship-capstone.git
+git clone <repository-url>
 cd nextjs-internship-capstone/project
-```
-
-### 2. Install Dependencies
-
-```bash
 pnpm install
-```
-
-### 3. Environment Setup
-
-Copy the environment template:
-
-```bash
 cp .env.example .env.local
 ```
 
-Fill in the required environment variables (will be provided during onboarding).
+PowerShell equivalent:
 
-### 4. Database Setup
+```powershell
+Copy-Item .env.example .env.local
+```
 
-Run database migrations:
+Add valid Clerk and `DATABASE_URL` values to `.env.local`. Never commit that file.
+
+Configure a Clerk webhook at `/api/webhooks/clerk` with `user.created`, `user.updated`, `user.deleted`, and `organizationMembership.created`, then copy its secret into `CLERK_WEBHOOK_SIGNING_SECRET`.
+
+## Initialize the database
+
+Apply the committed schema:
 
 ```bash
-pnpm db:generate
 pnpm db:migrate
 ```
 
-### 5. Start Development Server
+For a new schema change:
+
+1. Edit `lib/db/schema.ts`.
+2. Run `pnpm db:generate`.
+3. Review the generated SQL in `drizzle/`.
+4. Run `pnpm db:migrate` against a development database.
+5. Test both new and existing data paths.
+
+Do not rewrite migrations already applied to a shared or production database.
+
+## Run locally
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open <http://localhost:3000>. If the port is occupied, use `pnpm dev -- --port 3001`.
 
-## Development Workflow
+## Development workflow
 
-### Individual Fork Workflow
-
-Since each intern works on their own fork, you have complete control over your repository:
-
-1. **Create feature branches** for major features:
-   ```bash
-   git checkout -b feature/authentication
-   git checkout -b feature/kanban-board
-   git checkout -b feature/task-management
-   ```
-
-2. **Make your changes** and commit regularly:
-   ```bash
-   git add .
-   git commit -m "feat: add task creation modal"
-   ```
-
-3. **Push your branch**:
-   ```bash
-   git push origin feature/authentication
-   ```
-
-4. **Merge to your main branch** when feature is complete:
-   ```bash
-   git checkout main
-   git merge feature/authentication
-   git push origin main
-   ```
-
-### Branch Naming Convention
-
-- `feature/[feature-description]`
-- `fix/[bug-description]`
-- `docs/[documentation-update]`
-
-Examples:
-- `feature/add-task-modal`
-- `fix/drag-drop-bug`
-- `docs/update-setup-guide`
-
-### Optional: Sync with Original Repository
-
-If you want to get updates from the original repository:
+Use a focused branch:
 
 ```bash
-# Add the original repo as upstream (one time setup)
-git remote add upstream https://github.com/stratpoint-engineering/nextjs-internship-capstone.git
-
-# Fetch and merge updates when needed
-git fetch upstream
-git checkout main
-git merge upstream/main
-git push origin main
+git switch -c feature/task-description
 ```
 
-### Commit Message Convention
+Recommended prefixes are `feature/`, `fix/`, `refactor/`, `test/`, and `docs/`. Use conventional commit subjects such as `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, and `chore:`.
 
-Use conventional commits:
+Before committing:
 
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `style:` - Code style changes (formatting, etc.)
-- `refactor:` - Code refactoring
-- `test:` - Adding or updating tests
-- `chore:` - Maintenance tasks
+```bash
+pnpm check
+pnpm type-check
+pnpm test
+pnpm build
+```
 
-## Available Scripts
+Use `pnpm check:fix` for safe Biome fixes. Review the resulting diff before committing.
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build for production
-- `pnpm start` - Start production server
-- `pnpm lint` - Run ESLint
-- `pnpm lint:fix` - Fix ESLint issues automatically
-- `pnpm type-check` - Run TypeScript type checking
-- `pnpm test` - Run unit tests
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:e2e` - Run end-to-end tests
-- `pnpm db:generate` - Generate database migrations
-- `pnpm db:migrate` - Run database migrations
-- `pnpm db:studio` - Open database studio (if using Drizzle Studio)
+## Engineering conventions
 
-## Code Quality Standards
+### Server and data
+
+- Prefer Server Components for data loading and Client Components only for interactive state.
+- Use Server Actions for mutations.
+- Parse untrusted inputs with Zod.
+- Enforce RBAC and workspace/project scope on the server for every mutation.
+- Revalidate all routes whose rendered data changed.
+- Keep Clerk calls and database writes consistent; return actionable errors without leaking secrets.
+
+### UI
+
+- Reuse `components/ui/` primitives and existing Kanvas tokens.
+- Use shadcn Chart plus Recharts for application data visualizations.
+- Build mobile-first and test light and dark modes.
+- Preserve keyboard navigation, focus states, semantic labels, and reduced-motion preferences.
+- Confirm destructive actions and use the established muted destructive palette.
 
 ### TypeScript
 
-- Use strict TypeScript mode
-- Define proper types for all props and functions
-- Avoid `any` type unless absolutely necessary
-- Use proper type imports: `import type { ... }`
+- Keep strict typing and avoid `any`.
+- Use `import type` for type-only imports.
+- Model nullable database values explicitly.
+- Prefer shared types and validation schemas over duplicate shapes.
 
-### React Best Practices
+## Available commands
 
-- Use functional components with hooks
-- Follow the Rules of Hooks
-- Use Server Components by default, Client Components when needed
-- Proper error boundaries for error handling
-
-### Styling Guidelines
-
-- Use Tailwind CSS utility classes
-- Follow mobile-first responsive design
-- Use Shadcn/UI components when possible
-- Consistent spacing and typography scale
-
-### File Organization
-
-```
-project/                   # Your project directory
-├── app/                   # Next.js App Router pages
-│   ├── (auth)/           # Auth-related pages (placeholder)
-│   ├── (dashboard)/      # Dashboard pages ✅ Implemented
-│   └── api/              # API routes (to be implemented)
-├── components/           # Reusable components ✅ Basic structure
-│   ├── ui/               # Shadcn/UI components (to be added)
-│   └── modals/           # Modal components (placeholder)
-├── lib/                  # Utilities and configurations
-│   ├── db/               # Database related (placeholder)
-│   └── utils.ts          # Helper functions ✅
-├── hooks/                # Custom React hooks (placeholder)
-├── stores/               # Zustand stores (placeholder)
-├── types/                # TypeScript type definitions ✅
-└── styles/               # Additional styles
-```
-
-## Testing Guidelines
-
-- Write unit tests for utility functions
-- Test React components with React Testing Library
-- Write integration tests for user flows
-- E2E tests for critical user journeys
-- Aim for 80%+ test coverage
-
-## Getting Help
-
-- **Daily Standups**: Share progress and blockers with other interns
-- **Optional Code Reviews**: Share your fork for peer feedback and learning
-- **Mentor Office Hours**: 1-on-1 guidance sessions
-- **Team Chat**: Quick questions and collaboration
-- **GitHub Issues**: Create issues in your fork to track bugs and features
-- **Knowledge Sharing**: Help other interns with similar challenges
+| Command | Description |
+| --- | --- |
+| `pnpm dev` | Development server |
+| `pnpm build` | Production build |
+| `pnpm start` | Serve a production build |
+| `pnpm check` | Biome lint and formatting validation |
+| `pnpm check:fix` | Apply Biome fixes |
+| `pnpm lint` | Biome lint |
+| `pnpm format` | Format files |
+| `pnpm type-check` | TypeScript validation |
+| `pnpm test` | Unit tests |
+| `pnpm test:watch` | Unit-test watch mode |
+| `pnpm test:coverage` | Coverage report |
+| `pnpm test:e2e` | Playwright tests |
+| `pnpm test:e2e:ui` | Playwright UI |
+| `pnpm db:generate` | Generate migrations |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:push` | Direct development schema sync |
+| `pnpm db:studio` | Drizzle Studio |
 
 ## Troubleshooting
 
-### Common Issues
+- **Authentication redirect loop:** confirm Clerk URL variables, allowed origins, and the active Clerk instance.
+- **Page load/database error:** validate `DATABASE_URL`, SSL requirements, migrations, and database reachability.
+- **Workspace missing:** select or create a Clerk Organization and confirm membership.
+- **No membership notification:** check the Clerk webhook subscription and signing secret.
+- **Stale Next.js output:** stop the dev server, remove only `project/.next`, and restart. Do not delete the repository or user data.
+- **Vitest `spawn EPERM`:** the shell is blocking worker processes; run from a normal terminal or grant Node permission to spawn test workers.
+- **Type errors hidden during deployment:** always run `pnpm type-check`; do not rely solely on Next.js build behavior.
 
-1. **Port already in use**:
-   ```bash
-   lsof -ti:3000 | xargs kill -9
-   ```
-
-2. **Node modules issues**:
-   ```bash
-   rm -rf node_modules pnpm-lock.yaml
-   pnpm install
-   ```
-
-3. **Database connection issues**:
-   - Check environment variables
-   - Verify database is running
-   - Check network connectivity
-
-4. **TypeScript errors**:
-   ```bash
-   pnpm type-check
-   ```
-
-### Getting Additional Help
-
-If you're stuck for more than 30 minutes:
-
-1. Check the documentation
-2. Search existing GitHub Issues
-3. Ask in team chat
-4. Schedule time with mentor
-5. Create a GitHub Issue with detailed description
-
-Remember: **There are no "dumb" questions!** Everyone is here to learn and grow together.
+See [the application README](../project/README.md) for routes, RBAC, architecture, deployment, and security details.
