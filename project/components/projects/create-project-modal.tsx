@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { createProjectAction } from "@/app/actions/projects";
 import { Button } from "@/components/ui/button";
+import { DeadlineInput } from "@/components/ui/deadline-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
@@ -63,7 +64,7 @@ export function CreateProjectModal() {
 				<div className="grid gap-4 sm:grid-cols-2">
 					<div className="space-y-1.5">
 						<Label htmlFor="project-due-date">Due date</Label>
-						<Input id="project-due-date" name="dueDate" type="date" />
+						<DeadlineInput id="project-due-date" name="dueDate" />
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="project-visibility">Visibility</Label>
@@ -71,7 +72,10 @@ export function CreateProjectModal() {
 							id="project-visibility"
 							name="visibility"
 							defaultValue="private"
-							options={[{ value: "private", label: "Private" }, { value: "workspace", label: "Workspace" }]}
+							options={[
+								{ value: "private", label: "Private" },
+								{ value: "workspace", label: "Workspace" },
+							]}
 						/>
 					</div>
 				</div>
