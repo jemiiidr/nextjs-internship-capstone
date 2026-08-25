@@ -40,9 +40,9 @@ export default async function NotificationsPage({
 	return (
 		<div className="mx-auto max-w-4xl space-y-7">
 			<header>
-				<p className="flex items-center gap-2 text-sm font-semibold text-blue_munsell-600 dark:text-blue_munsell-300">
+				{/* <p className="flex items-center gap-2 text-sm font-semibold text-blue_munsell-600 dark:text-blue_munsell-300">
 					<Bell size={16} /> Inbox
-				</p>
+				</p> */}
 				<h1 className="mt-1 text-3xl font-bold tracking-tight text-outer_space-900 dark:text-platinum-50">
 					Notifications
 				</h1>
