@@ -5,8 +5,8 @@ import {
 	closestCorners,
 	DndContext,
 	type DragEndEvent,
-	DragOverlay,
 	type DragOverEvent,
+	DragOverlay,
 	type DragStartEvent,
 	KeyboardSensor,
 	MouseSensor,
@@ -25,6 +25,7 @@ import {
 	ArrowDownToLine,
 	ArrowUpToLine,
 	CalendarDays,
+	ChevronRight,
 	LayoutGrid,
 	List,
 	MessageSquare,
@@ -133,7 +134,19 @@ function TaskDragPreview({ task }: { task: BoardTask }) {
 				<div className="mt-2 flex flex-wrap gap-1">
 					{task.labels.slice(0, 3).map((label) => {
 						const decoded = decodeLabel(label);
-						return <span key={label} className="rounded-full border px-2 py-0.5 text-[10px] font-medium" style={{ borderColor: `${decoded.color}55`, backgroundColor: `${decoded.color}18`, color: decoded.color }}>{decoded.name}</span>;
+						return (
+							<span
+								key={label}
+								className="rounded-full border px-2 py-0.5 text-[10px] font-medium"
+								style={{
+									borderColor: `${decoded.color}55`,
+									backgroundColor: `${decoded.color}18`,
+									color: decoded.color,
+								}}
+							>
+								{decoded.name}
+							</span>
+						);
 					})}
 				</div>
 			) : null}
@@ -145,32 +158,110 @@ function columnAccent(name: string) {
 	const normalized = name.trim().toLowerCase();
 	if (normalized.includes("progress")) return "bg-violet-500";
 	if (normalized.includes("review")) return "bg-amber-500";
-	if (["done", "complete", "completed"].includes(normalized)) return "bg-emerald-500";
+	if (["done", "complete", "completed"].includes(normalized))
+		return "bg-emerald-500";
 	if (normalized.includes("block")) return "bg-rose-500";
 	return "bg-blue-500";
 }
 
-function TaskListView({ tasks, lists }: { tasks: BoardTask[]; lists: BoardList[] }) {
+function TaskListView({
+	tasks,
+	lists,
+}: {
+	tasks: BoardTask[];
+	lists: BoardList[];
+}) {
 	const openTaskDetail = useUIStore((state) => state.openTaskDetail);
 	const listNames = new Map(lists.map((list) => [list.id, list.name]));
 
 	return (
 		<div className="min-h-136 overflow-hidden rounded-xl border border-french_gray-300 bg-white dark:border-paynes_gray-400 dark:bg-outer_space-500">
 			<div className="hidden grid-cols-[minmax(16rem,2fr)_1fr_0.8fr_1fr_0.8fr] gap-4 border-b border-french_gray-300 bg-platinum-50/70 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-paynes_gray-500 dark:border-paynes_gray-400 dark:bg-outer_space-400 dark:text-french_gray-400 md:grid">
-				<span>Task</span><span>Status</span><span>Priority</span><span>Assignee</span><span>Due date</span>
+				<span>Task</span>
+				<span>Status</span>
+				<span>Priority</span>
+				<span>Assignee</span>
+				<span>Due date</span>
 			</div>
-			{tasks.length ? tasks.map((task) => (
-				<button key={task.id} type="button" onClick={() => openTaskDetail(task.id)} className="grid w-full gap-3 border-b border-french_gray-200 px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-platinum-50 dark:border-paynes_gray-400 dark:hover:bg-outer_space-400 md:grid-cols-[minmax(16rem,2fr)_1fr_0.8fr_1fr_0.8fr] md:items-center md:gap-4">
-					<div className="min-w-0">
-						<p className="truncate text-sm font-semibold text-outer_space-500 dark:text-platinum-500">{task.title}</p>
-						<div className="mt-1 flex flex-wrap gap-1">{task.labels.slice(0, 2).map((label) => { const decoded = decodeLabel(label); return <Badge key={label} style={{ borderColor: `${decoded.color}55`, backgroundColor: `${decoded.color}18`, color: decoded.color }}>{decoded.name}</Badge>; })}</div>
-					</div>
-					<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400"><span className={cn("size-2 rounded-full", columnAccent(listNames.get(task.listId) ?? ""))} />{listNames.get(task.listId) ?? "Unknown"}</div>
-					<span className="text-sm capitalize text-paynes_gray-500 dark:text-french_gray-400">{task.priority}</span>
-					<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">{task.assignee ? <><Avatar name={task.assignee.name} src={task.assignee.avatarUrl} className="size-7" /><span className="truncate">{task.assignee.name}</span></> : <span>Unassigned</span>}</div>
-					<div className="flex items-center gap-1.5 text-sm text-paynes_gray-500 dark:text-french_gray-400">{task.dueDate ? <><CalendarDays size={14} />{formatDate(task.dueDate, { year: undefined })}</> : "No deadline"}{task.commentsCount > 0 ? <span className="ml-auto flex items-center gap-1"><MessageSquare size={13} />{task.commentsCount}</span> : null}</div>
-				</button>
-			)) : <div className="flex min-h-112 items-center justify-center text-sm text-paynes_gray-500 dark:text-french_gray-400">No tasks match the current filters.</div>}
+			{tasks.length ? (
+				tasks.map((task) => (
+					<button
+						key={task.id}
+						type="button"
+						onClick={() => openTaskDetail(task.id)}
+						className="grid w-full gap-3 border-b border-french_gray-200 px-4 py-4 text-left transition-colors last:border-b-0 hover:bg-platinum-50 dark:border-paynes_gray-400 dark:hover:bg-outer_space-400 md:grid-cols-[minmax(16rem,2fr)_1fr_0.8fr_1fr_0.8fr] md:items-center md:gap-4"
+					>
+						<div className="min-w-0">
+							<p className="truncate text-sm font-semibold text-outer_space-500 dark:text-platinum-500">
+								{task.title}
+							</p>
+							<div className="mt-1 flex flex-wrap gap-1">
+								{task.labels.slice(0, 2).map((label) => {
+									const decoded = decodeLabel(label);
+									return (
+										<Badge
+											key={label}
+											style={{
+												borderColor: `${decoded.color}55`,
+												backgroundColor: `${decoded.color}18`,
+												color: decoded.color,
+											}}
+										>
+											{decoded.name}
+										</Badge>
+									);
+								})}
+							</div>
+						</div>
+						<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
+							<span
+								className={cn(
+									"size-2 rounded-full",
+									columnAccent(listNames.get(task.listId) ?? ""),
+								)}
+							/>
+							{listNames.get(task.listId) ?? "Unknown"}
+						</div>
+						<span className="text-sm capitalize text-paynes_gray-500 dark:text-french_gray-400">
+							{task.priority}
+						</span>
+						<div className="flex items-center gap-2 text-sm text-paynes_gray-500 dark:text-french_gray-400">
+							{task.assignee ? (
+								<>
+									<Avatar
+										name={task.assignee.name}
+										src={task.assignee.avatarUrl}
+										className="size-7"
+									/>
+									<span className="truncate">{task.assignee.name}</span>
+								</>
+							) : (
+								<span>Unassigned</span>
+							)}
+						</div>
+						<div className="flex items-center gap-1.5 text-sm text-paynes_gray-500 dark:text-french_gray-400">
+							{task.dueDate ? (
+								<>
+									<CalendarDays size={14} />
+									{formatDate(task.dueDate, { year: undefined })}
+								</>
+							) : (
+								"No deadline"
+							)}
+							{task.commentsCount > 0 ? (
+								<span className="ml-auto flex items-center gap-1">
+									<MessageSquare size={13} />
+									{task.commentsCount}
+								</span>
+							) : null}
+						</div>
+					</button>
+				))
+			) : (
+				<div className="flex min-h-112 items-center justify-center text-sm text-paynes_gray-500 dark:text-french_gray-400">
+					No tasks match the current filters.
+				</div>
+			)}
 		</div>
 	);
 }
@@ -209,7 +300,12 @@ function KanbanColumn({
 		>
 			<header className="flex items-center justify-between border-b border-french_gray-300 p-3 dark:border-paynes_gray-400">
 				<div className="flex min-w-0 items-center gap-2">
-					<span className={cn("size-2.5 shrink-0 rounded-full", columnAccent(list.name))} />
+					<span
+						className={cn(
+							"size-2.5 shrink-0 rounded-full",
+							columnAccent(list.name),
+						)}
+					/>
 					<h2 className="truncate font-semibold text-outer_space-500 dark:text-platinum-500">
 						{list.name}
 					</h2>
@@ -220,7 +316,13 @@ function KanbanColumn({
 
 				{canEdit ? (
 					<div className="flex">
-						<Button size="icon" variant="ghost" className="size-8" onClick={onCreateTask} aria-label={`Add task to ${list.name}`}>
+						<Button
+							size="icon"
+							variant="ghost"
+							className="size-8"
+							onClick={onCreateTask}
+							aria-label={`Add task to ${list.name}`}
+						>
 							<Plus size={16} />
 						</Button>
 						<Button
@@ -332,6 +434,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 
 	const tasksRef = useRef(tasks);
 	const dragSnapshotRef = useRef<BoardTask[] | null>(null);
+	const contextMenuRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		tasksRef.current = tasks;
@@ -341,15 +444,23 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		if (!contextMenu) return;
 
 		const close = () => setContextMenu(null);
+		const closeOnOutsidePointer = (event: PointerEvent) => {
+			if (
+				contextMenuRef.current &&
+				!contextMenuRef.current.contains(event.target as Node)
+			) {
+				close();
+			}
+		};
 		const closeOnKey = (event: KeyboardEvent) => {
 			if (event.key === "Escape") close();
 		};
-		document.addEventListener("pointerdown", close);
+		document.addEventListener("pointerdown", closeOnOutsidePointer);
 		window.addEventListener("blur", close);
 		window.addEventListener("scroll", close, true);
 		window.addEventListener("keydown", closeOnKey);
 		return () => {
-			document.removeEventListener("pointerdown", close);
+			document.removeEventListener("pointerdown", closeOnOutsidePointer);
 			window.removeEventListener("blur", close);
 			window.removeEventListener("scroll", close, true);
 			window.removeEventListener("keydown", closeOnKey);
@@ -437,7 +548,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 			null)
 		: null;
 	const contextTask = contextMenu
-		? tasks.find((task) => task.id === contextMenu.taskId) ?? null
+		? (tasks.find((task) => task.id === contextMenu.taskId) ?? null)
 		: null;
 
 	const onDragStart = (event: DragStartEvent) => {
@@ -482,7 +593,9 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		let position = destination.length;
 
 		if (overTask && overTask.id !== taskId) {
-			const overIndex = destination.findIndex((task) => task.id === overTask.id);
+			const overIndex = destination.findIndex(
+				(task) => task.id === overTask.id,
+			);
 			const translated = event.active.rect.current.translated;
 			const isBelow = translated
 				? translated.top + translated.height / 2 >
@@ -502,10 +615,7 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 		if (!move) return;
 
 		const moving = tasksRef.current.find((task) => task.id === move.taskId);
-		if (
-			moving?.listId === move.toListId &&
-			moving.position === move.position
-		)
+		if (moving?.listId === move.toListId && moving.position === move.position)
 			return;
 
 		const nextTasks = moveInArray(tasksRef.current, move);
@@ -543,7 +653,11 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 
 		const nextTasks = moveInArray(tasksRef.current, finalMove);
 		const finalTask = nextTasks.find((task) => task.id === taskId);
-		const didMove = Boolean(finalTask && (originalTask.listId !== finalTask.listId || originalTask.position !== finalTask.position));
+		const didMove = Boolean(
+			finalTask &&
+				(originalTask.listId !== finalTask.listId ||
+					originalTask.position !== finalTask.position),
+		);
 
 		if (!didMove) {
 			dragSnapshotRef.current = null;
@@ -772,21 +886,38 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					<Select
 						value={priorityFilter}
 						onValueChange={(value) =>
-							setPriorityFilter(
-								value as "all" | BoardTask["priority"],
-							)
+							setPriorityFilter(value as "all" | BoardTask["priority"])
 						}
 						className="min-w-0 flex-1 md:w-40 md:flex-none"
-						options={[{ value: "all", label: "All priorities" }, { value: "low", label: "Low" }, { value: "medium", label: "Medium" }, { value: "high", label: "High" }]}
+						options={[
+							{ value: "all", label: "All priorities" },
+							{ value: "low", label: "Low" },
+							{ value: "medium", label: "Medium" },
+							{ value: "high", label: "High" },
+						]}
 					/>
 				</div>
 
 				<fieldset className="flex w-full rounded-lg border border-french_gray-300 bg-platinum-50 p-1 dark:border-paynes_gray-400 dark:bg-outer_space-400 md:w-auto">
 					<legend className="sr-only">Task view</legend>
-					<Button type="button" size="sm" variant={viewMode === "board" ? "default" : "ghost"} className="h-8 flex-1 gap-1.5 px-2.5 md:flex-none" onClick={() => setViewMode("board")} aria-pressed={viewMode === "board"}>
+					<Button
+						type="button"
+						size="sm"
+						variant={viewMode === "board" ? "default" : "ghost"}
+						className="h-8 flex-1 gap-1.5 px-2.5 md:flex-none"
+						onClick={() => setViewMode("board")}
+						aria-pressed={viewMode === "board"}
+					>
 						<LayoutGrid size={15} /> Board
 					</Button>
-					<Button type="button" size="sm" variant={viewMode === "list" ? "default" : "ghost"} className="h-8 flex-1 gap-1.5 px-2.5 md:flex-none" onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+					<Button
+						type="button"
+						size="sm"
+						variant={viewMode === "list" ? "default" : "ghost"}
+						className="h-8 flex-1 gap-1.5 px-2.5 md:flex-none"
+						onClick={() => setViewMode("list")}
+						aria-pressed={viewMode === "list"}
+					>
 						<List size={15} /> List
 					</Button>
 				</fieldset>
@@ -820,79 +951,90 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 				) : null}
 			</div>
 
-			{viewMode === "board" ? <DndContext
-				sensors={sensors}
-				collisionDetection={collisionDetectionStrategy}
-				onDragStart={onDragStart}
-				onDragOver={onDragOver}
-				onDragEnd={onDragEnd}
-				onDragCancel={onDragCancel}
-			>
-				<div className="flex gap-4 overflow-x-auto pb-5 scrollbar-thin">
-					{lists.map((list) => (
-						<KanbanColumn
-							key={list.id}
-							list={list}
-							tasks={filteredTasks
-								.filter((task) => task.listId === list.id)
-								.sort((a, b) => a.position - b.position)}
-							canEdit={canEdit}
-							activeTaskId={activeTaskId}
-							onCreateTask={() => openCreateTask(list.id)}
-							onRename={() => openRenameModal(list)}
-							onDelete={() => {
-								setDeleteError("");
-								setListToDelete(list);
-							}}
-							onTaskContextMenu={(event, task) => {
-								const menuWidth = 224;
-								const menuHeight = 330;
-								setContextMenu({
-									taskId: task.id,
-									x: Math.min(event.clientX, window.innerWidth - menuWidth - 8),
-									y: Math.min(event.clientY, window.innerHeight - menuHeight - 8),
-								});
-							}}
-						/>
-					))}
-
-					{canEdit ? (
-						<form
-							action={createList}
-							className="w-[min(86vw,19rem)] shrink-0 rounded-2xl border border-dashed border-french_gray-300 bg-white p-3 dark:border-paynes_gray-800 dark:bg-outer_space-500"
-						>
-							<input type="hidden" name="projectId" value={data.project.id} />
-							<Input
-								name="name"
-								required
-								maxLength={60}
-								placeholder="New list name"
-							/>
-							<Button
-								type="submit"
-								variant="secondary"
-								className="mt-2 w-full"
-								disabled={isSaving}
-							>
-								<Plus size={16} /> Add list
-							</Button>
-						</form>
-					) : null}
-				</div>
-
-				<DragOverlay
-					zIndex={50}
-					dropAnimation={{
-						duration: 180,
-						easing: "cubic-bezier(0.2, 0, 0, 1)",
-					}}
+			{viewMode === "board" ? (
+				<DndContext
+					sensors={sensors}
+					collisionDetection={collisionDetectionStrategy}
+					onDragStart={onDragStart}
+					onDragOver={onDragOver}
+					onDragEnd={onDragEnd}
+					onDragCancel={onDragCancel}
 				>
-					{activeTask ? <TaskDragPreview task={activeTask} /> : null}
-				</DragOverlay>
-			</DndContext> : <TaskListView tasks={filteredTasks} lists={lists} />}
+					<div className="flex gap-4 overflow-x-auto pb-5 scrollbar-thin">
+						{lists.map((list) => (
+							<KanbanColumn
+								key={list.id}
+								list={list}
+								tasks={filteredTasks
+									.filter((task) => task.listId === list.id)
+									.sort((a, b) => a.position - b.position)}
+								canEdit={canEdit}
+								activeTaskId={activeTaskId}
+								onCreateTask={() => openCreateTask(list.id)}
+								onRename={() => openRenameModal(list)}
+								onDelete={() => {
+									setDeleteError("");
+									setListToDelete(list);
+								}}
+								onTaskContextMenu={(event, task) => {
+									const menuWidth = 224;
+									const menuHeight = 330;
+									setContextMenu({
+										taskId: task.id,
+										x: Math.min(
+											event.clientX,
+											window.innerWidth - menuWidth - 8,
+										),
+										y: Math.min(
+											event.clientY,
+											window.innerHeight - menuHeight - 8,
+										),
+									});
+								}}
+							/>
+						))}
+
+						{canEdit ? (
+							<form
+								action={createList}
+								className="w-[min(86vw,19rem)] shrink-0 rounded-2xl border border-dashed border-french_gray-300 bg-white p-3 dark:border-paynes_gray-800 dark:bg-outer_space-500"
+							>
+								<input type="hidden" name="projectId" value={data.project.id} />
+								<Input
+									name="name"
+									required
+									maxLength={60}
+									placeholder="New list name"
+								/>
+								<Button
+									type="submit"
+									variant="secondary"
+									className="mt-2 w-full"
+									disabled={isSaving}
+								>
+									<Plus size={16} /> Add list
+								</Button>
+							</form>
+						) : null}
+					</div>
+
+					<DragOverlay
+						zIndex={50}
+						dropAnimation={{
+							duration: 180,
+							easing: "cubic-bezier(0.2, 0, 0, 1)",
+						}}
+					>
+						{activeTask ? <TaskDragPreview task={activeTask} /> : null}
+					</DragOverlay>
+				</DndContext>
+			) : (
+				<TaskListView tasks={filteredTasks} lists={lists} />
+			)}
 
 			{contextMenu && contextTask ? (
 				<div
+					ref={contextMenuRef}
 					role="menu"
 					aria-label={`Actions for ${contextTask.title}`}
 					onPointerDown={(event) => event.stopPropagation()}
@@ -902,7 +1044,9 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 					<button
 						type="button"
 						role="menuitem"
-						onClick={() => moveTaskFromMenu(contextTask.id, contextTask.listId, 0)}
+						onClick={() =>
+							moveTaskFromMenu(contextTask.id, contextTask.listId, 0)
+						}
 						disabled={contextTask.position === 0 || isSaving}
 						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
 					>
@@ -915,42 +1059,68 @@ export function KanbanBoard({ data }: { data: ProjectBoardData }) {
 							moveTaskFromMenu(
 								contextTask.id,
 								contextTask.listId,
-								tasks.filter((task) => task.listId === contextTask.listId).length,
+								tasks.filter((task) => task.listId === contextTask.listId)
+									.length,
 							)
 						}
 						disabled={
 							contextTask.position ===
-								tasks.filter((task) => task.listId === contextTask.listId).length - 1 ||
-							isSaving
+								tasks.filter((task) => task.listId === contextTask.listId)
+									.length -
+									1 || isSaving
 						}
 						className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
 					>
 						<ArrowDownToLine size={15} /> Move to bottom
 					</button>
 					<div className="my-1 border-t border-french_gray-200 dark:border-paynes_gray-700" />
-					<p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-paynes_gray-500">
-						Change status
-					</p>
-					<div className="max-h-36 overflow-y-auto scrollbar-thin">
-						{lists.map((list) => (
-							<button
-								key={list.id}
-								type="button"
-								role="menuitem"
-								onClick={() =>
-									moveTaskFromMenu(
-										contextTask.id,
-										list.id,
-										tasks.filter((task) => task.listId === list.id).length,
-									)
-								}
-								disabled={list.id === contextTask.listId || isSaving}
-								className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
-							>
-								<span className={cn("size-2.5 rounded-full", columnAccent(list.name))} />
-								<span className="truncate">{list.name}</span>
-							</button>
-						))}
+					<div className="group/status relative">
+						<button
+							type="button"
+							role="menuitem"
+							aria-haspopup="menu"
+							className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 focus:bg-platinum-100 dark:hover:bg-outer_space-300 dark:focus:bg-outer_space-300"
+						>
+							<span className="flex-1">Change status</span>
+							<ChevronRight size={15} />
+						</button>
+						<div
+							role="menu"
+							aria-label="Choose a new status"
+							className={cn(
+								"absolute top-0 z-110 hidden w-52 rounded-xl border border-french_gray-300 bg-white p-1.5 shadow-2xl group-hover/status:block group-focus-within/status:block dark:border-paynes_gray-700 dark:bg-outer_space-400",
+								contextMenu.x + 448 > window.innerWidth
+									? "right-full"
+									: "left-full",
+							)}
+						>
+							<div className="max-h-56 overflow-y-auto scrollbar-thin">
+								{lists.map((list) => (
+									<button
+										key={list.id}
+										type="button"
+										role="menuitem"
+										onClick={() =>
+											moveTaskFromMenu(
+												contextTask.id,
+												list.id,
+												tasks.filter((task) => task.listId === list.id).length,
+											)
+										}
+										disabled={list.id === contextTask.listId || isSaving}
+										className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-platinum-100 disabled:opacity-40 dark:hover:bg-outer_space-300"
+									>
+										<span
+											className={cn(
+												"size-2.5 rounded-full",
+												columnAccent(list.name),
+											)}
+										/>
+										<span className="truncate">{list.name}</span>
+									</button>
+								))}
+							</div>
+						</div>
 					</div>
 					<div className="my-1 border-t border-french_gray-200 dark:border-paynes_gray-700" />
 					<button

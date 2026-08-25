@@ -47,6 +47,7 @@ function TaskForm({
 	onDelete?: () => void;
 }) {
 	const members = useBoardStore((state) => state.members);
+	const lists = useBoardStore((state) => state.lists);
 	const addTask = useBoardStore((state) => state.addTask);
 	const updateTask = useBoardStore((state) => state.updateTask);
 	const [state, formAction, pending] = useActionState(
@@ -65,7 +66,7 @@ function TaskForm({
 	return (
 		<form action={formAction} className="space-y-4">
 			<input type="hidden" name="projectId" value={projectId} />
-			<input type="hidden" name="listId" value={listId} />
+			{task ? null : <input type="hidden" name="listId" value={listId} />}
 			{task ? <input type="hidden" name="taskId" value={task.id} /> : null}
 			<div className="space-y-1.5">
 				<Label htmlFor={`${task?.id ?? "new"}-title`}>Title</Label>
@@ -81,6 +82,20 @@ function TaskForm({
 					<p className="text-xs text-red-600">{state.fieldErrors.title[0]}</p>
 				) : null}
 			</div>
+			{task ? (
+				<div className="space-y-1.5">
+					<Label htmlFor={`${task.id}-status`}>Status</Label>
+					<Select
+						id={`${task.id}-status`}
+						name="listId"
+						defaultValue={task.listId}
+						options={lists.map((list) => ({
+							value: list.id,
+							label: list.name,
+						}))}
+					/>
+				</div>
+			) : null}
 			<div className="space-y-1.5">
 				<Label htmlFor={`${task?.id ?? "new"}-description`}>Description</Label>
 				<Textarea
@@ -130,7 +145,6 @@ function TaskForm({
 							className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-paynes_gray-500 dark:text-french_gray-400"
 						/>
 					</div>
-					<p className="text-xs text-paynes_gray-500">Defaults to 11:59 PM.</p>
 					{state.fieldErrors?.dueTime?.[0] ? (
 						<p className="text-xs text-red-600">
 							{state.fieldErrors.dueTime[0]}
