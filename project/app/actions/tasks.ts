@@ -6,7 +6,7 @@ import { canEditProject, requireProjectAccess } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activities, lists, tasks, users } from "@/lib/db/schema";
 import { createNotification } from "@/lib/notifications";
-import { parseLabels, toDateOrNull } from "@/lib/utils";
+import { parseLabels, toTaskDeadlineOrNull } from "@/lib/utils";
 import {
 	bulkMoveTasksSchema,
 	moveTaskSchema,
@@ -73,6 +73,7 @@ export async function createTaskAction(
 		description: formData.get("description"),
 		priority: formData.get("priority") || "medium",
 		dueDate: formData.get("dueDate"),
+		dueTime: formData.get("dueTime"),
 		assigneeId: formData.get("assigneeId"),
 		labels: formData.get("labels"),
 	});
@@ -124,7 +125,7 @@ export async function createTaskAction(
 			title: parsed.data.title,
 			description: parsed.data.description,
 			priority: parsed.data.priority,
-			dueDate: toDateOrNull(parsed.data.dueDate),
+			dueDate: toTaskDeadlineOrNull(parsed.data.dueDate, parsed.data.dueTime),
 			assigneeId: parsed.data.assigneeId,
 			labels: parseLabels(parsed.data.labels),
 			position,
@@ -180,6 +181,7 @@ export async function updateTaskAction(
 		description: formData.get("description"),
 		priority: formData.get("priority") || "medium",
 		dueDate: formData.get("dueDate"),
+		dueTime: formData.get("dueTime"),
 		assigneeId: formData.get("assigneeId"),
 		labels: formData.get("labels"),
 	});
@@ -234,7 +236,7 @@ export async function updateTaskAction(
 			title: parsed.data.title,
 			description: parsed.data.description,
 			priority: parsed.data.priority,
-			dueDate: toDateOrNull(parsed.data.dueDate),
+			dueDate: toTaskDeadlineOrNull(parsed.data.dueDate, parsed.data.dueTime),
 			assigneeId: parsed.data.assigneeId,
 			labels: parseLabels(parsed.data.labels),
 			updatedAt: new Date(),

@@ -115,3 +115,17 @@ export function toDateOrNull(value: string | null | undefined) {
 		return null;
 	return date;
 }
+
+export function toTaskDeadlineOrNull(
+	dateValue: string | null | undefined,
+	timeValue: string | null | undefined,
+) {
+	if (!dateValue || !toDateOrNull(dateValue)) return null;
+	const time = timeValue?.trim() || "23:59";
+	const match = /^(\d{2}):(\d{2})$/.exec(time);
+	if (!match) return null;
+	const hour = Number(match[1]);
+	const minute = Number(match[2]);
+	if (hour > 23 || minute > 59) return null;
+	return new Date(`${dateValue}T${time}:00.000Z`);
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, MessageSquare, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock3, MessageSquare } from "lucide-react";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import {
 	addCommentAction,
@@ -90,7 +90,7 @@ function TaskForm({
 					maxLength={2000}
 				/>
 			</div>
-			<div className="grid gap-4 sm:grid-cols-2">
+			<div className="grid gap-4 sm:grid-cols-3">
 				<div className="space-y-1.5">
 					<Label htmlFor={`${task?.id ?? "new"}-priority`}>Priority</Label>
 					<Select
@@ -105,12 +105,37 @@ function TaskForm({
 					/>
 				</div>
 				<div className="space-y-1.5">
-					<Label htmlFor={`${task?.id ?? "new"}-due`}>Due date</Label>
+					<Label htmlFor={`${task?.id ?? "new"}-due`}>Deadline date</Label>
 					<DeadlineInput
 						id={`${task?.id ?? "new"}-due`}
 						name="dueDate"
 						defaultValue={task?.dueDate?.slice(0, 10)}
 					/>
+				</div>
+				<div className="space-y-1.5">
+					<Label htmlFor={`${task?.id ?? "new"}-due-time`}>Deadline time</Label>
+					<div className="relative">
+						<Input
+							id={`${task?.id ?? "new"}-due-time`}
+							name="dueTime"
+							type="time"
+							defaultValue={
+								task?.dueDate ? task.dueDate.slice(11, 16) : "23:59"
+							}
+							className="relative pr-10 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:z-10 [&::-webkit-calendar-picker-indicator]:size-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+						/>
+						<Clock3
+							size={16}
+							aria-hidden="true"
+							className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-paynes_gray-500 dark:text-french_gray-400"
+						/>
+					</div>
+					<p className="text-xs text-paynes_gray-500">Defaults to 11:59 PM.</p>
+					{state.fieldErrors?.dueTime?.[0] ? (
+						<p className="text-xs text-red-600">
+							{state.fieldErrors.dueTime[0]}
+						</p>
+					) : null}
 				</div>
 			</div>
 			<div className="space-y-1.5">
@@ -142,8 +167,12 @@ function TaskForm({
 					Cancel
 				</Button>
 				{task && onDelete ? (
-					<Button variant="danger" onClick={onDelete}>
-						<Trash2 size={14} /> Delete task
+					<Button
+						variant="danger"
+						onClick={onDelete}
+						className="bg-transparent hover:bg-transparent dark:bg-transparent dark:hover:bg-transparent"
+					>
+						Delete task
 					</Button>
 				) : null}
 				<Button type="submit" disabled={pending}>

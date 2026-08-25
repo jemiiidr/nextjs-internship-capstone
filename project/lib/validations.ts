@@ -62,6 +62,14 @@ export const taskSchema = z.object({
 	description: optionalText(2_000),
 	priority: z.enum(["low", "medium", "high"]).default("medium"),
 	dueDate: optionalDateInput,
+	dueTime: z.preprocess(
+		(value) =>
+			typeof value === "string" && value.trim() === "" ? undefined : value,
+		z
+			.string()
+			.regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use a valid deadline time")
+			.optional(),
+	),
 	assigneeId: optionalUuid,
 	labels: optionalText(300),
 });
