@@ -10,6 +10,7 @@ export default function SignUpPage() {
 			eyebrow="Start creating"
 			title="Build your Kanvas workspace"
 			description="Create your account and bring projects, tasks, and teammates into focus."
+			showIntro={false}
 		>
 			<ClerkAuth mode="sign-up" />
 		</AuthShell>

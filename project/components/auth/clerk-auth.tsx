@@ -9,6 +9,12 @@ export function ClerkAuth({
 	mode: "sign-in" | "sign-up" | "invitation";
 }) {
 	const { theme, accentColor } = useTheme();
+	const headerTitleClass =
+		mode === "sign-in"
+			? "before:content-['Welcome_back']"
+			: mode === "sign-up"
+				? "before:content-['Create_an_account']"
+				: "";
 	const appearance = {
 		variables: {
 			colorPrimary: accentColor,
@@ -24,6 +30,9 @@ export function ClerkAuth({
 			rootBox: "w-full",
 			cardBox: "w-full shadow-none",
 			card: "w-full border border-french_gray-300 shadow-2xl shadow-outer_space-900/10 dark:border-paynes_gray-700 dark:shadow-black/25",
+			headerTitle: `text-2xl font-bold tracking-tight before:mb-1.5 before:block before:text-sm before:font-semibold before:tracking-normal before:text-blue_munsell-600 dark:before:text-blue_munsell-300 ${headerTitleClass}`,
+			headerSubtitle:
+				"mx-auto max-w-sm text-sm leading-6 text-paynes_gray-500 dark:text-french_gray-400",
 			footer: "bg-transparent",
 			footerActionLink: "text-blue_munsell-600 dark:text-blue_munsell-300",
 			formButtonPrimary:

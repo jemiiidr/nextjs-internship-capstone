@@ -47,7 +47,27 @@ export default function RootLayout({
 	children: ReactNode;
 }>) {
 	return (
-		<ClerkProvider>
+		<ClerkProvider
+			localization={{
+				signIn: {
+					start: {
+						title: "Sign in to Kanvas",
+						titleCombined: "Sign in to Kanvas",
+						subtitle:
+							"Pick up where your team left off and keep the work moving.",
+						subtitleCombined:
+							"Pick up where your team left off and keep the work moving.",
+					},
+				},
+				signUp: {
+					start: {
+						title: "Build your Kanvas workspace",
+						subtitle:
+							"Create your account and bring projects, tasks, and teammates into focus.",
+					},
+				},
+			}}
+		>
 			<html lang="en" suppressHydrationWarning>
 				<head>
 					<Script id="kanvas-theme-init" strategy="beforeInteractive">

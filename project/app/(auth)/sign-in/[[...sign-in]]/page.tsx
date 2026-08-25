@@ -10,6 +10,7 @@ export default function SignInPage() {
 			eyebrow="Welcome back"
 			title="Sign in to Kanvas"
 			description="Pick up where your team left off and keep the work moving."
+			showIntro={false}
 		>
 			<ClerkAuth mode="sign-in" />
 		</AuthShell>
