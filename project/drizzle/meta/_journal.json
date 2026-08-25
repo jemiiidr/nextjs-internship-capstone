@@ -1,34 +1,41 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1785378933609,
-      "tag": "0000_opposite_lester",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1787326715011,
-      "tag": "0001_flowora_workspaces",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1787395318884,
-      "tag": "0002_common_sister_grimm",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1787574542293,
-      "tag": "0003_kind_nemesis",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1785378933609,
+			"tag": "0000_opposite_lester",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1787326715011,
+			"tag": "0001_flowora_workspaces",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1787395318884,
+			"tag": "0002_common_sister_grimm",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1787574542293,
+			"tag": "0003_kind_nemesis",
+			"breakpoints": true
+		},
+		{
+			"idx": 4,
+			"version": "7",
+			"when": 1787620000000,
+			"tag": "0004_task_deadline_end_of_day",
+			"breakpoints": true
+		}
+	]
 }

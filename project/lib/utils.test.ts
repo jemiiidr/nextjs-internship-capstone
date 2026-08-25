@@ -8,6 +8,7 @@ import {
 	parseLabels,
 	parsePositiveInteger,
 	toDateOrNull,
+	toTaskDeadlineOrNull,
 } from "./utils";
 
 describe("date formatting", () => {
@@ -26,6 +27,16 @@ describe("date formatting", () => {
 		);
 		expect(toDateOrNull("2024-13-01")).toBeNull();
 		expect(toDateOrNull("anything else")).toBeNull();
+	});
+
+	it("stores task deadline times and defaults to end of day", () => {
+		expect(toTaskDeadlineOrNull("2026-08-25", undefined)?.toISOString()).toBe(
+			"2026-08-25T23:59:00.000Z",
+		);
+		expect(toTaskDeadlineOrNull("2026-08-25", "14:30")?.toISOString()).toBe(
+			"2026-08-25T14:30:00.000Z",
+		);
+		expect(toTaskDeadlineOrNull("2026-08-25", "25:00")).toBeNull();
 	});
 
 	it("formats relative boundaries predictably", () => {

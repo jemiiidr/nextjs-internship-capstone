@@ -2,6 +2,7 @@
 
 import {
 	CalendarDays,
+	Clock3,
 	ExternalLink,
 	FolderKanban,
 	ListTodo,
@@ -37,6 +38,15 @@ function readableDate(dateKey: string) {
 		month: "long",
 		day: "numeric",
 		year: "numeric",
+	});
+}
+
+function readableTime(value: string | null) {
+	if (!value) return "11:59 PM";
+	return new Date(value).toLocaleTimeString("en-US", {
+		hour: "numeric",
+		minute: "2-digit",
+		timeZone: "UTC",
 	});
 }
 
@@ -103,7 +113,9 @@ export function CalendarDayTasks({
 						)}
 					>
 						<span className="block truncate font-medium">{task.title}</span>
-						<span className="block truncate opacity-70">{task.listName}</span>
+						<span className="block truncate opacity-70">
+							{readableTime(task.dueDate)} · {task.listName}
+						</span>
 					</button>
 				))}
 				{tasks.length > maxVisible ? (
@@ -147,7 +159,8 @@ export function CalendarDayTasks({
 									{task.title}
 								</span>
 								<span className="block truncate text-xs text-paynes_gray-500">
-									{task.projectName} · {task.listName}
+									{task.projectName} · {readableTime(task.dueDate)} ·{" "}
+									{task.listName}
 								</span>
 							</span>
 						</button>
@@ -174,6 +187,13 @@ export function CalendarDayTasks({
 								<FolderKanban size={16} className="text-blue_munsell-500" />
 								<span className="text-paynes_gray-500">Project</span>
 								<strong className="ml-auto">{selectedTask.projectName}</strong>
+							</p>
+							<p className="flex items-center gap-2">
+								<Clock3 size={16} className="text-blue_munsell-500" />
+								<span className="text-paynes_gray-500">Due time</span>
+								<strong className="ml-auto">
+									{readableTime(selectedTask.dueDate)}
+								</strong>
 							</p>
 							<p className="flex items-center gap-2">
 								<ListTodo size={16} className="text-blue_munsell-500" />
