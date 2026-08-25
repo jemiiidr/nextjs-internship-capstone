@@ -1,8 +1,72 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "motion/react";
+import {
+	motion,
+	useMotionTemplate,
+	useMotionValue,
+	useReducedMotion,
+	useScroll,
+	useSpring,
+	useTransform,
+} from "motion/react";
 import { type ReactNode, useRef } from "react";
 import { cn } from "@/lib/utils";
+
+export function HeroScene({
+	children,
+	className,
+}: {
+	children: ReactNode;
+	className?: string;
+}) {
+	const ref = useRef<HTMLElement>(null);
+	const reduceMotion = useReducedMotion();
+	const pointerX = useMotionValue(50);
+	const pointerY = useMotionValue(28);
+	const smoothX = useSpring(pointerX, {
+		stiffness: 110,
+		damping: 24,
+		mass: 0.5,
+	});
+	const smoothY = useSpring(pointerY, {
+		stiffness: 110,
+		damping: 24,
+		mass: 0.5,
+	});
+	const glow = useMotionTemplate`radial-gradient(560px circle at ${smoothX}% ${smoothY}%, color-mix(in srgb, var(--brand-color) 24%, transparent), transparent 68%)`;
+	const accentX = useTransform(smoothX, [0, 100], [-32, 32]);
+	const accentY = useTransform(smoothY, [0, 100], [-20, 20]);
+
+	return (
+		<motion.section
+			ref={ref}
+			className={className}
+			onPointerMove={(event) => {
+				if (reduceMotion || event.pointerType === "touch") return;
+				const bounds = ref.current?.getBoundingClientRect();
+				if (!bounds) return;
+				pointerX.set(((event.clientX - bounds.left) / bounds.width) * 100);
+				pointerY.set(((event.clientY - bounds.top) / bounds.height) * 100);
+			}}
+			onPointerLeave={() => {
+				pointerX.set(50);
+				pointerY.set(28);
+			}}
+		>
+			<motion.div
+				aria-hidden="true"
+				className="pointer-events-none absolute inset-0 z-0 opacity-80 dark:opacity-55"
+				style={{ backgroundImage: glow }}
+			/>
+			<motion.div
+				aria-hidden="true"
+				className="pointer-events-none absolute left-[14%] top-36 z-0 size-44 rounded-full bg-[#e989b8]/20 blur-3xl dark:bg-[#e989b8]/10"
+				style={reduceMotion ? undefined : { x: accentX, y: accentY }}
+			/>
+			{children}
+		</motion.section>
+	);
+}
 
 export function Reveal({
 	children,

@@ -152,10 +152,12 @@ Server Components load data by default. Interactive surfaces are Client Componen
 | `pnpm format` | Format the repository |
 | `pnpm type-check` | Run TypeScript without emitting files |
 | `pnpm test` | Run Jest once |
+| `pnpm test:ci` | Run Jest serially in CI mode |
 | `pnpm test:watch` | Run Jest in watch mode |
 | `pnpm test:coverage` | Generate unit-test coverage |
 | `pnpm test:e2e` | Run Playwright tests |
 | `pnpm test:e2e:ui` | Open Playwright's test UI |
+| `pnpm verify` | Run formatting/lint, types, Jest, and production build |
 
 Before review:
 
@@ -167,6 +169,17 @@ pnpm build
 ```
 
 All tests live under `tests/`. The Jest suite covers RBAC, validation, shared utilities, and reusable UI behavior through React Testing Library. Playwright covers public navigation and responsive browser flows. Add focused tests for new server logic and validation edge cases; use Playwright for critical browser workflows.
+
+### Weeks 11-12 testing and ship criteria
+
+- Keep pure logic tests in `tests/unit/`, React Testing Library tests in `tests/components/`, and Playwright flows in `tests/e2e/`.
+- Maintain at least 10 Jest unit/integration cases covering core behavior and at least two Playwright tests covering critical browser flows. This project intentionally uses Jest in place of the rubric's Vitest command.
+- Keep unit and component tests independent of live Clerk and database services.
+- Use dedicated Clerk test accounts and an isolated test database before enabling authenticated Playwright mutations.
+- Run `pnpm verify` before submission, followed by `pnpm test:e2e` against the intended test environment.
+- Set `PLAYWRIGHT_TEST_BASE_URL` to test an already-running local or deployed environment without starting Playwright's local server.
+- `instrumentation.ts` initializes OpenTelemetry under the `kanvas` service name.
+- Verify the production Vercel deployment and final showcase separately; these are release milestones, not automated test results.
 
 ## Deployment to Vercel
 

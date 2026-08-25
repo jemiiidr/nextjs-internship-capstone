@@ -12,6 +12,8 @@ import {
 
 type Theme = "dark" | "light";
 const DEFAULT_ACCENT_COLOR = "#7467f0";
+let themeTransitionFrame: number | null = null;
+let themeReleaseFrame: number | null = null;
 
 interface ThemeContextValue {
 	theme: Theme;
@@ -34,7 +36,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 			: "light";
 
 		setThemeState(currentTheme);
-		const savedAccent = localStorage.getItem("kanvas-accent-color") ?? localStorage.getItem("flowora-accent-color");
+		const savedAccent =
+			localStorage.getItem("kanvas-accent-color") ??
+			localStorage.getItem("flowora-accent-color");
 		if (savedAccent && /^#[0-9a-f]{6}$/i.test(savedAccent)) {
 			document.documentElement.style.setProperty("--brand-color", savedAccent);
 			setAccentColorState(savedAccent);
@@ -42,13 +46,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const setTheme = useCallback((nextTheme: Theme) => {
-		document.documentElement.classList.toggle("dark", nextTheme === "dark");
+		const root = document.documentElement;
+		if (themeTransitionFrame !== null)
+			cancelAnimationFrame(themeTransitionFrame);
+		if (themeReleaseFrame !== null) cancelAnimationFrame(themeReleaseFrame);
 
-		document.documentElement.style.colorScheme = nextTheme;
+		root.classList.add("theme-switching");
+		root.classList.toggle("dark", nextTheme === "dark");
+
+		root.style.colorScheme = nextTheme;
 
 		localStorage.setItem("kanvas-theme", nextTheme);
 
 		setThemeState(nextTheme);
+		themeTransitionFrame = requestAnimationFrame(() => {
+			themeReleaseFrame = requestAnimationFrame(() => {
+				root.classList.remove("theme-switching");
+				themeTransitionFrame = null;
+				themeReleaseFrame = null;
+			});
+		});
 	}, []);
 
 	const setAccentColor = useCallback((color: string) => {

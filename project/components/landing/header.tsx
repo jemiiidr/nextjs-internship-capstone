@@ -1,9 +1,10 @@
 "use client";
 
 import { useAuth, useClerk, useUser } from "@clerk/nextjs";
+import { useLenis } from "lenis/react";
 import { ArrowRight, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { KanvasLogo } from "@/components/kanvas-logo";
 import { SpectrumAura } from "@/components/landing/landing-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -14,14 +15,50 @@ export function Header() {
 	const { isLoaded, isSignedIn } = useAuth();
 	const { signOut } = useClerk();
 	const { user } = useUser();
+	const lenis = useLenis();
 	const [accountOpen, setAccountOpen] = useState(false);
 	const accountRef = useRef<HTMLDivElement>(null);
 	useEffect(() => {
 		if (!accountOpen) return;
-		const close = (event: PointerEvent) => { if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false); };
+		const close = (event: PointerEvent) => {
+			if (!accountRef.current?.contains(event.target as Node))
+				setAccountOpen(false);
+		};
 		document.addEventListener("pointerdown", close);
 		return () => document.removeEventListener("pointerdown", close);
 	}, [accountOpen]);
+
+	const scrollToSection = (event: MouseEvent<HTMLAnchorElement>) => {
+		if (
+			event.button !== 0 ||
+			event.metaKey ||
+			event.ctrlKey ||
+			event.shiftKey ||
+			event.altKey
+		)
+			return;
+
+		const hash = event.currentTarget.hash;
+		const target = hash ? document.querySelector<HTMLElement>(hash) : null;
+		if (!target) return;
+
+		event.preventDefault();
+		window.history.pushState(null, "", hash);
+		const reduceMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+
+		if (reduceMotion || !lenis) {
+			target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+			return;
+		}
+
+		lenis.scrollTo(target, {
+			duration: 1.15,
+			offset: -76,
+			easing: (time) => 1 - (1 - time) ** 4,
+		});
+	};
 
 	return (
 		<header className="sticky top-0 z-40 border-b border-french_gray-300/70 bg-white/85 backdrop-blur-xl dark:border-paynes_gray-800 dark:bg-outer_space-800/85">
@@ -31,18 +68,21 @@ export function Header() {
 				<nav className="hidden items-center gap-7 text-sm font-medium text-paynes_gray-500 md:flex">
 					<Link
 						href="#features"
+						onClick={scrollToSection}
 						className="transition hover:text-blue_munsell-600"
 					>
 						Features
 					</Link>
 					<Link
 						href="#analytics"
+						onClick={scrollToSection}
 						className="transition hover:text-blue_munsell-600"
 					>
 						Analytics
 					</Link>
 					<Link
 						href="#workspaces"
+						onClick={scrollToSection}
 						className="transition hover:text-blue_munsell-600"
 					>
 						Workspaces

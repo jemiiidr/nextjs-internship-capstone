@@ -31,7 +31,7 @@ test("sign-in navigation reaches the branded authentication route", async ({
 	page,
 }) => {
 	await page.goto("/");
-	await page.getByRole("link", { name: "Log in" }).first().click();
+	await page.getByRole("link", { name: /view your workspace/i }).click();
 	await expect(page).toHaveURL(/\/sign-in/);
 	await expect(
 		page.getByRole("link", { name: /back to kanvas home/i }),
@@ -51,4 +51,17 @@ test("landing feature sections remain discoverable", async ({ page }) => {
 	await expect(
 		page.getByRole("heading", { name: /a separate kanvas for every team/i }),
 	).toBeVisible();
+});
+
+test("desktop navigation smoothly targets anchored sections", async ({
+	page,
+}, testInfo) => {
+	test.skip(
+		testInfo.project.name.includes("mobile"),
+		"Desktop navigation is hidden on mobile.",
+	);
+	await page.goto("/");
+	await page.getByRole("link", { name: "Analytics", exact: true }).click();
+	await expect(page).toHaveURL(/#analytics$/);
+	await expect(page.locator("#analytics")).toBeInViewport();
 });

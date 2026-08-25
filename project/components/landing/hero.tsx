@@ -2,6 +2,7 @@ import { ArrowRight, CalendarDays, MessageSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import {
 	FloatingOrb,
+	HeroScene,
 	Parallax,
 	Reveal,
 } from "@/components/landing/landing-motion";
@@ -36,13 +37,24 @@ const previewColumns = [
 
 export function Hero() {
 	return (
-		<section className="flowora-soft-gradient relative overflow-hidden px-4 pb-24 pt-20 sm:px-6 sm:pt-28 lg:px-8">
+		<HeroScene className="relative isolate overflow-hidden bg-[linear-gradient(135deg,#f8f5ff_0%,#edf7ff_38%,#fff5f9_70%,#effcf8_100%)] px-4 pb-24 pt-20 sm:px-6 sm:pt-28 lg:px-8 dark:bg-[linear-gradient(135deg,#171426_0%,#121d29_40%,#21151e_72%,#12231f_100%)]">
 			<div
-				className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,color-mix(in_srgb,var(--border)_45%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--border)_45%,transparent)_1px,transparent_1px)] bg-size-[64px_64px] opacity-45 mask-[linear-gradient(to_bottom,black,transparent_75%)]"
+				className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[70%] bg-[radial-gradient(ellipse_at_top,rgba(145,135,245,.34),transparent_55%),radial-gradient(ellipse_at_78%_24%,rgba(114,186,218,.28),transparent_42%),radial-gradient(ellipse_at_20%_58%,rgba(233,137,184,.2),transparent_38%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(116,103,240,.28),transparent_55%),radial-gradient(ellipse_at_78%_24%,rgba(31,142,178,.2),transparent_42%),radial-gradient(ellipse_at_20%_58%,rgba(191,82,136,.14),transparent_38%)]"
 				aria-hidden="true"
 			/>
-			<FloatingOrb className="-left-32 top-32 size-88" />
-			<FloatingOrb className="-right-20 top-12 size-56" delay={-5} />
+			<div
+				className="pointer-events-none absolute inset-x-0 top-[30%] z-0 mx-auto h-72 max-w-5xl rounded-[100%] border border-white/50 bg-white/15 blur-2xl dark:border-white/5 dark:bg-white/[.025]"
+				aria-hidden="true"
+			/>
+			<div
+				className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(to_right,color-mix(in_srgb,var(--border)_38%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_srgb,var(--border)_38%,transparent)_1px,transparent_1px)] bg-size-[64px_64px] opacity-55 mask-[radial-gradient(ellipse_at_top,black,transparent_78%)]"
+				aria-hidden="true"
+			/>
+			<FloatingOrb className="-left-32 top-32 size-88 bg-linear-to-br from-[#9187f5]/16 to-[#72bada]/8 shadow-[inset_0_0_70px_rgba(145,135,245,.12)]" />
+			<FloatingOrb
+				className="-right-20 top-12 size-56 bg-linear-to-br from-[#e989b8]/14 to-[#e9be65]/8 shadow-[inset_0_0_60px_rgba(233,137,184,.12)]"
+				delay={-5}
+			/>
 			<div className="relative z-10 mx-auto max-w-7xl text-center">
 				<Reveal>
 					<span className="inline-flex items-center rounded-full border border-blue_munsell-200 bg-white/70 px-3 py-1.5 text-xs font-semibold text-blue_munsell-700 shadow-sm dark:border-blue_munsell-800 dark:bg-outer_space-500 dark:text-blue_munsell-200">
@@ -146,6 +158,6 @@ export function Hero() {
 					))}
 				</div>
 			</Parallax>
-		</section>
+		</HeroScene>
 	);
 }
